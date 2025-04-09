@@ -42,7 +42,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from core.admin import admin_site  
 
-current_site = "core"
+current_site = "islands"
 
 urlpatterns = [
     path("admin/", admin_site.urls),

@@ -96,11 +96,6 @@
     right: -20px;
   }
 
-  .projects {
-    background-image: url(https://resourcewatch.org/static/images/components/layout/header-bg-texture.png);
-    background-size: cover;
-  }
-
   .statement {
     font-size: 2rem;
   }
@@ -136,7 +131,7 @@
     <h2 class="text-center font-weight-bold my-4 ">What we do</h2>
     <div class="row pt-4">
       <div class="col-md-6 col-lg-3 mb-4">
-        <div class="card icon-card clickable-card" data-url="/islands/hub/harvesting/">
+        <div class="card icon-card clickable-card" data-url="/hub/harvesting/">
           <div class="icon bg-primary">
             <i class="fal fa-fw fa-file-chart-line text-light"></i>
           </div>
@@ -151,7 +146,7 @@
         </div>
       </div>
       <div class="col-md-6 col-lg-3 mb-4">
-        <div class="card icon-card clickable-card" data-url="/islands/library">
+        <div class="card icon-card clickable-card" data-url="/library">
           <div class="icon bg-{% if alternative_design %}light{% else %}primary{% endif %}">
             <i class="fal fa-fw fa-share-alt {% if not alternative_design %} text-light{% endif %}"></i>
           </div>
@@ -278,7 +273,6 @@
     </div>
 </section>
 
-
 {% if False %}
 <section class="forum">
   <div class="container">
@@ -320,7 +314,7 @@
     <div class="row my-4">
       {% for each in news %}
         <div class="col-lg-4 mb-sm-4 mb-lg-0">
-          <a class="card btn-card" href="{% url "core:news" each.slug %}">
+          <a class="card btn-card" href="{% url "islands:news" each.slug %}">
             {% if each.image %}
               <img src="{{ each.image.thumbnail.url }}" class="card-img-top" alt="">
             {% endif %}

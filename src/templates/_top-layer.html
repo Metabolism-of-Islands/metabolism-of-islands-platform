@@ -25,28 +25,15 @@
     <div class="dark-cover"></div>
   {% endif %}
 
-  {% if PROJECT.slug == "ascus2020" or PROJECT.slug == "ascus2021" or PROJECT.slug == "ascus2022" or PROJECT.slug == "ascus2023" or PROJECT.slug == "ascus2024" %}
-    <div class="return-bar">
-      <div class="container">
-        <a href="https://ascus-society.org/">
-          Go back to AScUS Main page
-          <i class="fad fa-arrow-circle-right"></i>
-        </a>
-      </div>
-    </div>
-  {% elif DESIGN.back_link or request.user.is_authenticated %}
+  {% if DESIGN.back_link or request.user.is_authenticated %}
     <div class="return-bar">
       <div class="container">
         <div class="row">
           <div class="col-lg-4">
             {% if DESIGN.back_link %}
-              {% if DEBUG %}
-                <a href="/"><i class="fad fa-arrow-circle-left mr-1"></i>
-                  Return to Metabolism of Cities
-                </a>
-              {% else %}
-                <a href="https://metabolismofcities.org/"><i class="fad fa-arrow-circle-left mr-1"></i> Return to Metabolism of Cities</a>
-              {% endif %}
+              <a href="/"><i class="fad fa-arrow-circle-left mr-1"></i>
+                Return to Metabolism of Islands
+              </a>
             {% endif %}
           </div>
 
@@ -54,12 +41,12 @@
 
             <div class="col-lg-8 d-flex align-middle justify-content-end">
 
-              <a class="badge badge-light ml-1" href="{% if DEBUG %}/{{ PROJECT.slug }}{% endif %}/hub/profile/">
+              <a class="badge badge-light ml-1" href="/hub/profile/">
                 <i class="fa fa-user mr-1"></i> {{ request.user.people }}
               </a>
 
               {% if DESIGN.back_link %}
-                <a class="badge badge-light ml-1" href="{% if DEBUG and PROJECT.slug %}/{{ PROJECT.slug }}{% endif %}/hub/network/">
+                <a class="badge badge-light ml-1" href="/hub/network/">
                   <i class="fa fa-heart-rate"></i> Network activity
                 </a>
               {% endif %}
@@ -75,7 +62,7 @@
               </a>
 
               {% if "curator" in PERMISSIONS or request.user.is_staff or "admin" in PERMISSIONS %}
-                <a class="badge badge-secondary ml-1" href="{% if DEBUG and PROJECT.id != 1 %}/{{ PROJECT.slug }}/{% elif PROJECT.id == 1 %}/{% else %}{{ PROJECT.get_website }}{% endif %}controlpanel/">
+                <a class="badge badge-secondary ml-1" href="/controlpanel/">
                   <i class="fa fa-cog"></i> Control panel
                 </a>
               {% endif %}
@@ -102,7 +89,7 @@
                     {% endif %}
 
                     {% if webpage and not edit_link and request.user.is_authenticated and request.user.is_staff %}
-                      <a class="dropdown-item" href="{% if DEBUG and PROJECT.id != 1 %}/{{ PROJECT.slug }}{% endif %}/controlpanel/content/{{ webpage.id }}/?next={{ request.get_full_path }}"><i class="fal mr-2 fa-edit fa-fw"></i> Edit</a>
+                      <a class="dropdown-item" href="/controlpanel/content/{{ webpage.id }}/?next={{ request.get_full_path }}"><i class="fal mr-2 fa-edit fa-fw"></i> Edit</a>
                     {% endif %}
 
                     {% if article and request.user.is_authenticated and request.user.is_staff %}
@@ -137,9 +124,9 @@
     </div>
   {% endif %}
 
-  <nav class="navbar navbar-expand-{% if PROJECT.slug == "water" %}md{% else %}lg{% endif %} navbar-{{ DESIGN.header_color }} main-nav-project-{{ PROJECT.id }}" {% if PROJECT.id == 16 and request.user.is_authenticated %}hidden{% endif %}>
-    <div class="container{% if PROJECT.slug == "water" %}-fluid{% endif %}">
-      <a class="navbar-brand" href="{% if DEBUG %}/{% if PROJECT.id != 1 %}{{ PROJECT.slug }}{% endif %}{% else %}{{ PROJECT.get_website }}{% endif %}">
+  <nav class="navbar navbar-expand-lg navbar-{{ DESIGN.header_color }} main-nav-project-{{ PROJECT.id }}">
+    <div class="container">
+      <a class="navbar-brand" href="/">
         <img alt="{{ PROJECT }}" src="{{ LOGO }}?u=true">
       </a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".project-navbar-collapse" aria-controls="project-navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -148,45 +135,7 @@
 
       <div class="collapse navbar-collapse project-navbar-collapse" id="project-navbar">
         <ul class="navbar-nav {% if PROJECT.slug != "water" %}ml-auto{% endif %}">
-
-          {% if PROJECT.id == 4 %}
-            {% include "_menu-data.html" %}
-          {% elif PROJECT.id == 14 %}
-            {% include "_menu-staf.html" %}
-          {% elif PROJECT.id == 3 %}
-            {% include "_menu-multimedia.html" %}
-          {% elif PROJECT.id == 2 %}
-            {% include "_menu-library.html" %}
-          {% elif PROJECT.id == 16 %}
-            {% include "_menu-platformu.html" %}
-          {% elif PROJECT.id == 18 %}
-            {% include "_menu-community.html" %}
-          {% elif PROJECT.id == 18683 %}
-            {% include "_menu-stocks.html" %}
-          {% elif PROJECT.id == 17 %}
-            {% include "_menu-islands.html" %}
-          {% elif PROJECT.id == 1 %}
-            {% include "_menu-moc.html" %}
-          {% elif PROJECT.id == 32542 %}
-            {% include "_menu-untraceable.html" %}
-          {% elif PROJECT.slug == "education" %}
-            {% include "_menu-education.html" %}
-          {% elif PROJECT.slug == "cityloops" %}
-            {% include "_menu-cityloops.html" %}
-          {% elif PROJECT.slug == "peeide" %}
-            {% include "_menu-peeide.html" %}
-          {% elif PROJECT.slug == "ascus" %}
-            {% include "_menu-ascus.html" %}
-          {% elif PROJECT.slug == "ascus2020" %}
-            {% include "_menu-ascus2020.html" %}
-          {% elif PROJECT.slug == "ascus2021" %}
-            {% include "_menu-ascus2021.html" %}
-          {% elif PROJECT.slug == "ascus2024" %}
-            {% include "_menu-ascus2024.html" %}
-          {% elif PROJECT.slug == "water" %}
-            {% include "_menu-water.html" %}
-          {% endif %}
-
+          {% include "_menu-islands.html" %}
         </ul>
       </div>
     </div>
@@ -213,24 +162,8 @@
 
 </div>
 
-{% if space and not hide_space_menu and IS_DATA_PORTAL and not PROJECT.slug == "stocks" and not PROJECT.slug == "water" %}
+{% if space and not hide_space_menu and IS_DATA_PORTAL %}
   {% include "_submenu-data.html" %}
-{% elif PROJECT.slug == "ascus2020" and request.user.is_authenticated %}
-  {% include "_submenu-ascus2020.html" %}
-{% elif PROJECT.slug == "ascus2021" and request.user.is_authenticated %}
-  {% include "_submenu-ascus2021.html" %}
-{% elif PROJECT.slug == "ascus2024" and request.user.is_authenticated %}
-  {% include "_submenu-ascus2024.html" %}
-{% elif PROJECT.id == 16 and request.user.is_authenticated %}
-  {% if my_organization %}
-    {% include "_submenu-platformu.html" %}
-  {% else %}
-    <div class="container">
-      <a class="btn btn-primary mt-4" href="{% url 'platformu:admin' %}">
-        <i class="fal fa-arrow-left mr-2"></i> Return to PlatformU
-      </a>
-    </div>
-  {% endif %}
 {% endif %}
 
 {% if IS_DATA_PORTAL and space %}

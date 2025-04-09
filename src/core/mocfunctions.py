@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 # various pages in the menu. Here we can differentiate between the different sites.
 
 TAG_ID = settings.TAG_ID_LIST
-PAGE_ID = settings.PAGE_ID_LIST
 PROJECT_ID = settings.PROJECT_ID_LIST
 PROJECT_LIST = settings.PROJECT_LIST
 AUTO_BOT = 32070

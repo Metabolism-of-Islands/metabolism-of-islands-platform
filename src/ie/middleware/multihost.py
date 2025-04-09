@@ -17,7 +17,7 @@ class MultiHostMiddleware:
 
     def __call__(self, request):
         # If things fail, we have our fallback project = 1 (MoC main section)
-        project = 1
+        project = 17
         host = request.META.get("HTTP_HOST")
 
         try:
