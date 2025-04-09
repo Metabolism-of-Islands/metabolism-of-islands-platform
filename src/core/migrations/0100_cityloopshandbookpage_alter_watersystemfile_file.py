@@ -26,6 +26,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='watersystemfile',
             name='file',
-            field=models.FileField(blank=True, max_length=255, null=True, upload_to=core.models.waterfile_path),
+            field=models.FileField(blank=True, max_length=255, null=True, upload_to="test"),
         ),
     ]

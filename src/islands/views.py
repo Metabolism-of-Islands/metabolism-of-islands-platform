@@ -20,7 +20,7 @@ def index(request):
     list = ReferenceSpace.objects.filter(activated__part_of_project_id=request.project)[:3]
     project = get_object_or_404(Project, pk=request.project)
     blurb = """
-        <img class="main-logo my-4" alt="Metabolism of Cities" src="/media/logos/logo.flat.svg?u=true">
+        <img class="main-logo my-4" alt="Metabolism of Islands" src="/media/logos/logo.flat.svg?u=true">
         <div class="my-4 font-weight-bold" style="text-shadow:2px 2px 8px #000">
             MoI is a network of scholars conducting policy-relevant research
             to support island economies achieve resource security and
