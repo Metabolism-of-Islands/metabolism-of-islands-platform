@@ -2333,25 +2333,12 @@ def trim_database(request):
     if not settings.DEBUG:
         return render(request, "template/blank.html", context)
     else:
-        MaterialDemand.objects.all().delete()
         User.objects.all().delete()
         Message.objects.all().delete()
         People.objects.all().delete()
-        WaterSystemSpace.objects.all().delete()
-        CityLoopsIndicator.objects.all().delete()
-        CityLoopsSCAReport.objects.all().delete()
-        CityLoopsUCAReport.objects.all().delete()
         PublicProject.objects.all().delete()
-        SocialMedia.objects.all().delete()
         ZoteroCollection.objects.all().delete()
-        WaterSystemCategory.objects.all().delete()
         Relationship.objects.filter(pk=1).delete() # Remove platformu admins
-        # We should re-create this level though! Otherwise PlatformU won't work!
-        Relationship.objects.create(
-            id=1,
-            name='PlatformU admin',
-        )
-        Tag.objects.filter(pk=747).delete() # PlatformU segments
         zotero = ZoteroCollection.objects.all()
         zotero.update(api="none")
 

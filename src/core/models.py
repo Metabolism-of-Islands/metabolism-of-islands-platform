@@ -3105,43 +3105,6 @@ class Milestone(Record):
         ordering = ["year", "position"]
 
 ###
-### PLATFORM-U SPECIFIC TABLES
-### These are created exclusively for the PlatformU website. This website is not yet mature
-### and tables will not be merged with the main database until it is more extensively used
-### and matured.
-###
-
-class MaterialDemand(Record):
-    material_type = models.ForeignKey(Material, on_delete=models.CASCADE)
-    quantity = models.FloatField()
-    unit = models.ForeignKey(Unit, on_delete=models.CASCADE)
-    start_date = models.DateField()
-    estimate_value = models.IntegerField(null=True, blank=True, help_text="The total estimate value of the listing")
-    end_date = models.DateField(null=True, blank=True, help_text="The end date is optional, leave blank if it's open ended")
-    owner = models.ForeignKey(Record, on_delete=models.CASCADE, related_name="demand")
-    AVAILABILITY = [
-        ('Unavailable', 'Unavailable'),
-        ('Occasionally', 'Occasionally available'),
-        ('Short_term_use', 'Available short-term use'),
-        ('Long_term_use', 'Available for long-term use'),
-    ]
-    availability = models.CharField(max_length=50, null=True,  blank=True, choices=AVAILABILITY)
-    days = models.CharField(max_length=255, null=True)
-    time = models.CharField(max_length=255, null=True)
-
-    def __str__(self):
-        return self.material_type.name
-
-    def type(self):
-        return "supply" if self.quantity < 0 else "demand"
-
-    def absolute_quantity(self):
-        return self.quantity*-1 if self.quantity < 0 else self.quantity
-
-    class Meta:
-        ordering = ["start_date"]
-
-###
 ### DUMMY FORMAT
 ###
 
