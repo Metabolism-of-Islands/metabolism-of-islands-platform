@@ -743,33 +743,6 @@ class RecordRelationship(models.Model):
         verbose_name = "relationship manager"
         unique_together = ["record_parent", "relationship", "record_child"]
 
-class SocialMediaPlatform(models.Model):
-    name = models.CharField(max_length=255)
-    icon = models.CharField(max_length=30)
-
-    def __str__(self):
-        return self.name
-
-class SocialMedia(models.Model):
-    name = models.CharField(max_length=255)
-    record = models.ForeignKey(Record, on_delete=models.CASCADE, null=True, blank=True)
-    STATUS = [
-        ("draft", "Draft"),
-        ("discarded", "Discarded"),
-        ("ready", "Ready for publication"),
-        ("published", "Published"),
-    ]
-    status = models.CharField(max_length=20, blank=True, null=True, choices=STATUS, default="draft")
-    date = models.DateTimeField(null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
-    response = models.TextField(null=True, blank=True)
-    image = StdImageField(upload_to="socialmedia", variations={"thumbnail": (480, 480), "large": (1280, 1024)}, blank=True, null=True, delete_orphans=True)
-    campaign = models.ForeignKey(Tag, on_delete=models.CASCADE, limit_choices_to={"parent_tag_id": 927})
-    platforms = models.ManyToManyField(SocialMediaPlatform)
-
-    def __str__(self):
-        return self.name
-
 class Event(Record):
     EVENT_TYPE = [
         ("conference", "Conference"),
@@ -3130,43 +3103,6 @@ class Milestone(Record):
 
     class Meta:
         ordering = ["year", "position"]
-
-###
-### PLATFORM-U SPECIFIC TABLES
-### These are created exclusively for the PlatformU website. This website is not yet mature
-### and tables will not be merged with the main database until it is more extensively used
-### and matured.
-###
-
-class MaterialDemand(Record):
-    material_type = models.ForeignKey(Material, on_delete=models.CASCADE)
-    quantity = models.FloatField()
-    unit = models.ForeignKey(Unit, on_delete=models.CASCADE)
-    start_date = models.DateField()
-    estimate_value = models.IntegerField(null=True, blank=True, help_text="The total estimate value of the listing")
-    end_date = models.DateField(null=True, blank=True, help_text="The end date is optional, leave blank if it's open ended")
-    owner = models.ForeignKey(Record, on_delete=models.CASCADE, related_name="demand")
-    AVAILABILITY = [
-        ('Unavailable', 'Unavailable'),
-        ('Occasionally', 'Occasionally available'),
-        ('Short_term_use', 'Available short-term use'),
-        ('Long_term_use', 'Available for long-term use'),
-    ]
-    availability = models.CharField(max_length=50, null=True,  blank=True, choices=AVAILABILITY)
-    days = models.CharField(max_length=255, null=True)
-    time = models.CharField(max_length=255, null=True)
-
-    def __str__(self):
-        return self.material_type.name
-
-    def type(self):
-        return "supply" if self.quantity < 0 else "demand"
-
-    def absolute_quantity(self):
-        return self.quantity*-1 if self.quantity < 0 else self.quantity
-
-    class Meta:
-        ordering = ["start_date"]
 
 ###
 ### DUMMY FORMAT

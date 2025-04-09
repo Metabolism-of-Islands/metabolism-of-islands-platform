@@ -168,11 +168,6 @@ class EventAdmin(SearchCompleteAdmin):
     list_filter = ["is_public", "is_deleted", "projects"]
     exclude = ["old_id", "meta_data", "slug", "sectors"]
 
-class SocialMediaAdmin(admin.ModelAdmin):
-    autocomplete_fields = ["record"]
-    list_display = ["name", "record", "date"]
-    list_filter = ["platforms", "status"]
-
 class ProjectAdmin(SearchCompleteAdmin):
     list_display = ["name", "type", "start_date", "slug", "has_subsite", "status"]
     list_filter = ["has_subsite", "status", "type"]
@@ -343,8 +338,6 @@ admin_site.register(Project, ProjectAdmin)
 admin_site.register(PublicProject, PublicProjectAdmin)
 admin_site.register(Relationship, RelationshipAdmin)
 admin_site.register(RecordRelationship, RecordRelationshipAdmin)
-admin_site.register(SocialMedia, SocialMediaAdmin)
-admin_site.register(SocialMediaPlatform)
 admin_site.register(LibraryItem, LibraryAdmin)
 admin_site.register(Photo, LibraryAdmin)
 admin_site.register(LibraryItemType, LibraryItemTypeAdmin)
@@ -377,7 +370,6 @@ admin_site.register(WorkSprint, SprintAdmin)
 #admin_site.register(Work, WorkAdmin)
 admin_site.register(WorkActivity, WorkActivityAdmin)
 admin_site.register(Badge, BadgeAdmin)
-admin_site.register(MaterialDemand, SearchCompleteAdmin)
 admin_site.register(Milestone, SearchCompleteAdmin)
 admin_site.register(ActivityCatalog, SearchAdmin)
 admin_site.register(Activity, ActivityAdmin)
