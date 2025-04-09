@@ -17,7 +17,26 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from core.mocfunctions import *
 
 def index(request):
-    list = ReferenceSpace.objects.filter(activated__part_of_project_id=request.project)[:3]
+
+    # Temp cleanup
+
+
+    # Retrieve the first 1000 ForumTopic objects that do not belong to part_of_project 17
+    ft = list(ForumTopic.objects.exclude(part_of_project=17)[:1000])
+
+    # Delete the retrieved objects
+    ForumTopic.objects.filter(id__in=[topic.id for topic in ft]).delete()
+
+    publications = LibraryItem.objects_include_private.filter(tags__id=219).order_by("name")
+    print(publications.count())
+    print(LibraryItem.objects_include_private.all().count())
+    for each in publications:
+        pass
+        #print(each.name)
+
+    # end temp cleanup
+    
+    spaces = ReferenceSpace.objects.filter(activated__part_of_project_id=request.project)[:3]
     project = get_object_or_404(Project, pk=request.project)
     blurb = """
         <img class="main-logo my-4" alt="Metabolism of Islands" src="/media/logos/logo.flat.svg?u=true">
@@ -31,7 +50,7 @@ def index(request):
 
     context = {
         "show_project_design": True,
-        "list": list,
+        "list": spaces,
         "dashboard_link": project.slug + ":dashboard",
         "harvesting_link": project.slug + ":hub_harvesting_space",
         "layers": get_layers(request),

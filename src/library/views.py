@@ -32,10 +32,7 @@ from django.core.mail import EmailMultiAlternatives
 THIS_PROJECT = PROJECT_ID["library"]
 
 def get_site_tag(request):
-    if request.project == 17:
-        return 219
-    else:
-        return 11
+    return 219
 
 # helper function to solve a query: (field, contains/starts with, query) for advanced search options 
 def searchBy(field: str, contains: str, query: str) -> set:
@@ -233,15 +230,10 @@ def index(request):
     urban_only = True
     core_filter = get_site_tag(request)
     space = None
-    if request.project == THIS_PROJECT:
-        title = "Homepage"
-    else:
-        title = "Library"
+    title = "Library"
 
-    if request.project == 17:
-        # The islands use a 'Themes' subset of tags, which we need to add to the list
-        tags.append(944)
-
+    # The islands use a 'Themes' subset of tags, which we need to add to the list
+    tags.append(944)
     
     if "terms" in request.GET and "find" in request.GET and len(request.GET.getlist('terms')[0])>0: # if using the advanced search
         show_results = True
@@ -341,7 +333,6 @@ def index(request):
     active_boolean.insert(0, "and")
     active_contains = request.GET.getlist("contains")
     active_terms = request.GET.getlist("terms")
-
 
     context = {
         "show_project_design": True,

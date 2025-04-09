@@ -12,7 +12,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Share Popup</title>
+
   <script crossorigin="anonymous"></script>
   <style>
       /* Overlay */
@@ -110,11 +110,16 @@
           margin-top: 10px;
           font-size: 14px;
       }
-  </style>
-{% endblock %}
 
-{% block css %}
-  <style>
+      .share-button {
+        transition: transform 0.3s ease-in-out;
+      }
+
+      .share-button:hover {
+        transform: scale(1.2);
+        cursor: pointer;
+      }
+
     .journal {
       max-height: 160px;
     }
@@ -293,7 +298,6 @@
 
       <div class="border rounded bg-white my-4">
         <ul class="list-group list-group-flush">
-<<<<<<< HEAD
           <!-- bookmark item -->
           {% if request.user.is_authenticated %}
             <li class="list-group-item table-item">
@@ -311,9 +315,7 @@
                 </span>
               </div>
             </li>
-=======
-          <!-- export item -->
-          {% if request.user.is_authenticated %}
+
             <div id="exportModalOverlay" class="modal-overlay"></div>
 
             <div id="exportModal" class="export-modal">
@@ -375,11 +377,10 @@
                 <p style="text-align:center;">This item was added to your Zotero library.</p>
               </div>
             </div>
->>>>>>> improve-upload-data
+
           {% endif %}
           <li class="list-group-item table-item">
             <div><i class="fal fa-fw fa-{{ info.type.icon }} mr-1"></i>
-              {% if PROJECT.slug == "peeide" %}Reference{% endif %}
               Type 
             </div>
             <div>{{ info.type }}</div>
@@ -392,17 +393,6 @@
             </div>
             <div><i class="fal fa-fw fa-share share-button" onclick="openSharePopup()"></i></div>
           </li>
-
-          <style>
-            .share-button {
-              transition: transform 0.3s ease-in-out;
-            }
-
-            .share-button:hover {
-              transform: scale(1.2);
-              cursor: pointer;
-            }
-          </style>
 
           <!-- Overlay -->
           <div class="overlay" id="overlay" onclick="closeSharePopup()"></div>
@@ -421,7 +411,6 @@
             <div class="close-btn" onclick="closeSharePopup()">Close</div>
           </div>
 
-
           {% if publisher %}
             <li class="list-group-item table-item">
               <div><i class="fal fa-fw fa-building mr-1"></i>
@@ -435,48 +424,45 @@
             </li>
           {% endif %}
 
-          {% if PROJECT.slug != "ascus2021" and PROJECT.slug != "ascus2024" %}
-
-            {% if info.year %}
-              <li class="list-group-item table-item">
-                <div><i class="fal fa-fw fa-calendar mr-1"></i> Year</div>
-                <div>{{ info.year }}</div>
-              </li>
-            {% endif %}
-
-            {% if info.author_list %}
-              <li class="list-group-item">
-                <i class="fal fa-fw fa-user-edit mb-1 mr-1" aria-hidden="true"></i> Author(s)
-                <br>
-                {{ info.author_list }}
-              </li>
-            {% endif %}
-
-            {% if tags %}
-              <li class="list-group-item hide-water">
-                <i class="fal fa-fw fa-tag mb-1 mr-1" aria-hidden="true"></i> {% if PROJECT.slug == "peeide" %}Keywords{% else %}Tags{% endif %}
-                <br>
-                {% for each in tags %}
-                  {% if not each.hidden %}
-                    <a class="btn btn-sm btn-primary-outline mt-1" href="{% url URLS.LIBRARY %}?find=true&amp;search={{ each.id }}&amp;types=all">{{ each }}</a>
-                  {% endif %}
-                {% endfor %}
-              </li>
-            {% endif %}
-
-            {% if info.language and not info.type.name == "Image" %}
-            <li class="list-group-item table-item hide-water">
-              <div><i class="fal fa-fw fa-language mr-1"></i> Language</div>
-              <div>{{ info.get_language_display }}</div>
+          {% if info.year %}
+            <li class="list-group-item table-item">
+              <div><i class="fal fa-fw fa-calendar mr-1"></i> Year</div>
+              <div>{{ info.year }}</div>
             </li>
-            {% endif %}
+          {% endif %}
 
-            {% if info.license %}
-              <li class="list-group-item table-item">
-                <div><i class="fal fa-fw fa-universal-access mr-1"></i> License</div>
-                <div>{{ info.license }}</div>
-              </li>
-            {% endif %}
+          {% if info.author_list %}
+            <li class="list-group-item">
+              <i class="fal fa-fw fa-user-edit mb-1 mr-1" aria-hidden="true"></i> Author(s)
+              <br>
+              {{ info.author_list }}
+            </li>
+          {% endif %}
+
+          {% if tags %}
+            <li class="list-group-item hide-water">
+              <i class="fal fa-fw fa-tag mb-1 mr-1" aria-hidden="true"></i> {% if PROJECT.slug == "peeide" %}Keywords{% else %}Tags{% endif %}
+              <br>
+              {% for each in tags %}
+                {% if not each.hidden %}
+                  <a class="btn btn-sm btn-primary-outline mt-1" href="{% url URLS.LIBRARY %}?find=true&amp;search={{ each.id }}&amp;types=all">{{ each }}</a>
+                {% endif %}
+              {% endfor %}
+            </li>
+          {% endif %}
+
+          {% if info.language and not info.type.name == "Image" %}
+          <li class="list-group-item table-item hide-water">
+            <div><i class="fal fa-fw fa-language mr-1"></i> Language</div>
+            <div>{{ info.get_language_display }}</div>
+          </li>
+          {% endif %}
+
+          {% if info.license %}
+            <li class="list-group-item table-item">
+              <div><i class="fal fa-fw fa-universal-access mr-1"></i> License</div>
+              <div>{{ info.license }}</div>
+            </li>
           {% endif %}
 
           {% if info.url %}
@@ -600,73 +586,6 @@
         </ul>
       </div>
 
-      {% if PROJECT.slug == "ascus" or PROJECT.slug == "ascus2021" or PROJECT.slug == "ascus2024" %}
-
-        {% if info.author_list %}
-          <div class="card">
-            <ul class="list-group list-group-flush">
-              <li class="list-group-item">
-                <i class="fal fa-fw fa-user-edit mb-1 mr-1" aria-hidden="true"></i>
-                <strong>
-                Author(s)
-                </strong>
-                <br>
-                {{ info.author_list }}
-              </li>
-            </ul>
-          </div>
-        {% endif %}
-
-        {% for each in authors_temp %}
-          <div class="card mt-4">
-            {% if each.image %}
-            <a href="{% url 'ascus2024:participant' each.id %}">
-              <img class="card-img-top" src="{{ each.image.thumbnail.url }}">
-            </a>
-            {% endif %}
-            <div class="card-body">
-              <div class="mb-4">
-                <span class="details">
-                  {% if each.image %}
-                  <a href="{% url 'ascus2024:participant' each.id %}">
-                    <strong>{{ each }}</strong>
-                  </a>
-                  {% else %}
-                    <strong>{{ each }}</strong>
-                  {% endif %}
-
-                  {% if each.email %}
-                  <br>
-                  {{ each.email }}
-                  {% endif %}
-                </span>
-              </div>
-
-            </div>
-          </div>
-        {% endfor %}
-
-        <form method="post" class="form form-horizontal mt-2" action="{% url 'ascus2024:account_vote' %}" hidden>
-          {% csrf_token %}
-          <div class="alert alert-warning">
-            <h3>Best PTA</h3>
-            <p>
-            {% if best_vote %}
-                You already cast your vote
-            {% else %}
-              <button type="submit" class="btn btn-success" name="best_pta" value="{{ info.id }}"><i class="fa fa-vote-yea"></i> Vote for this path-to-action document.</button>
-              <input type="hidden" name="next" value="{{ request.get_full_path }}" />
-            {% endif %}
-            </p>
-          </div>
-        </form>
-
-        {% if curator or request.user.people == info.uploader or request.user.people == info.author %}
-          <a href="?edit&amp;return={{ request.get_full_path }}" class="btn btn-primary"><i class="fa fa-pencil"></i> Edit</a>
-        {% endif %}
-
-      {% else %}
-
         {% if request.user.is_authenticated %}
           <div class="list-group mb-4">
             {% if curator or request.user.people == info.uploader %}
@@ -759,12 +678,12 @@
 
         {% endif %}
 
-      {% endif %}
 
       <a href="javascript:history.back()" class="btn btn-primary-light">
         <i class="fal fa-arrow-left"></i> Back
       </a>
     </div>
+
     <div class="col-lg-{% if data_layout %}12{% else %}8{% endif %} mb-4 order-1 order-lg-2">
       <h1>{{ info }}</h1>
 
@@ -1303,12 +1222,6 @@
       </section>
       {% endif %}
 
-      {% if PROJECT.slug == "ascus" or PROJECT.slug == "ascus2021" or PROJECT.slug == "ascus2024" %}
-        <section class="messages">
-          {% include "_messages.html" %}
-        </section>
-      {% endif %}
-
     </div>
   </div>
 </div>
@@ -1436,7 +1349,6 @@
       });
     {% endif %}
 
-<<<<<<< HEAD
     {% if user.is_authenticated %}
     
     // Handle bookmark library item
@@ -1472,7 +1384,7 @@
       });
     });
     {% endif %}
-=======
+
     $(document).ready(function () {
       $(".export-btn").on("click", function () {
         $("#exportModalOverlay").fadeIn(200);
@@ -1639,6 +1551,5 @@
     function shareReddit() {
       window.open(`https://www.reddit.com/submit?url=${shareURL}&title=Check this out!`, "_blank");
     }
->>>>>>> improve-upload-data
   </script>
 {% endblock %}
