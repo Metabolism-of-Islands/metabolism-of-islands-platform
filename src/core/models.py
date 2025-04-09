@@ -743,33 +743,6 @@ class RecordRelationship(models.Model):
         verbose_name = "relationship manager"
         unique_together = ["record_parent", "relationship", "record_child"]
 
-class SocialMediaPlatform(models.Model):
-    name = models.CharField(max_length=255)
-    icon = models.CharField(max_length=30)
-
-    def __str__(self):
-        return self.name
-
-class SocialMedia(models.Model):
-    name = models.CharField(max_length=255)
-    record = models.ForeignKey(Record, on_delete=models.CASCADE, null=True, blank=True)
-    STATUS = [
-        ("draft", "Draft"),
-        ("discarded", "Discarded"),
-        ("ready", "Ready for publication"),
-        ("published", "Published"),
-    ]
-    status = models.CharField(max_length=20, blank=True, null=True, choices=STATUS, default="draft")
-    date = models.DateTimeField(null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
-    response = models.TextField(null=True, blank=True)
-    image = StdImageField(upload_to="socialmedia", variations={"thumbnail": (480, 480), "large": (1280, 1024)}, blank=True, null=True, delete_orphans=True)
-    campaign = models.ForeignKey(Tag, on_delete=models.CASCADE, limit_choices_to={"parent_tag_id": 927})
-    platforms = models.ManyToManyField(SocialMediaPlatform)
-
-    def __str__(self):
-        return self.name
-
 class Event(Record):
     EVENT_TYPE = [
         ("conference", "Conference"),
