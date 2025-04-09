@@ -4,14 +4,15 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.db.models import Count
 from django.contrib import messages
-from django.http import Http404, HttpResponseRedirect, JsonResponse, FileResponse
+from django.http import Http404, JsonResponse, FileResponse
 from django.forms import modelform_factory
 from django.contrib.auth.decorators import login_required
-import json
+
 from django.core.cache import cache
 
 from django.utils import timezone
 import pytz
+import json 
 
 from django.db.models import Q
 
@@ -597,6 +598,7 @@ def item(request, id, show_export=True, space=None, layer=None, data_section_typ
         except:
             pass
 
+    is_saved = False # check if the user had saved this item or not
     if request.user.is_authenticated:
         if has_permission(request, request.project, ["curator", "dataprocessor"]) or request.user.people == info.uploader or request.user.people == info.author:
             curator = True
@@ -606,6 +608,26 @@ def item(request, id, show_export=True, space=None, layer=None, data_section_typ
                 url_processing = project.slug + ":hub_processing_geospreadsheet"
             elif info.type.id == 10:
                 url_processing = project.slug + ":hub_processing_dataset"
+
+        is_saved = LibraryItem.objects.filter(id=id, saved_by_users=request.user.id).exists()
+
+        # if user want to bookmark this item
+        if request.method == "POST":
+            try:
+                library_item = LibraryItem.objects.get(id=id)
+            
+                # Add or remove the item from the user's saved items (toggle behavior)
+                if library_item.saved_by_users.filter(id=request.user.id).exists():
+                    library_item.saved_by_users.remove(request.user.id)
+                    action = "removed"
+                else:
+                    library_item.saved_by_users.add(request.user.id)
+                    action = "added"
+
+                return JsonResponse({"success": True, "action": action})
+            
+            except Exception as e:
+                return JsonResponse({"success": False, "error": str(e)}, status=400)
 
     if info.type.group == "multimedia":
         section = "multimedia_library"
@@ -712,6 +734,7 @@ def item(request, id, show_export=True, space=None, layer=None, data_section_typ
 
     context = {
         "info": info,
+        "is_saved": is_saved,
         "data": data,
         "data_count": data_count,
         "spaces": spaces,
