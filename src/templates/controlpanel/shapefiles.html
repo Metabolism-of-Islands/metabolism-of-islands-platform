@@ -8,8 +8,34 @@
     Back to control panel
   </a>
 
+  <h3 class="pt-5">All shapefiles in the system</h3>
+
+  <table class="table table-striped datatable table-card">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Space</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for each in all_items %}
+      <tr>
+        <td>
+          <a href="{% url URLS.LIBRARY_ITEM each.id %}">{{ each }}</a>
+        </td>
+        <td>
+          {% for space in each.spaces.all %}
+            <li>{{ space }}</li>
+          {% endfor %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <h3 class="pt-5">Pending shapefiles</h3>
   <p>
-    On this page you can see which shapefiles are not yet processed. They should
+    Below you can see which shapefiles are not yet processed. They should
     be processed by our automated cron script (running every 6h). If they are not, 
     check the cron log for insights.
   </p>

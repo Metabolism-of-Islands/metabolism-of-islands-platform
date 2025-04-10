@@ -718,14 +718,6 @@ def item(request, id, show_export=True, space=None, layer=None, data_section_typ
             load_leaflet = True
             load_leaflet_time = True
 
-    # TEMPORARY CODE TO GET UNIT FOR CHARTS IN SCA REPORTS
-    # https://data.metabolismofcities.org/tasks/991921/
-    unit = None
-    if data_count:
-        units = data.values("unit__name").filter(quantity__isnull=False).order_by("unit__name").distinct()
-        if units.count() == 1:
-            unit = units[0]
-
     data_layout = False
     if info.type.name == "Dataset":
         data_layout = True if project.slug == "water" or "data-layout" in request.GET else False
@@ -764,11 +756,6 @@ def item(request, id, show_export=True, space=None, layer=None, data_section_typ
 
         "data_layout": data_layout,
 
-        # Here temporarily, see comment above
-        "unit": unit,
-
-        # The following we'll only have during the AScUS voting round; remove afterwards
-        #"best_vote": RecordRelationship.objects.filter(relationship_id=32, record_parent=request.user.people) if request.user.is_authenticated else None,
     }
 
     if info.meta_data and "show_all_data_viz" in info.meta_data:
@@ -1898,8 +1885,15 @@ def controlpanel_library(request):
     if not has_permission(request, request.project, ["curator", "admin", "publisher"]):
         unauthorized_access(request)
 
+    items = None
+    if "type" in request.GET:
+        items = LibraryItem.objects.filter(type_id=request.GET["type"])
+
     context = {
         "load_select2": True,
+        "types": LibraryItemType.objects.annotate(total=Count("items")),
+        "items": items,
+        "load_datatables": True,
     }
     return render(request, "controlpanel/library.html", context)
 
