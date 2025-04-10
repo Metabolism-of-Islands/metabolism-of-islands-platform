@@ -39,5 +39,3 @@ odfpy
 plotly==5.3.1
 openpyxl
 django-cleanup
-django-recaptcha
-django_ratelimit

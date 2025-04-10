@@ -2192,7 +2192,7 @@ def newsletter(request):
         is_subscribed = RecordRelationship.objects.filter(relationship_id=28, record_parent=request.user.people, record_child_id=request.project)
 
     if request.method == "POST":
-
+        project = get_project(request)
         if "unsubscribe" in request.POST and is_subscribed:
             is_subscribed.delete()
             record_instance = Record.objects.create(
@@ -2206,6 +2206,16 @@ def newsletter(request):
                     record=record_instance,  # The Record instance
                     people=admin,
                 )
+
+            # Send the email to the admin user
+            send_mail(
+                subject="Newsletter Unsubscription",
+                message=f"User {request.user.username} has unsubscribed from the newsletter.",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[settings.DEFAULT_FROM_EMAIL],
+                fail_silently=False,
+            )
+
             messages.success(request, "You have successfully unsubscribed.")
         elif not is_subscribed:
             if request.user.is_authenticated:
@@ -2240,6 +2250,17 @@ def newsletter(request):
                     record=record_instance,  # The Record instance
                     people=admin,
                 )
+
+            # Send the email to the admin user
+            sent = send_mail(
+                subject="Newsletter Subscription",
+                message=f"User with an email {email} from institution {institution} has subscribed to a newsletter.",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[settings.DEFAULT_FROM_EMAIL],
+                fail_silently=False,
+            )
+
+            print("Number of emails sent:", sent)
 
             messages.success(request, "You have successfully subscribed to our newsletter")
 
