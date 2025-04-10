@@ -611,6 +611,12 @@ class News(Record):
     projects = models.ManyToManyField(Project)
     include_in_timeline = models.BooleanField(default=False)
 
+    TYPE_CHOICES = (
+        ('news', 'News'),
+        ('blog', 'Blog'),
+    )
+    type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='news')
+
     def get_absolute_url(self):
         if self.projects.count() > 0:
             p = self.projects.all()[0]
@@ -623,6 +629,11 @@ class News(Record):
 
     def authors(self):
         return People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=4)
+
+    def get_type_display(self):
+        choices_dict = dict(self._meta.get_field('type').choices)
+        display = choices_dict.get(self.type, '')
+        return display.upper()
 
     def save(self, *args, **kwargs):
         self.slug = slugify(unidecode(self.name))

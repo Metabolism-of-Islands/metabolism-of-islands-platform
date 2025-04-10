@@ -456,15 +456,39 @@ def news_list(request, header_subtitle=None):
         list = News.objects.filter(projects=project).distinct()
     else:
         list = News.objects.filter(projects__in=MOC_PROJECTS).distinct()
+
+    years = list.dates('date', 'year', order='DESC')
+
     context = {
-        "list": list[3:],
-        "shortlist": list[:3],
+        "list": list[3:],  # Skipping the first 3 items for pagination
+        "shortlist": list[:3],  # The first 3 items to show in a separate section
         "add_link": "/admin/core/news/add/",
         "header_title": "News",
         "header_subtitle": header_subtitle,
         "menu": "news",
+        "years": years, 
     }
     return render(request, "news.list.html", context)
+
+def events_list(request, header_subtitle=None):
+    if request.project != 1:
+        project = get_object_or_404(Project, pk=request.project)
+        list = Event.objects.filter(projects=project).distinct()
+    else:
+        list = Event.objects.filter(projects__in=MOC_PROJECTS).distinct()
+
+    upcoming_events = list.filter(start_date__gt=timezone.now())    
+    print(upcoming_events)
+
+    context = {
+        "list": list[3:],  # Skipping the first 3 items for pagination
+        "shortlist": upcoming_events,  # The first 3 items to show in a separate section
+        "add_link": "/admin/core/news/add/",
+        "header_title": "Events",
+        "header_subtitle": header_subtitle,
+        "menu": "events",
+    }
+    return render(request, "events.list.html", context)
 
 def news(request, slug):
     if request.project != 1:
@@ -1376,7 +1400,7 @@ def controlpanel_news_form(request, id=None):
         unauthorized_access(request)
 
     info = None
-    ModelForm = modelform_factory(News, fields=("name", "date", "image", "projects", "include_in_timeline", "is_deleted"))
+    ModelForm = modelform_factory(News, fields=("type", "name", "date", "image", "projects", "include_in_timeline", "is_deleted"))
     if id:
         info = get_object_or_404(News, pk=id)
         form = ModelForm(request.POST or None, request.FILES or None, instance=info)
@@ -1392,7 +1416,7 @@ def controlpanel_news_form(request, id=None):
             meta_data = info.meta_data if info.meta_data else {}
             meta_data["format"] = request.POST.get("format")
             # saving category for ndee / peeide news articles and resources
-            if project == PROJECT_ID["peeide"]:
+            if "peeide" in PROJECT_ID and project == PROJECT_ID["peeide"]:
                 meta_data["category"] = request.POST.get("category")
             info.meta_data = meta_data
             info.save()
@@ -1438,7 +1462,7 @@ def controlpanel_news_form(request, id=None):
         "load_select2": True,
         "form": form,
         "info": info,
-        "title": info.name if info else "Create news article",
+        "title": info.name if info else "Create news/blogs article",
         "load_markdown": True,
     }
     return render(request, "controlpanel/news.form.html", context)
