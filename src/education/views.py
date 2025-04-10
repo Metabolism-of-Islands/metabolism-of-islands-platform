@@ -35,8 +35,6 @@ def courses(request):
     # on a per-site basis, so we have to query the right webpage:
     webpages = {
         "islands": 583724,
-        "education": 583723,
-        "cityloops": 49333,
     }
     try:
         webpage = Webpage.objects.get(pk=webpages[project.slug])
@@ -44,7 +42,7 @@ def courses(request):
         webpage = None
     context = {
         "list": Course.objects.filter(projects=project),
-        "title": "Online urban metabolism courses",
+        "title": "Online island metabolism courses",
         "webpage": webpage,
     }
     return render(request, "education/courses/index.html", context)

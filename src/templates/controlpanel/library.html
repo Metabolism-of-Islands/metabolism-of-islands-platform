@@ -8,16 +8,64 @@
     Back to control panel
   </a>
 
-  <div class="alert alert-warning">
-    <p>
-      <i class="fa fa-search"></i>
-      Use the insta-search below to search through the library by title.
-    </p>
-    <p>
-      <select id="existing" class="select2 custom-select">
-      </select>
-    </p>
-  </div>
+  {% if items %}
+
+    <table class="table table-striped datatable">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Author</th>
+          <th>Reference Space</th>
+          <th>Project</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for each in items %}
+        <tr>
+          <td><a href="/library/{{ each.id }}/">{{ each.name }}</a></td>
+          <td>{{ each.author }}</td>
+          <td>
+            {% for space in each.spaces.all %}
+              <li>{{ space }}</li>
+            {% endfor %}
+          </td>
+          <td>{{ each.part_of_project }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+  {% else %}
+    <div class="alert alert-warning">
+      <p>
+        <i class="fa fa-search"></i>
+        Use the insta-search below to search through the library by title.
+      </p>
+      <p>
+        <select id="existing" class="select2 custom-select">
+        </select>
+      </p>
+    </div>
+
+    <h3 class="mt-4">Types</h3>
+
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Items</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for each in types %}
+        <tr>
+          <td><a href="?type={{ each.id }}">{{ each.name }}</a></td>
+          <td>{{ each.total }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
 
   <a class="btn btn-default-outline" href="/upload/"><i class="fal fa-plus"></i> Add new library item</a>
 

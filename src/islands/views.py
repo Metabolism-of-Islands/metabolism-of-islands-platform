@@ -18,23 +18,6 @@ from core.mocfunctions import *
 
 def index(request):
 
-    # Temp cleanup
-    if "delete" in request.GET:
-        # Retrieve the first 1000 ForumTopic objects that do not belong to part_of_project 17
-        ft = ForumTopic.objects.exclude(part_of_project=17)[:1000]
-        for each in ft:
-            print(each.name, each.id)
-            each.delete()
-            
-        publications = LibraryItem.objects_include_private.filter(tags__id=219).order_by("name")
-        print(publications.count())
-        print(LibraryItem.objects_include_private.all().count())
-        for each in publications:
-            pass
-            #print(each.name)
-
-    # end temp cleanup
-    
     spaces = ReferenceSpace.objects.filter(activated__part_of_project_id=request.project)[:3]
     project = get_object_or_404(Project, pk=request.project)
     blurb = """

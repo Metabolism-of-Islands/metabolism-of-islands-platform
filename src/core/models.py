@@ -1138,7 +1138,7 @@ class LibraryItem(Record):
     author_list = models.TextField(null=True, blank=True)
     author_citation = models.TextField(null=True, blank=True)
     bibtex_citation = models.TextField(null=True, blank=True)
-    type = models.ForeignKey(LibraryItemType, on_delete=models.CASCADE)
+    type = models.ForeignKey(LibraryItemType, on_delete=models.CASCADE, related_name="items")
     is_part_of = models.ForeignKey("self", on_delete=models.SET_NULL, null=True, blank=True, related_name="children")
     year = models.PositiveSmallIntegerField(null=True, blank=True)
     abstract_original_language = models.TextField(null=True, blank=True)
@@ -2506,6 +2506,8 @@ class ReferenceSpace(Record):
     @cached_property
     def is_island(self):
         #check = self.geocodes.filter(id=123)
+        if ActivatedSpace.objects.filter(space=self).exists():
+            return True
         check = self.geocodes.filter(name="Island").exists()
         return True if check else False
 
@@ -2545,7 +2547,7 @@ class ReferenceSpace(Record):
         try:
             return Photo.objects.filter(spaces=self).order_by("position")[0]
         except:
-            return Photo.objects.get(pk=33476)
+            return None #Photo.objects.get(pk=33476)
 
     @property
     def get_thumbnail(self):
@@ -2579,29 +2581,6 @@ class ReferenceSpace(Record):
     def get_document_counter(self):
         try:
             return self.meta_data["progress"]["document_counter"]
-        except:
-            None
-
-    # These 3 _cityloops properties are not elegant and I like to remove
-    # them when CL comes to an end. For now, it's a means to an end.
-    @property
-    def get_completion_cityloops(self):
-        try:
-            return self.meta_data["progress_cityloops"]["completion"]
-        except:
-            None
-
-    @property
-    def get_counter_cityloops(self):
-        try:
-            return self.meta_data["progress_cityloops"]["counter"]
-        except:
-            None
-
-    @property
-    def get_document_counter_cityloops(self):
-        try:
-            return self.meta_data["progress_cityloops"]["document_counter"]
         except:
             None
 
@@ -3092,17 +3071,6 @@ class DataViz(Record):
             del self.source.__dict__["get_dataviz_properties"]
         except KeyError:
             pass
-
-class Milestone(Record):
-    position = models.PositiveSmallIntegerField(db_index=True, help_text="Enter 0 to make this the annual summary")
-    year = models.PositiveSmallIntegerField()
-    projects = models.ManyToManyField(Project)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        ordering = ["year", "position"]
 
 ###
 ### DUMMY FORMAT
