@@ -963,9 +963,36 @@ def controlpanel(request, space=None):
     return render(request, "controlpanel/index.html", context)
 
 @login_required
-def controlpanel_users(request):
+def controlpanel_users(request, id=None):
     if not has_permission(request, request.project, ["curator", "admin", "publisher"]):
         unauthorized_access(request)
+
+    if request.method == "POST":
+        # delete this user from the platform
+        try:
+            user = RecordRelationship.objects.filter(
+                record_child_id=request.project
+            ).exclude(relationship_id=13).get(id=id)
+            
+            # Perform the deletion
+            user.delete()
+
+            # Inject JavaScript to reload the page
+            return render(request, "controlpanel/users.html", {
+                'users': RecordRelationship.objects.filter(record_child_id=request.project).exclude(relationship_id=13),
+                'load_datatables': True,
+                'reload': True  # Pass a flag to trigger the page reload in the template
+            })
+
+        except RecordRelationship.DoesNotExist:
+            # Handle the case where the user is not found
+            print("User not found")
+            return render(request, "controlpanel/users.html", {
+                'users': RecordRelationship.objects.filter(record_child_id=request.project).exclude(relationship_id=13),
+                'load_datatables': True
+            })
+
+
     context = {
         # Filter our "presentation" as most of AScUS records are in that form and should be relabeled to Presenters
         "users": RecordRelationship.objects.filter(record_child_id=request.project).exclude(relationship_id=13),
@@ -2168,6 +2195,17 @@ def newsletter(request):
 
         if "unsubscribe" in request.POST and is_subscribed:
             is_subscribed.delete()
+            record_instance = Record.objects.create(
+                description=f"User {request.user.username} has unsubscribed to a newsletter."
+            )
+
+            # Send a notification to any People with the name "TestAdmin"
+            test_admins = People.objects.filter(name="TestAdmin")
+            for admin in test_admins:
+                Notification.objects.create(
+                    record=record_instance,  # The Record instance
+                    people=admin,
+                )
             messages.success(request, "You have successfully unsubscribed.")
         elif not is_subscribed:
             if request.user.is_authenticated:
@@ -2183,6 +2221,26 @@ def newsletter(request):
                 record_child_id = request.project,
             )
             is_subscribed = True
+
+            # Send a notification to any People with the name "TestAdmin"
+            # Fetch the Record instance using the project ID
+            record_instance = Record.objects.get(id=request.project)
+
+            # Send a notification to any People with the name "TestAdmin"
+            email = request.user.username if request.user.is_authenticated else request.POST.get("email")
+            institution = request.POST.get("institution") if request.POST.get("institution") else "None"
+            record_instance = Record.objects.create(
+                description=f"User with an email {email} from institution {institution} has subscribed to a newsletter."
+            )
+
+            # Send a notification to any People with the name "TestAdmin"
+            test_admins = People.objects.filter(name="TestAdmin")
+            for admin in test_admins:
+                Notification.objects.create(
+                    record=record_instance,  # The Record instance
+                    people=admin,
+                )
+
             messages.success(request, "You have successfully subscribed to our newsletter")
 
     context = {
