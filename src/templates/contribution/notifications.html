@@ -30,7 +30,12 @@
           {{ each.record.message.posted_by }}
         </td>
         <td>
-          {{ each.record.message.date_created|naturaltime }}<br>
+          {% if each.record.message.date_created|naturaltime %}
+            {{ each.record.message.date_created|naturaltime }}
+          {% else %}
+            {{ each.record.date_created|naturaltime }}
+          {% endif %}
+          <br>
           <a href="../{% if PROJECT.id != 18 %}hub/{% endif %}{% if each.record.message.parent.work %}work{% else %}forum{% endif %}/{{ each.record.message.parent.id }}/">{{ each.record.message.parent }}</a>
         </td>
         <td>
