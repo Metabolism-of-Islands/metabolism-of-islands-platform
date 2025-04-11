@@ -165,19 +165,15 @@ def user_register(request, project="core", section=None):
                     relationship_id = 12,
                 )
 
-            if request.project == PROJECT_ID["platformu"]:
-                subject = "Welcome to PlatformU"
-                msg_html = render_to_string("mailbody/welcome.platformu.html", mailcontext)
-                msg_plain = render_to_string("mailbody/welcome.platformu.txt", mailcontext)
-            else:
-                subject = "Welcome to Metabolism of Cities"
-                msg_html = render_to_string("mailbody/welcome.html", mailcontext)
-                msg_plain = render_to_string("mailbody/welcome.txt", mailcontext)
+            subject = "Welcome to Metabolism of Islands"
+            msg_html = render_to_string("mailbody/welcome.html", mailcontext)
+            msg_plain = render_to_string("mailbody/welcome.txt", mailcontext)
 
             sender = '"' + project.name + '" <' + settings.DEFAULT_FROM_EMAIL + '>'
             recipient = '"' + name + '" <' + email + '>'
 
-            if request.project == PROJECT_ID["platformu"]:
+            if False:
+            # Currently not being sent; can be activated in the future, welcome mails must be reviewed.
                 send_mail(
                     subject,
                     msg_plain,
