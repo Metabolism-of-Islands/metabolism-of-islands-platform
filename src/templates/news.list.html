@@ -80,7 +80,7 @@
   <h3 id="heading">Past News/Blogs</h3>
   <div class="row">
     {% for each in list %}
-      <div class="col-lg-6 mb-3 news-card" data-year="{{ each.date|date:"Y" }}" data-type="{{ each.type }}">
+      <div class="col-lg-6 mb-3 news-card" data-year="{{ each.date|date:"Y" }}" data-type="{{ each.article_type }}">
         <a href="{{ each.slug }}/" class="card btn-card">
           <div class="card-body media">
             {% if each.image %}
