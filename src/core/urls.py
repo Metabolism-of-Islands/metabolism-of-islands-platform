@@ -60,5 +60,4 @@ urlpatterns = baseline_urlpatterns + [
     # Local only
     path("trim_database/", views.trim_database),
     path("search/ajax/<slug:type>/", views.search_ajax, name="search_ajax"),
-    path("forum/", community.forum_list, name="forum_list"),
 ]

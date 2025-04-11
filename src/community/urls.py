@@ -11,10 +11,6 @@ urlpatterns = baseline_urlpatterns + [
     path("people/", community.people_list, name="people_list"),
     path("people/<int:id>/", community.person, name="person"),
 
-    path("forum/", community.forum_list, name="forum_list"),
-    path("forum/<int:id>/", community.forum, name="forum"),
-    path("forum/create/", community.forum_form, name="forum_form"),
-
     # Projects
     path("projects/", community.projects, name="projects"),
     path("projects/<int:id>/", community.project, name="project"),

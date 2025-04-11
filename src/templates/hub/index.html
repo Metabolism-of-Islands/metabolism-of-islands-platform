@@ -12,21 +12,6 @@
       <div class="card-body text-center">
         <h2>{{ PROJECT }} is made possible by volunteers</h2>
 
-        {% if False %}
-          <div class="my-4">
-            <img class="avatar" src="https://backoffice.metabolismofcities.org/media/contacts/paul.thumbnail.jpg">
-            <img class="avatar" src="https://backoffice.metabolismofcities.org/media/contacts/paul.thumbnail.jpg">
-            <img class="avatar" src="https://backoffice.metabolismofcities.org/media/contacts/paul.thumbnail.jpg">
-            <img class="avatar" src="https://backoffice.metabolismofcities.org/media/contacts/paul.thumbnail.jpg">
-            <img class="avatar" src="https://backoffice.metabolismofcities.org/media/contacts/paul.thumbnail.jpg">
-            <img class="avatar" src="https://backoffice.metabolismofcities.org/media/contacts/paul.thumbnail.jpg">
-            <img class="avatar" src="https://backoffice.metabolismofcities.org/media/contacts/paul.thumbnail.jpg">
-            <img class="avatar" src="https://backoffice.metabolismofcities.org/media/contacts/paul.thumbnail.jpg">
-            <img class="avatar" src="https://backoffice.metabolismofcities.org/media/contacts/paul.thumbnail.jpg">
-            <img class="avatar" src="https://backoffice.metabolismofcities.org/media/contacts/paul.thumbnail.jpg">
-          </div>
-        {% endif %}
-
         {% if not request.user.is_authenticated %}
           <div>
             <a class="btn btn-lg btn-primary my-4" href="/hub/join/?next={{ request.get_full_path }}">
@@ -55,27 +40,6 @@
     </div>
 
   <div class="row">
-    <div class="col-lg-6">
-      <h3>Latest forum posts</h3>
-      <div class="forum-posts">
-
-        {% for each in forum %}
-        <a class="card btn-card mb-3" href="forum/{{ each.parent.id }}/">
-          <div class="card-body">
-            <h5 class="card-title">{{ each }}</h5>
-            {{ each.get_markdown_description|safe|truncatewords_html:30 }}
-            <h6 class="card-subtitle mb-2 text-muted">Posted by {{ each.posted_by }} {{ each.date_created|naturaltime }}</h6>
-          </div>
-        </a>
-        {% endfor %}
-
-      </div>
-
-      <a class="btn btn-lg btn-primary" href="forum/">
-        <i class="fas fa-comments-alt"></i>
-        Forum
-      </a>
-    </div>
     <div class="col-lg-6">
       <h3>Latest activity</h3>
       {% include "_work-updates.html" %}

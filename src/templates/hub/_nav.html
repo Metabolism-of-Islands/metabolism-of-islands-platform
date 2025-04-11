@@ -40,9 +40,6 @@
         <a class="nav-link {% if menu == 'work' %}active{% endif %}" href="/hub/work/">Tasks</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link {% if menu == 'forum' %}active{% endif %}" href="/hub/forum/">Forum</a>
-      </li>
-      <li class="nav-item">
         <a class="nav-link {% if menu == 'log' or menu == 'latest' %}active{% endif %}" href="/hub/latest/">Activity log</a>
       </li>
       {% if request.user.is_staff and PROJECT.id == 1 %}
