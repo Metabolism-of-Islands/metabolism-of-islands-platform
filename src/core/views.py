@@ -922,6 +922,20 @@ def hub_bookmark_items(request):
 @login_required
 def controlpanel(request, space=None):
 
+    # TEMP CODE
+    photo = Photo.objects.filter(pk=33476)
+    if not photo:
+        info = Photo.objects.create(
+            image = settings.MEDIA_ROOT + "/records/placeholder.png",
+            type_id = 38,
+        )
+        p(info.id)
+        info.id = 33476
+        info.save()
+        p(info.id)
+
+    # END TEMP CODE
+
     if not has_permission(request, request.project, ["curator", "admin", "publisher"]):
         unauthorized_access(request)
 
