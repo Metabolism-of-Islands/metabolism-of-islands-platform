@@ -930,9 +930,6 @@ def controlpanel(request, space=None):
             type_id = 38,
         )
         p(info.id)
-        info.id = 33476
-        info.save()
-        p(info.id)
 
     # END TEMP CODE
 
