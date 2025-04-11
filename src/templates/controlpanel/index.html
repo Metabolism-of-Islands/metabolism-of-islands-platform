@@ -43,17 +43,6 @@
       </a>
     </div>
 
-    {% if request.user.is_superuser %}
-      <div class="col-md-3 mb-3">
-        <a class="card icon-card btn-card" href="cache/">
-          <div class="icon">
-            <i class="far fa-fw fa-hdd"></i>
-          </div>
-          <div class="card-header">Manage cache</div>
-        </a>
-      </div>
-    {% endif %}
-
   </section>
 
   <section>
@@ -110,16 +99,15 @@
         </div>
       {% endif %}
 
-      {% if PROJECT.slug == "islands" %}
         <div class="col-md-3 mb-3">
-          <a class="card icon-card btn-card" href="spaces/?geocode=8355">
+          <a class="card icon-card btn-card" href="spaces/">
             <div class="icon">
               <i class="fal fa-fw fa-island-tropical"></i>
             </div>
             <div class="card-header">Islands</div>
           </a>
         </div>
-        <div class="col-md-3 mb-3">
+        <div class="col-md-3 mb-3" hidden>
           <a class="card icon-card btn-card" href="stats/">
             <div class="icon">
               <i class="fal fa-fw fa-chart-line"></i>
@@ -127,7 +115,6 @@
             <div class="card-header">Website Statistics</div>
           </a>
         </div>
-      {% endif %}
 
       {% if PROJECT.slug == "education" %}
         <div class="col-md-3 mb-3">
@@ -147,48 +134,6 @@
           </a>
         </div>
       {% endif %}
-
-      {% if PROJECT.id == 16 %}
-        <div class="col-md-3 mb-3">
-          <a class="card icon-card btn-card" href="materials/">
-            <div class="icon">
-              <i class="fal fa-fw fa-apple-crate"></i>
-            </div>
-            <div class="card-header">Materials</div>
-          </a>
-        </div>
-      {% endif %}
-
-      {% if PROJECT.slug == "multimedia" %}
-        <div class="col-md-3 mb-3">
-          <a class="card icon-card btn-card" href="video-uploader/">
-            <div class="icon">
-              <i class="fab fa-fw fa-youtube"></i>
-            </div>
-            <div class="card-header">Video uploader</div>
-          </a>
-        </div>
-        <div class="col-md-3 mb-3">
-          <a class="card icon-card btn-card" href="video-editor/">
-            <div class="icon">
-              <i class="fab fa-fw fa-youtube"></i>
-            </div>
-            <div class="card-header">Video editor</div>
-          </a>
-        </div>
-      {% endif %}
-
-      {% if PROJECT.slug == "peeide" %}
-        <div class="col-md-3 mb-3">
-          <a class="card icon-card btn-card" href="{% url 'peeide:upload' %}">
-            <div class="icon">
-              <i class="fal fa-fw fa-upload"></i>
-            </div>
-            <div class="card-header">Upload file</div>
-          </a>
-        </div>
-      {% endif %}
-
     </div>
   </section>
 
@@ -250,54 +195,6 @@
               <i class="fal fa-fw fa-file-import"></i>
             </div>
             <div class="card-header">Zotero</div>
-          </a>
-        </div>
-      </div>
-    </section>
-  {% endif %}
-
-  {% if PROJECT.slug == "ascus2021" or PROJECT.slug == "ascus2024" %}
-    <section>
-      <h2>(Un)conference management</h2>
-      <div class="row">
-        <div class="col-md-3 mb-3">
-          <a class="card icon-card btn-card" href="../account/admin/participant/">
-            <div class="icon">
-              <i class="fal fa-fw fa-users"></i>
-            </div>
-            <div class="card-header">People</div>
-          </a>
-        </div>
-        <div class="col-md-3 mb-3">
-          <a class="card icon-card btn-card" href="../account/admin/documents/abstracts/">
-            <div class="icon">
-              <i class="fal fa-fw fa-presentation"></i>
-            </div>
-            <div class="card-header">Abstracts</div>
-          </a>
-        </div>
-        <div class="col-md-3 mb-3">
-          <a class="card icon-card btn-card" href="../account/admin/documents/topics/">
-            <div class="icon">
-              <i class="fal fa-fw fa-comments-alt"></i>
-            </div>
-            <div class="card-header">Discussion topics</div>
-          </a>
-        </div>
-        <div class="col-md-3 mb-3">
-          <a class="card icon-card btn-card" href="../account/admin/introvideos/">
-            <div class="icon">
-              <i class="fal fa-fw fa-video"></i>
-            </div>
-            <div class="card-header">Intro videos</div>
-          </a>
-        </div>
-        <div class="col-md-3 mb-3">
-          <a class="card icon-card btn-card" href="votes/">
-            <div class="icon">
-              <i class="fal fa-fw fa-vote-yea"></i>
-            </div>
-            <div class="card-header">Votes</div>
           </a>
         </div>
       </div>

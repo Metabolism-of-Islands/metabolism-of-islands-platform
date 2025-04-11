@@ -1,5 +1,11 @@
 {% extends "_base.html" %}
 
+{% block head %}
+  <style type="text/css">
+  #addform{display:none}
+  </style>
+{% endblock %}
+
 {% block content %}
 
   <h1 class="mb-0">{% block title %}Spaces{% endblock %}</h1>
@@ -8,24 +14,65 @@
     Back to control panel
   </a>
 
-  <table class="table table-striped datatable">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Options</th>
-      </tr>
-    </thead>
-    <tbody>
-    {% for each in list %}
-      <tr>
-        <td><a href="{% url URLS.SPACE each.id %}">{{ each }}</a></td>
-        <td>Edit</td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
+  {% if request.method == "POST" %}
+    
+    <p class="alert alert-info">
+    We found multiple spaces in our database that have the name you typed. 
+    Activate the right one using the table below.
+    </p>
 
-  <a class="mt-4 btn btn-default-outline" href="create/?next={{ request.get_full_path }}"><i class="fal fa-plus"></i> Add</a>
+    <table class="table table-striped datatable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Options</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for each in spaces %}
+        <tr>
+          <td><a href="{% url URLS.SPACE each.id %}">{{ each }}</a></td>
+          <td>
+            <a href="?activate={{ each.id }}">Activate this space</a>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+  {% else %}
+    <table class="table table-striped datatable">
+      <thead>
+        <tr>
+          <th>Name</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for each in spaces %}
+        <tr>
+          <td><a href="{% url URLS.SPACE each.space.id %}">{{ each }}</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+    <a class="mt-4 btn btn-default-outline" id="add"><i class="fal fa-plus"></i> Add</a>
+
+    <form method="post" id="addform">
+
+      <div class="mb-3 mt-5">
+        <label class="form-label">Name</label>
+        <input type="text" class="form-control" name="name">
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Add island to the website</button>
+      </div>
+      
+      {% csrf_token %}
+    </form>
+
+  {% endif %}
 
   <div>
     <a href="../" class="btn btn-primary-basic mt-4">
@@ -34,4 +81,14 @@
     </a>
   </div>
 
+{% endblock %}
+
+{% block footer %}
+  <script type="text/javascript">
+  $(function(){
+    $("#add").click(function(){
+      $("#addform").toggle();
+    });
+  });
+  </script>
 {% endblock %}

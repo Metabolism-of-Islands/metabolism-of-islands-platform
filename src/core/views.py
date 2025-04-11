@@ -1050,9 +1050,27 @@ def controlpanel_spaces(request):
     if not has_permission(request, request.project, ["curator", "admin", "publisher"]):
         unauthorized_access(request)
 
-    list = ReferenceSpace.objects.filter(geocodes=request.GET["geocode"])
+    spaces = ActivatedSpace.objects.all()
+    space = None
+
+    if request.method == "POST":
+        spaces = ReferenceSpace.objects.filter(name=request.POST["name"])
+        if spaces.count() == 1:
+            space = spaces[0]
+        elif not spaces:
+            space = ReferenceSpace.objects.create(name=request.POST["name"])
+    elif "activate" in request.GET:
+        space = ReferenceSpace.objects.get(pk=request.GET["activate"])
+
+    if space:
+        try:
+            info = ActivatedSpace.objects.create(space=space, part_of_project_id=17)
+            return redirect(info.get_absolute_url())
+        except Exception as e:
+            messages.error(request, "We could not activate this space. Does it already exist on the site perhaps? Error: "+str(e))
+
     context = {
-        "list": list,
+        "spaces": spaces,
         "load_datatables": True,
     }
     return render(request, "controlpanel/spaces.html", context)

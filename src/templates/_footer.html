@@ -9,28 +9,6 @@
           <h2>This is an open source, community effort</h2>
           <h3>Join us now!</h3>
 
-          {% if PROJECT.slug == "untraceable" %}
-            {% if request.user.is_authenticated %}
-            <a class="btn btn-inverse mt-2 mr-3" href="/hub/profile/">
-              <i class="fas fa-fw fa-user"></i>
-              My profile
-            </a>
-            <a class="btn btn-inverse mt-2 mr-3" href="/accounts/logout/?next={{ request.get_full_path }}">
-              <i class="fas fa-fw fa-sign-out"></i>
-              Log out
-            </a>
-            {% else %}
-              <a class="btn btn-inverse mt-2 mr-3" href="/accounts/register/?next={{ request.get_full_path }}">
-              <i class="fas fa-fw fa-user"></i>
-                Register
-              </a>
-              <a class="btn btn-inverse mt-2 mr-3" href="/accounts/login/?next={{ request.get_full_path }}">
-              <i class="fas fa-fw fa-sign-in"></i>
-                Sign in
-              </a>
-            {% endif %}
-
-          {% else %}
           <a style='display:none' class="btn btn-inverse mt-2 mr-3" href="/contributor/">
             <i class="fas fa-fw fa-user-plus"></i>
             Become a contributor
@@ -44,7 +22,7 @@
             <i class="fas fa-fw fa-envelope"></i>
             Subscribe
           </a>
-          {% endif %}
+
           <a class="btn btn-inverse-basic mt-2 mr-3" href="/hub/work/?status=1">
             <i class="fal fa-fw fa-tasks"></i>
             View open tasks
@@ -71,20 +49,6 @@
           {% endif %}
 
         </div>
-        {% if PROJECT.id == 16 %}
-        <div class="col-lg-4 col-xl-3 mt-4 mt-lg-0 text-lg-right">
-          <p>Made possible with funding from:</p>
-          <div class="logos">
-            <a href="https://vlaanderen-circulair.be/" class="text-lg-right d-block mb-2">
-              <img src="https://community.metabolismofcities.org/media/records/VC_logo_liggend_NL.thumbnail.png" alt="Vlaanderen Circulair" />
-            </a>
-
-            <a href="https://www.kbs-frb.be/start.aspx" class="textlg--right d-block">
-              <img src="https://community.metabolismofcities.org/media/records/kbs_36NRKrD.png" alt="King Baudouin Foundation" />
-            </a>
-          </div>
-        </div>
-        {% endif %}
       </div>
     </div>
   </footer>
@@ -102,104 +66,5 @@
   </footer>
 {% endif %}
 
-{% if DESIGN.show_footer_3 %}
-<footer id="info">
-  <div class="container">
-    <div class="row">
-      <div class="col-md-6 mb-4">
-        <div class="links">
-          <a href="https://creativecommons.org/licenses/by/4.0/" class="mb-2">
-            <i class="fab fa-fw fa-creative-commons"></i> Creative Commons Attribution 4.0 International license
-          </a>
-          <a href="https://github.com/metabolism-of-cities/metabolism-of-cities-platform" class="mb-2">
-            <i class="fab fa-fw fa-github"></i> Our source code is available on Github
-          </a>
-          <a href="https://metabolismofcities.org/about/privacy/" class="mb-2">
-            <i class="fas fa-fw fa-user-secret"></i> Privacy policy
-          </a>
-          <a href="https://metabolismofcities.org/about/data-protection/" class="mb-2">
-            <i class="fas fa-fw fa-user-shield"></i> Data protection
-          </a>
-          <a href="https://metabolismofcities.org/about/contact/" class="mb-2">
-            <i class="fas fa-fw fa-comments"></i> Contact us
-          </a>
-        </div>
-        <div class="social mt-4 mb-2">
-          <a href="https://twitter.com/CityMetabolism"><i class="fab fa-twitter"></i></a>
-          <a href="https://www.youtube.com/metabolismofcities"><i class="fab fa-youtube"></i></a>
-          <a href="https://www.instagram.com/MetabolismOfCities/"><i class="fab fa-instagram"></i></a>
-          <a href="https://linkedin.com/company/metabolism-of-cities"><i class="fab fa-linkedin"></i></a>
-        </div>
-      </div>
-      <div class="col-md-6 logos text-md-right">
-        <a href="https://metabolismofcities.org"><img class="main-logo mb-1" alt="Metabolism of Cities" src="/media/logos/Metabolism_of_Cities_full_logo_white.png"></a>
-        <br>
-        <strong>Visit our twin site</strong>
-        <br>
-        <a href="https://metabolismofislands.org"><img class="second-logo" alt="Metabolism of Islands" src="{% static 'img/islands-logo.svg' %}"></a>
-      </div>
-   </div>
-  </div>
-</footer>
-{% endif %}
-
 {{ DESIGN.get_footer_4 }}
 
-{% if PROJECT.slug == "peeide" %}
-  <footer id="footer-ndee" class="text-white">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-2 mr-lg-4">
-          <div class="text-uppercase font-weight-bold subheader">Powered by</div>
-          <div class="divider mb-4"></div>
-          <a href="https://metabolismofcities.org"><img class="img-fluid" src="{% static 'img/moc.png' %}"></a>
-        </div>
-        <div class="col-lg mr-lg-4">
-          <div class="text-uppercase font-weight-bold subheader">Supported by</div>
-          <div class="divider mb-4"></div>
-          <div class="row">
-            <div class="col-lg-6 mr-lg-4">
-              <a class="d-inline-block" target="_blank" href="https://www.law.berkeley.edu/research/clee/"><img class="img-fluid" src="{% static 'img/berkeley.png' %}"></a>
-            </div>
-            <div class="col-lg-5">
-              <a class="d-inline-block" target="_blank" href="https://www.eli.org"><img class="img-fluid" src="{% static 'img/eli.png' %}"></a>
-            </div>
-            <div class="col-lg-9 mt-4">
-              <a class="d-inline-block" target="_blank" href="https://environment.yale.edu/"><img class="img-fluid pt-3" src="{% static 'img/yale.png' %}"></a>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-3 ml-lg-4">
-          <div class="text-uppercase font-weight-bold subheader">Sponsored by</div>
-          <div class="divider mb-4"></div>
-          <div class="row">
-            <div class="col-lg-4 mr-lg-3">
-              <a class="d-inline-block" target="_blank" href="https://www.mcgovern.org/"><img class="img-fluid" src="{% static 'img/pjmf.png' %}"></a>
-            </div>
-            <div class="col-lg-4">
-              <a class="d-inline-block" target="_blank" href="https://www.isocfoundation.org/"><img class="img-fluid pr-lg-1" src="{% static 'img/isf.png' %}"></a>
-            </div>
-            <div class="col-lg-5 mt-4">
-              <a class="d-inline-block" target="_blank" href="https://sloan.org/"><img class="img-fluid" src="{% static 'img/sloan.png' %}"></a>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-3 meta">
-          <div class="font-weight-bold mb-3">
-            Network for Digital Economy and Environment
-          </div>
-
-          <div class="mb-3">
-            Environmental Law Institute<br>
-            1730 M Street, NW<br>
-            Suite 700<br>
-            Washington, DC 20036
-          </div>
-
-          <a class="text-white" href="tel:2029393800">202-939-3800</a><br>
-          <a class="text-white" href="mailto:networkdee@berkeley.edu">networkDEE@berkeley.edu</a>
-        </div>
-      </div>
-    </div>
-  </footer>
-{% endif %}
