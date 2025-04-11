@@ -5,6 +5,12 @@ domain. This means that subdomains have their own routes.
 Loosely based on https://code.djangoproject.com/wiki/MultiHostMiddleware
 But that had to be rewritten because it was for a very old Django version
 
+This was used in Metabolism of Cities to select the project (site) that was
+being opened. No longer relevant so hard coded to project=17. In due course
+the whole project element could be removed, but not a priority now.
+If desired, multi-language can be configured - kept the code for that if 
+at some point a translated version of the site is of interest.
+
 """
 
 from django.conf import settings
@@ -16,46 +22,14 @@ class MultiHostMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        # If things fail, we have our fallback project = 1 (MoC main section)
         project = 17
         host = request.META.get("HTTP_HOST")
 
-        try:
-            if settings.DEBUG:
-                # In local mode we want to open /subsite so we need to load
-                # the project in a different way
-                # If we have a URL, say
-                # https://metabolismofcities.org/library/casestudies/
-                # Then we'll get path = /library/casestudies/
-                # So we split it by /, up to 2 items max (no need to go further), and 
-                # we get the second item, in this case it would be ["", "library"] -> getting library
-                url = request.path
-                folder = url.split("/", 2)[1]
-                projects = settings.PROJECT_ID_LIST
-                if folder in projects:
-                    project = projects[folder]
-            else:
-                # Online we use the full host to figure out which
-                # project we are navigating.
-                project = settings.HOST_URL_LIST[host]["id"]
-        except:
-            pass
-
-        try:
-            if host in settings.HOST_URL_LIST:
-                new_urls = settings.HOST_URL_LIST[host]["urls"]
-                request.urlconf = new_urls
-                set_urlconf(new_urls)
-        except:
-            pass 
-
-        # The "water" project defaults to French; other sites are in English
         if "django_language" in request.COOKIES:
             language_code = request.COOKIES.get("django_language")
-        elif project == 1011035:
-            language_code = "fr"
         else:
             language_code = "en"
+
         translation.activate(language_code)
         request.language = language_code
         request.project = project

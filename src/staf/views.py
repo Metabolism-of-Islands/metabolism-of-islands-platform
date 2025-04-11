@@ -496,6 +496,7 @@ def map_item(request, id, space=None):
         spaces = spaces.filter(meta_data__features__contains={properties["feature"]: properties["feature_value"]})
 
     # We don't show > 500 objects by default
+    spaces = spaces.filter(geometry__isnull=False)
     if spaces.count() > 500 and "show_all_spaces" not in request.GET:
         space_count = spaces.count()
         spaces_to_display = spaces[:500]
@@ -947,7 +948,9 @@ def referencespace(request, id=None, space=None, slug=None):
     except:
         siblings = None
 
-    photos = Photo.objects.filter(spaces=info).order_by("position").exclude(pk=info.photo.id)
+    photos = Photo.objects.filter(spaces=info).order_by("position")
+    if info.photo:
+        photos = photos.exclude(pk=info.photo.id)
 
     data = available_library_items(request).filter(Q(data__origin_space=info)|Q(data__destination_space=info)).distinct()
 

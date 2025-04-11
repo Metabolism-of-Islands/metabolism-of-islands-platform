@@ -2558,7 +2558,7 @@ class ReferenceSpace(Record):
         try:
             return Photo.objects.filter(spaces=self).order_by("position")[0]
         except:
-            return None #Photo.objects.get(pk=33476)
+            return Photo.objects.get(pk=33476)
 
     @property
     def get_thumbnail(self):
