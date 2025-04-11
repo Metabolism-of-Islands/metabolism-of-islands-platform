@@ -317,19 +317,14 @@ def forum_form(request, id=False, parent=None, section=None):
                 return redirect(p.slug + ":"+page, info.id)
         else:
             messages.error(request, "There was an error with the form, please try again.")
-            return render(request, "forum.form.html", {"form": form})
 
         return redirect(info.get_absolute_url())
-    
-    else:
-        form = ForumForm()
 
     context = {
         "load_messaging": True,
         "menu": "forum",
         "section": section,
         "projects": projects,
-        "form": form,
     }
     return render(request, "forum.form.html", context)
 
