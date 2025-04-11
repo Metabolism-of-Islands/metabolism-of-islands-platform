@@ -923,14 +923,9 @@ def hub_bookmark_items(request):
 def controlpanel(request, space=None):
 
     # TEMP CODE
-    photo = Photo.objects.filter(pk=33476)
-    if not photo:
-        info = Photo.objects.create(
-            image = settings.MEDIA_ROOT + "/records/placeholder.png",
-            type_id = 38,
-        )
-        p(info.id)
-
+    info = Photo.objects.get(pk=1278693)
+    info.id = 33476
+    info.save()
     # END TEMP CODE
 
     if not has_permission(request, request.project, ["curator", "admin", "publisher"]):
