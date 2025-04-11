@@ -2209,17 +2209,6 @@ def newsletter(request):
         project = get_project(request)
         if "unsubscribe" in request.POST and is_subscribed:
             is_subscribed.delete()
-            record_instance = Record.objects.create(
-                description=f"User {request.user.username} has unsubscribed to a newsletter."
-            )
-
-            # Send a notification to any People with the name "TestAdmin"
-            test_admins = People.objects.filter(name="TestAdmin")
-            for admin in test_admins:
-                Notification.objects.create(
-                    record=record_instance,  # The Record instance
-                    people=admin,
-                )
 
             # Send the email to the admin user
             send_mail(
@@ -2246,35 +2235,14 @@ def newsletter(request):
             )
             is_subscribed = True
 
-            # Send a notification to any People with the name "TestAdmin"
-            # Fetch the Record instance using the project ID
-            record_instance = Record.objects.get(id=request.project)
-
-            # Send a notification to any People with the name "TestAdmin"
-            email = request.user.username if request.user.is_authenticated else request.POST.get("email")
-            institution = request.POST.get("institution") if request.POST.get("institution") else "None"
-            record_instance = Record.objects.create(
-                description=f"User with an email {email} from institution {institution} has subscribed to a newsletter."
-            )
-
-            # Send a notification to any People with the name "TestAdmin"
-            test_admins = People.objects.filter(name="TestAdmin")
-            for admin in test_admins:
-                Notification.objects.create(
-                    record=record_instance,  # The Record instance
-                    people=admin,
-                )
-
             # Send the email to the admin user
-            sent = send_mail(
+            send_mail(
                 subject="Newsletter Subscription",
                 message=f"User with an email {email} from institution {institution} has subscribed to a newsletter.",
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[settings.DEFAULT_FROM_EMAIL],
                 fail_silently=False,
             )
-
-            print("Number of emails sent:", sent)
 
             messages.success(request, "You have successfully subscribed to our newsletter")
 

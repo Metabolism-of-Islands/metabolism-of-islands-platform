@@ -615,7 +615,7 @@ class News(Record):
         ('news', 'News'),
         ('blog', 'Blog'),
     )
-    type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='news')
+    article_type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='news')
 
     def get_absolute_url(self):
         if self.projects.count() > 0:
@@ -631,8 +631,8 @@ class News(Record):
         return People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=4)
 
     def get_type_display(self):
-        choices_dict = dict(self._meta.get_field('type').choices)
-        display = choices_dict.get(self.type, '')
+        choices_dict = dict(self._meta.get_field('article_type').choices)
+        display = choices_dict.get(self.article_type, '')
         return display.upper()
 
     def save(self, *args, **kwargs):

@@ -1336,12 +1336,8 @@ def search_spaces_ajax(request):
             r["results"].append({"id": each.id, "text": s})
     return JsonResponse(r, safe=False)
 
-from django_recaptcha.fields import ReCaptchaField
-from django_recaptcha.widgets import ReCaptchaV2Checkbox
-from django_ratelimit.decorators import ratelimit
 
 @login_required
-@ratelimit(key='ip', rate='3/m', method='POST')
 def form(request, id=None, project_name="library", type=None, slug=None, tag=None, space=None, referencespace_photo=None):
 
     # Slug is only there because one of the subsites has it in the URL; it does not do anything

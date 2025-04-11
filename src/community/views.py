@@ -17,13 +17,6 @@ from django.forms import modelform_factory
 
 # ReCaptcha to prevent spammers from the forum 
 from django import forms
-from django_recaptcha.fields import ReCaptchaField
-from django_recaptcha.widgets import ReCaptchaV2Checkbox
-from django_ratelimit.decorators import ratelimit
-
-class ForumForm(forms.Form):
-    captcha = ReCaptchaField(widget=ReCaptchaV2Checkbox())
-
 import logging
 logger = logging.getLogger(__name__)
 from core.mocfunctions import *
@@ -275,13 +268,7 @@ def forum_edit(request, id, edit, project_name=None, section=None):
     return render(request, "forum.topic.html", context)
 
 @login_required
-@ratelimit(key='ip', rate='1/m', method='POST')
 def forum_form(request, id=False, parent=None, section=None):
-
-    # Limit the request per minute to prevent the users from spamming
-    if request.limited:
-        return JsonResponse({'error': 'Too many requests. Please try again later.'}, status=429)
-
     project = None
     projects = Project.objects.filter(pk__in=OPEN_WORK_PROJECTS).exclude(pk=1)
     if request.project != 1:
@@ -289,7 +276,6 @@ def forum_form(request, id=False, parent=None, section=None):
         projects = [project]
 
     if request.method == "POST":
-        form = ForumForm(request.POST, request.FILES)
         if(form.is_valid()):
             info = ForumTopic.objects.create(
                 part_of_project_id = request.POST["project"] if "project" in request.POST else request.project,
