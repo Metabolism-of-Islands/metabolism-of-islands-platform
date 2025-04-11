@@ -17,8 +17,8 @@ FOOD_TAG = 1795
 
 # Also defined in context_processor for templates, but we need it sometimes in the Folium map configuration
 MAPBOX_API_KEY = "pk.eyJ1IjoibWV0YWJvbGlzbW9mY2l0aWVzIiwiYSI6ImNqcHA5YXh6aTAxcmY0Mm8yMGF3MGZjdGcifQ.lVZaiSy76Om31uXLP3hw-Q"
-SATELLITE_TILES = "https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}@2x.png?access_token=" + MAPBOX_API_KEY
-STREET_TILES = "https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=" + MAPBOX_API_KEY
+SATELLITE_TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+STREET_TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 
 PLACEHOLDER_PHOTO_THUMBNAIL = "/media/records/placeholder.thumbnail.png"
 PLACEHOLDER_PHOTO = "/media/records/placeholder.png"
@@ -211,38 +211,6 @@ def work_item_unvote(info, people):
     info.save()
 
     return True
-
-# Used for the water platform
-NICE_REGIONS = {
-    1: "Eau d'Azur",
-    2: "Nice",
-    3: "Rive Droite (RD)",
-    4: "Est-Littoral (EL)",
-    5: "Moyen Pays Rive Gauche (MPRG)",
-    6: "Tinée",
-    7: "Vésubie",
-
-    8: "Tinée + Vésubie",
-    9: "MPRG + Tinée + Vésubie",
-    10: "Nice + EL",
-    11: "Nice + EL + MPRG",
-    12: "Nice + EL + MPRG + RD",
-}
-
-NICE_REGIONS_FULLNAMES = {
-    9: "Moyen Pays Rive Gauche + Tinée + Vésubie",
-    10: "Nice + Est-Littoral",
-    11: "Nice + Est-Littoral + Moyen Pays Rive Gauche",
-    12: "Nice + Est-Littoral + Moyen Pays Rive Gauche + Rive Droite",
-}
-
-NICE_REGIONS_COMBINATIONS = {
-    8: [6, 7],
-    9: [5, 6, 7],
-    10: [2, 4],
-    11: [2, 4, 5],
-    12: [2, 4, 5, 3],
-}
 
 # For some of the websites users might have access to documents that are not 
 # public (public=False in the record). For some sites these private files
