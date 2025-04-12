@@ -116,7 +116,6 @@ PAGE_ID_LIST = {
 
 INSTALLED_APPS = [
     'core.apps.CoreConfig',
-    'stafdb.apps.StafdbConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
