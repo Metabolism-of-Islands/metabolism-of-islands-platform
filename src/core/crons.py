@@ -95,59 +95,6 @@ class CheckDataProgress(CronJobBase):
             each.meta_data["progress"] = progress
             each.save()
 
-class CheckDataProgressCityLoops(CronJobBase):
-    RUN_EVERY_MINS = 60*5
-    schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
-    code = "core.checkdataprogresscityloops" # Unique code for logging purposes
-
-    def do(self):
-        list = ReferenceSpace.objects.filter(activated__part_of_project_id=6)
-        layers = Tag.objects.filter(parent_tag_id=971)
-        items = LibraryItem.objects.filter(spaces__in=list, tags__parent_tag__in=layers).distinct()
-        counter = {}
-        check = {}
-        completion = {}
-        document_counter = {}
-
-        # TODO yeah one day we need to do a clever JOIN and COUNT and whatnot and sort this out through SQL
-        # until then, this hack will do
-        for each in items:
-            for tag in each.tags.all():
-                if tag.parent_tag in layers:
-                    for space in each.spaces.all():
-                        t = tag.parent_tag.id
-                        try:
-                            document_counter[space.id] += 1
-                        except:
-                            document_counter[space.id] = 1
-                        if space.id not in check:
-                            check[space.id] = {}
-                        if t not in check[space.id]:
-                            check[space.id][t] = {}
-                        if tag.id not in check[space.id][t]:
-                            if space.id not in completion:
-                                completion[space.id] = 0
-                            completion[space.id] += 1
-                            if space.id not in counter:
-                                counter[space.id] = {}
-                            if t not in counter[space.id]:
-                                counter[space.id][t] = 1
-                            else:
-                                counter[space.id][t] += 1
-                        check[space.id][t][tag.id] = True
-
-
-        for each in list:
-            progress = {
-                "completion": completion[each.id] if each.id in completion else 0,
-                "counter": counter[each.id] if each.id in counter else 0,
-                "document_counter": document_counter[each.id] if each.id in document_counter else 0,
-            }
-            if not each.meta_data:
-                each.meta_data = {}
-            each.meta_data["progress_cityloops"] = progress
-            each.save()
-
 # Normally we create the cache on-the-fly, the first time we generate a json object to represent
 # a specific data visualization. However, some datasets are too large for this to be done on-the-fly
 # so site curators can click a button to schedule the generation of the cache for this graph.
@@ -247,23 +194,22 @@ class EmailNotifications(CronJobBase):
 
         for people in people_with_notifications:
             messages = Notification.objects.filter(people=people, is_read=False).order_by("record", "-id")
-            print("Sending " + str(messages.count()) + " notifications to " + str(people))
 
             context = {
                 "list": messages,
                 "firstname": people.name,
                 "url": url_project,
-                "organization_name": "Metabolism of Cities",
+                "organization_name": "Metabolism of Islands",
                 "email": people.email,
             }
 
             msg_html = render_to_string("mailbody/notifications.html", context)
             msg_plain = render_to_string("mailbody/notifications.txt", context)
 
-            sender = "Metabolism of Cities" + '<info@metabolismofcities.org>'
+            sender = "Metabolism of Islands" + '<info@metabolismofislands.org>'
             recipient = '"' + people.name + '" <' + people.email + '>'
             send_mail(
-                "Your latest notifications from Metabolism of Cities",
+                "Your latest notifications from Metabolism of Islands",
                 msg_plain,
                 sender,
                 [people.email],
