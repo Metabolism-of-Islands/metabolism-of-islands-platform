@@ -471,7 +471,7 @@ def events_list(request, header_subtitle=None):
     list = list.filter(start_date__lt=timezone.now())  
 
     context = {
-        "list": list,  # Skipping the first 3 items for pagination
+        "list": list,  
         "shortlist": upcoming_events, # only shows events that are latest than the current time
         "add_link": "/admin/core/news/add/",
         "header_title": "Events",
