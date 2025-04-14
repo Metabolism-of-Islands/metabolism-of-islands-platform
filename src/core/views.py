@@ -447,13 +447,10 @@ def news_events_list(request, header_subtitle=None):
     return render(request, "news.events.list.html", context)
 
 def news_list(request, header_subtitle=None):
-    if request.project != 1:
-        project = get_object_or_404(Project, pk=request.project)
-        list = News.objects.filter(projects=project).distinct()
-    else:
-        list = News.objects.filter(projects__in=MOC_PROJECTS).distinct()
 
-    years = list.dates('date', 'year', order='DESC')
+    list = News.objects.all().distinct()
+
+    years = list.dates("date", "year", order="DESC")
 
     context = {
         "list": list[3:],  # Skipping the first 3 items for pagination
@@ -467,18 +464,15 @@ def news_list(request, header_subtitle=None):
     return render(request, "news.list.html", context)
 
 def events_list(request, header_subtitle=None):
-    if request.project != 1:
-        project = get_object_or_404(Project, pk=request.project)
-        list = Event.objects.filter(projects=project).distinct()
-    else:
-        list = Event.objects.filter(projects__in=MOC_PROJECTS).distinct()
 
-    upcoming_events = list.filter(start_date__gt=timezone.now())    
-    print(upcoming_events)
+    list = Event.objects.all().distinct() # no need filtering as the only the MOI events are in the database
+
+    upcoming_events = list.filter(start_date__gt=timezone.now())  
+    list = list.filter(start_date__lt=timezone.now())  
 
     context = {
-        "list": list[3:],  # Skipping the first 3 items for pagination
-        "shortlist": upcoming_events,  # The first 3 items to show in a separate section
+        "list": list,  # Skipping the first 3 items for pagination
+        "shortlist": upcoming_events, # only shows events that are latest than the current time
         "add_link": "/admin/core/news/add/",
         "header_title": "Events",
         "header_subtitle": header_subtitle,
@@ -959,37 +953,26 @@ def controlpanel_users(request, id=None):
     if not has_permission(request, request.project, ["curator", "admin", "publisher"]):
         unauthorized_access(request)
 
-    if request.method == "POST":
-        # delete this user from the platform
-        try:
-            user = RecordRelationship.objects.filter(
-                record_child_id=request.project
-            ).exclude(relationship_id=13).get(id=id)
-            
-            # Perform the deletion
-            user.delete()
-
-            # Inject JavaScript to reload the page
-            return render(request, "controlpanel/users.html", {
-                'users': RecordRelationship.objects.filter(record_child_id=request.project).exclude(relationship_id=13),
-                'load_datatables': True,
-                'reload': True  # Pass a flag to trigger the page reload in the template
-            })
-
-        except RecordRelationship.DoesNotExist:
-            # Handle the case where the user is not found
-            print("User not found")
-            return render(request, "controlpanel/users.html", {
-                'users': RecordRelationship.objects.filter(record_child_id=request.project).exclude(relationship_id=13),
-                'load_datatables': True
-            })
-
+    users = RecordRelationship.objects.filter(record_child_id=request.project).exclude(relationship_id=13)
 
     context = {
         # Filter our "presentation" as most of AScUS records are in that form and should be relabeled to Presenters
-        "users": RecordRelationship.objects.filter(record_child_id=request.project).exclude(relationship_id=13),
+        "users": users,
         "load_datatables": True,
     }
+
+    if request.method == "POST":
+        user_id = request.POST.get("user_id")
+        # delete this user from the platform
+        try:
+            user = users.get(id=user_id)
+            # Perform the deletion
+            user.delete()
+            messages.success(request, "User was successfully removed.")
+
+        except RecordRelationship.DoesNotExist:
+            messages.error(request, "User not found.")
+
     return render(request, "controlpanel/users.html", context)
 
 # This is a page that can be used to exclusively manage admin users. It is simpler and best to use for 
@@ -1437,7 +1420,7 @@ def controlpanel_news_form(request, id=None):
         unauthorized_access(request)
 
     info = None
-    ModelForm = modelform_factory(News, fields=("type", "name", "date", "image", "projects", "include_in_timeline", "is_deleted"))
+    ModelForm = modelform_factory(News, fields=("article_type", "name", "date", "image", "projects", "include_in_timeline", "is_deleted"))
     if id:
         info = get_object_or_404(News, pk=id)
         form = ModelForm(request.POST or None, request.FILES or None, instance=info)
@@ -1452,9 +1435,6 @@ def controlpanel_news_form(request, id=None):
             info.description = request.POST.get("description")
             meta_data = info.meta_data if info.meta_data else {}
             meta_data["format"] = request.POST.get("format")
-            # saving category for ndee / peeide news articles and resources
-            if "peeide" in PROJECT_ID and project == PROJECT_ID["peeide"]:
-                meta_data["category"] = request.POST.get("category")
             info.meta_data = meta_data
             info.save()
             form.save_m2m()
@@ -2202,7 +2182,6 @@ def newsletter(request):
         is_subscribed = RecordRelationship.objects.filter(relationship_id=28, record_parent=request.user.people, record_child_id=request.project)
 
     if request.method == "POST":
-        project = get_project(request)
         if "unsubscribe" in request.POST and is_subscribed:
             is_subscribed.delete()
 
@@ -2217,12 +2196,17 @@ def newsletter(request):
 
             messages.success(request, "You have successfully unsubscribed.")
         elif not is_subscribed:
+            email, institution = None, None
             if request.user.is_authenticated:
                 people = request.user.people
+                email = request.user.email
             else:
+                email = request.POST.get("email")
+                institution = request.POST.get("institution")
                 people = People.objects.create(
                     name = request.POST.get("name"),
-                    email = request.POST.get("email"),
+                    email = email,
+                    institution = institution,
                 )
             RecordRelationship.objects.create(
                 relationship_id = 28,

@@ -2,12 +2,6 @@
 
 {% block content %}
 
-{% if reload %}
-<script>
-    window.location.href = "/controlpanel/users/"
-</script>
-{% endif %}
-
 <div class="manage_users">
   <h1 class="mb-0">{% block title %}{{ _("Our team") }}{% endblock %}</h1>
   <a href="../" class="btn btn-primary-basic mb-4">
@@ -45,8 +39,9 @@
           <td>{{ each.record_child }}</td>
         {% endif %}
         <td>
-          <form method="POST" action="delete/{{ each.id }}/" style="display:inline;" onsubmit="return confirmDelete();">
+          <form method="POST" style="display:inline;" onsubmit="return confirmDelete();">
             {% csrf_token %}
+            <input type="hidden" name="user_id" value="{{ each.id }}">
             <button type="submit" class="btn btn-danger btn-sm mb-4 view_user">
               <i class="fal fa-fw fa-times fa-lg"></i> Delete this user
             </button>

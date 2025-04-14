@@ -6,7 +6,7 @@
 
 {% block content %}
 
-<h2 style="text-align: center;">News and Blogs</h2>
+<h2 class="text-center">News and Blogs</h2>
 
 {% if list.count > 10 %}
 <div class="row mb-4">
@@ -53,7 +53,7 @@
           {% if each.image %}
             <img src="{{ each.image.url }}" class="card-img-top" alt="">
           {% else %}
-            {% if each.get_type_display == "NEWS" %}
+            {% if each.get_article_type_display|upper == "NEWS" %}
               <img src="{% static "img/news-default.jpg" %}" class="card-img-top" alt="">
             {% else %}
               <img src="{% static "img/blog-default.jpg" %}" class="card-img-top" alt="">
@@ -68,7 +68,7 @@
             <p class="card-text">
               {{ each.introduction }}
             </p>
-            <p class="badge badge-info" style="font-size: 0.9rem; padding: 0.5em 1em;">{{ each.get_type_display }}</p>
+            <p class="badge badge-info" style="font-size: 0.9rem; padding: 0.5em 1em;">{{ each.get_article_type_display|upper }}</p>
           </div>
         </a>
       </div>
@@ -86,7 +86,7 @@
             {% if each.image %}
               <img class="rounded" src="{{ each.image.url }}" alt="">
             {% else %}
-              {% if each.get_type_display == "NEWS" %}
+              {% if each.get_article_type_display|upper == "NEWS" %}
                 <img class="rounded" src="{% static "img/news-default.jpg" %}" alt="">
               {% else %}
                 <img class="rounded" src="{% static "img/blog-default.jpg" %}" alt="">
@@ -98,7 +98,7 @@
                 <br>
                 <small class="d-inline-block text-muted">{{ each.date }}</small>
                 <br>
-                <p id="type" class="badge badge-info mt-3" style="font-size: 0.75rem; padding: 0.5em 1em;">{{ each.get_type_display }}</p>
+                <p id="type" class="badge badge-info mt-3" style="font-size: 0.75rem; padding: 0.5em 1em;">{{ each.get_article_type_display|upper }}</p>
               </h5>
             </div>
           </div>
@@ -111,8 +111,6 @@
 {% endblock %}
 
 {% block footer %}
-<!-- Include jQuery -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
   $(document).ready(function() {
     function filterNews() {
