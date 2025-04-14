@@ -15,7 +15,7 @@
         display: flex !important;
       }
       .advanced-options {
-        display: block;
+        display: block !important;
       }
       .search-select {
         display: none;
@@ -800,27 +800,27 @@
     const allHidden = !$row.is(':visible') && !$row1.is(':visible') && !$row2.first().is(':visible') && !$row3.is(':visible');
 
     if (allHidden) {
-        // Expand
-        $row.slideDown(500);
-        $row1.slideDown(500);
-        $row3.slideDown(500);
-        $row2.each(function () {
-          $(this).slideDown(500);
-        });
+      // Expand
+      $row.slideDown(500);
+      $row1.slideDown(500);
+      $row3.slideDown(500);
+      $row2.each(function () {
+        $(this).slideDown(500);
+      });
 
-        $icon.removeClass('fa-arrow-down').addClass('fa-arrow-up');
-        $span.text('Collapse advanced search bar');
+      $icon.removeClass('fa-arrow-down').addClass('fa-arrow-up');
+      $span.text('Collapse advanced search bar');
     } else {
-        // Collapse
-        $row.slideUp(500);
-        $row1.slideUp(500);
-        $row3.slideUp(500);
-        $row2.each(function () {
-          $(this).slideUp(500);
-        });
+      // Collapse
+      $row.slideUp(500);
+      $row1.slideUp(500);
+      $row3.slideUp(500);
+      $row2.each(function () {
+        $(this).slideUp(500);
+      });
 
-        $icon.removeClass('fa-arrow-up').addClass('fa-arrow-down');
-        $span.text('Expand advanced search bar');
+      $icon.removeClass('fa-arrow-up').addClass('fa-arrow-down');
+      $span.text('Expand advanced search bar');
     }
   }
 
