@@ -79,12 +79,12 @@ This project contains lots of moving pieces and it is daunting to grasp for new 
 
 When querying the database, use the following naming conventions for the variables:
 
-*list* = when you except various records
+*plural_model_name* = when you except various records
 You use this name when there is one "main" model that you interact with. 
 
 Example: you are viewing the page with all the projects.
 
-list = Project.objects.all()
+projects = Project.objects.all()
 
 --------------
 
@@ -128,7 +128,7 @@ Define it straight in the context:
 
 context = {
   "info": Photo.objects.get(pk=id),
-  "list": Photo.objects.all(),
+  "photos": Photo.objects.all(),
 }
 
 -------------
@@ -137,5 +137,5 @@ When looping through a list, please use these keywords:
 
 Use *each* when looping through a queryset:
 
-for each in list:
+for each in photos:
   print(each.id)
