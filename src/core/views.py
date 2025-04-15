@@ -2175,9 +2175,6 @@ def support(request):
     }
     return render(request, "contribution/contributor.page.html", context)
 
-from django.core.mail import BadHeaderError
-from smtplib import SMTPException
-
 def newsletter(request):
     is_subscribed = None
     if request.user.is_authenticated:
@@ -2187,22 +2184,14 @@ def newsletter(request):
         if "unsubscribe" in request.POST and is_subscribed:
             is_subscribed.delete()
 
-
-            try:
-                # Send the email to the admin user
-                send_mail(
-                    subject="Newsletter Unsubscription",
-                    message=f"User {request.user.username} has unsubscribed from the newsletter.",
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[settings.DEFAULT_FROM_EMAIL],
-                    fail_silently=False,
-                )
-            except BadHeaderError:
-                print("Invalid header found.")
-            except SMTPException as e:
-                print(f"SMTP Exception: {e}")
-            except Exception as e:
-                print(f"Unexpected error: {e}")
+            # Send the email to the admin user
+            send_mail(
+                subject="Newsletter Unsubscription",
+                message=f"User {request.user.username} has unsubscribed from the newsletter.",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[settings.DEFAULT_FROM_EMAIL],
+                fail_silently=False,
+            )
 
             messages.success(request, "You have successfully unsubscribed.")
         elif not is_subscribed:
@@ -2225,20 +2214,13 @@ def newsletter(request):
             )
             is_subscribed = True
             
-            try:
-                send_mail(
-                    subject="Newsletter Subscription",
-                    message=f"User with an email {email} from institution {institution} has subscribed to a newsletter.",
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[settings.DEFAULT_FROM_EMAIL],
-                    fail_silently=False,
-                )
-            except BadHeaderError:
-                print("Invalid header found.")
-            except SMTPException as e:
-                print(f"SMTP Exception: {e}")
-            except Exception as e:
-                print(f"Unexpected error: {e}")
+            send_mail(
+                subject="Newsletter Subscription",
+                message=f"User with an email {email} from institution {institution} has subscribed to a newsletter.",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[settings.DEFAULT_FROM_EMAIL],
+                fail_silently=False,
+            )
 
             messages.success(request, "You have successfully subscribed to our newsletter")
 
