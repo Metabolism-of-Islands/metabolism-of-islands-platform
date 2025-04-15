@@ -53,18 +53,17 @@
           {% if each.image %}
             <img src="{{ each.image.url }}" class="card-img-top" alt="">
           {% else %}
-            {% if each.get_article_type_display|upper == "NEWS" %}
-              <img src="{% static "img/news-default.jpg" %}" class="card-img-top" alt="">
+            {% if each.get_article_type_display == "News" %}
+              <img src="{% static "img/news-default.jpg" %}" class="card-img-top" alt="" data-source="https://www.freepik.com/">
             {% else %}
-              <img src="{% static "img/blog-default.jpg" %}" class="card-img-top" alt="">
+              <img src="{% static "img/blog-default.jpg" %}" class="card-img-top" alt="" data-source="https://www.freepik.com/">
             {% endif %}
           {% endif %}
           <div class="card-body">
             <h5 class="card-title">
               {{ each }}
-              <br>
-              <small class="d-inline-block text-muted">{{ each.date }}</small>
             </h5>
+            <small class="d-inline-block text-muted">{{ each.date }}</small>
             <p class="card-text">
               {{ each.introduction }}
             </p>
@@ -86,20 +85,19 @@
             {% if each.image %}
               <img class="rounded" src="{{ each.image.url }}" alt="">
             {% else %}
-              {% if each.get_article_type_display|upper == "NEWS" %}
-                <img class="rounded" src="{% static "img/news-default.jpg" %}" alt="">
+              {% if each.get_article_type_display == "News" %}
+                <img class="rounded" src="{% static "img/news-default.jpg" %}" alt="" data-source="https://www.freepik.com/">
               {% else %}
-                <img class="rounded" src="{% static "img/blog-default.jpg" %}" alt="">
+                <img class="rounded" src="{% static "img/blog-default.jpg" %}" alt="" data-source="https://www.freepik.com/">
               {% endif %}
             {% endif %}
             <div class="media-body pl-3 align-self-center">
               <h5 class="mb-0 card-title">
                 <span class="mr-1">{{ each }}</span>
-                <br>
-                <small class="d-inline-block text-muted">{{ each.date }}</small>
-                <br>
-                <p id="type" class="badge badge-info mt-3" style="font-size: 0.75rem; padding: 0.5em 1em;">{{ each.get_article_type_display|upper }}</p>
               </h5>
+              <small class="d-inline-block text-muted">{{ each.date }}</small>
+              <br>
+              <p id="type" class="badge badge-info mt-3" style="font-size: 0.75rem; padding: 0.5em 1em;">{{ each.get_article_type_display|upper }}</p>
             </div>
           </div>
         </a>

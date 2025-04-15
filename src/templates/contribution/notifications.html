@@ -30,7 +30,7 @@
           {{ each.record.message.posted_by }}
         </td>
         <td>
-          {% if each.record.message.date_created|naturaltime %}
+          {% if each.record.message.date_created %}
             {{ each.record.message.date_created|naturaltime }}
           {% else %}
             {{ each.record.date_created|naturaltime }}

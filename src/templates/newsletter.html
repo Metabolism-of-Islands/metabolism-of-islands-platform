@@ -37,8 +37,8 @@
         {% endif %}
       </div>
       <div class="form-group">
-        <label for="institution">Institution</label>
         {% if not request.user.is_authenticated %}
+          <label for="institution">Institution</label>
           <input type="institution" class="form-control" id="institution" name="institution">
         {% endif %}
       </div>

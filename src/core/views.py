@@ -448,13 +448,13 @@ def news_events_list(request, header_subtitle=None):
 
 def news_list(request, header_subtitle=None):
 
-    list = News.objects.all().distinct()
+    news = News.objects.all().distinct()
 
-    years = list.dates("date", "year", order="DESC")
+    years = news.dates("date", "year", order="DESC")
 
     context = {
-        "list": list[3:],  # Skipping the first 3 items for pagination
-        "shortlist": list[:3],  # The first 3 items to show in a separate section
+        "list": news[3:],  # Skipping the first 3 items for pagination
+        "shortlist": news[:3],  # The first 3 items to show in a separate section
         "add_link": "/admin/core/news/add/",
         "header_title": "News",
         "header_subtitle": header_subtitle,
@@ -465,13 +465,13 @@ def news_list(request, header_subtitle=None):
 
 def events_list(request, header_subtitle=None):
 
-    list = Event.objects.all().distinct() # no need filtering as the only the MOI events are in the database
+    events = Event.objects.all().distinct() # no need filtering as the only the MOI events are in the database
 
-    upcoming_events = list.filter(start_date__gt=timezone.now())  
-    list = list.filter(start_date__lt=timezone.now())  
+    upcoming_events = events.filter(start_date__gt=timezone.now())  
+    events = events.filter(start_date__lt=timezone.now())  
 
     context = {
-        "list": list,  
+        "list": events,  
         "shortlist": upcoming_events, # only shows events that are latest than the current time
         "add_link": "/admin/core/news/add/",
         "header_title": "Events",
@@ -953,13 +953,7 @@ def controlpanel_users(request, id=None):
     if not has_permission(request, request.project, ["curator", "admin", "publisher"]):
         unauthorized_access(request)
 
-    users = RecordRelationship.objects.filter(record_child_id=request.project).exclude(relationship_id=13)
-
-    context = {
-        # Filter our "presentation" as most of AScUS records are in that form and should be relabeled to Presenters
-        "users": users,
-        "load_datatables": True,
-    }
+    users = RecordRelationship.objects.filter(record_child_id=request.project)
 
     if request.method == "POST":
         user_id = request.POST.get("user_id")
@@ -972,6 +966,11 @@ def controlpanel_users(request, id=None):
 
         except RecordRelationship.DoesNotExist:
             messages.error(request, "User not found.")
+
+    context = {
+        "users": users,
+        "load_datatables": True,
+    }
 
     return render(request, "controlpanel/users.html", context)
 

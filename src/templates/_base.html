@@ -75,6 +75,10 @@
   {% block css %}{% endblock %}
   {% block head %}{% endblock %}
 
+  {% if menu == "library" %}
+    <link href="{% static 'css/main.css' %}?rf12" rel="stylesheet" type="text/css" />
+  {% endif %}
+
   {% if DESIGN.custom_css %}
     <style type="text/css">
       {{ DESIGN.custom_css|safe }}
