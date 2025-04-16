@@ -131,11 +131,6 @@ def get_layers_count(request):
         l[each.id] = each.children.count()
     return l
 
-def get_space(request, slug):
-    # Here we can build an expansion if we want particular people to see dashboards that are under construction
-    check = get_object_or_404(ActivatedSpace, slug=slug, part_of_project_id=request.project)
-    return check.space
-
 # Quick function to make someone the author of something
 # Version 1.0
 def set_author(author, item):

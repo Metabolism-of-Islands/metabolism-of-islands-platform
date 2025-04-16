@@ -841,7 +841,7 @@ class People(Record):
         if self.image:
             return self.image
         else:
-            photo = Photo.objects.get(pk=33476)
+            photo = Photo.objects.get(pk=1278693)
             return photo.image
 
     @property
@@ -2508,8 +2508,8 @@ class ReferenceSpace(Record):
         #check = self.geocodes.filter(id=123)
         if ActivatedSpace.objects.filter(space=self).exists():
             return True
-        check = self.geocodes.filter(name="Island").exists()
-        return True if check else False
+        #check = self.geocodes.filter(name="Island").exists()
+        #return True if check else False
 
     @cached_property
     def get_centroids(self):
@@ -2547,7 +2547,7 @@ class ReferenceSpace(Record):
         try:
             return Photo.objects.filter(spaces=self).order_by("position")[0]
         except:
-            return Photo.objects.get(pk=33476)
+            return Photo.objects.get(pk=1278693)
 
     @property
     def get_thumbnail(self):
@@ -2644,7 +2644,7 @@ def update_referencespace_photo(sender, instance, created, **kwargs):
         try:
             photo = Photo.objects.filter(spaces=space).order_by("position", "id")[0]
         except:
-            photo = Photo.objects.get(pk=33476)
+            photo = Photo.objects.get(pk=1278693)
         space.image = photo.image
         space.save()
 
