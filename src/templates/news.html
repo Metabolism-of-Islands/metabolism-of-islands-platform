@@ -1,6 +1,7 @@
 {% extends "_base.html" %}
 {% block page_name %}news{% endblock %}
 {% block title %}{{ info }}{% endblock %}
+{% load static %}
 
 {% block head %}
   <link rel="canonical" href="{{ info.get_absolute_url }}" />
@@ -19,6 +20,20 @@
 
     {% if info.image %}
       <img class="img-fluid mb-4" src="{{ info.image.url }}">
+    {% else %}
+      {% if info.article_type == "news" %}
+        <img
+          src="{% static 'img/news-default.png' %}"
+          class="img-fluid mb-4"
+          alt=""
+        >
+      {% else %}
+        <img
+          src="{% static 'img/blogs-default.png' %}"
+          class="img-fluid mb-4"
+          alt=""
+        >
+      {% endif %}
     {% endif %}
 
     <h4>{{ info }}</h4>

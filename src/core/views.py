@@ -2214,9 +2214,16 @@ def newsletter(request):
             )
             is_subscribed = True
             
+            message = None
+
+            if institution:
+                message = f"User with an email {email} from institution {institution} has subscribed to a newsletter."
+            else:
+                message = f"User with an email {email} has subscribed to a newsletter."
+            
             send_mail(
                 subject="Newsletter Subscription",
-                message=f"User with an email {email} from institution {institution} has subscribed to a newsletter.",
+                message=message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[settings.DEFAULT_FROM_EMAIL],
                 fail_silently=False,
