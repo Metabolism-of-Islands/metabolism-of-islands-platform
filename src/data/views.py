@@ -85,18 +85,18 @@ def overview(request):
     return render(request, "data/overview.html", context)
 
 def progress(request, style="list"):
-    list = ReferenceSpace.objects.filter(activated__part_of_project_id=request.project)
+    islands = ReferenceSpace.objects.filter(activated__part_of_project_id=request.project)
     project = get_object_or_404(Project, pk=request.project)
     
     if request.GET.get("sort") == "documents":
-        list = list.order_by("-meta_data__progress__document_counter", "name")
+        islands = islands.order_by("-meta_data__progress__document_counter", "name")
     elif request.GET.get("sort") == "percentage":
-        list = list.order_by("-meta_data__progress__completion", "name")
+        islands = islands.order_by("-meta_data__progress__completion", "name")
 
     context = {
         "dashboard_link": project.slug + ":dashboard",
         "harvesting_link": project.slug + ":hub_harvesting_space",
-        "list": list,
+        "list": islands,
         "layers": get_layers(request),
         "layers_count": get_layers_count(request),
     }

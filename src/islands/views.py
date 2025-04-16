@@ -17,7 +17,7 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from core.mocfunctions import *
 
 def index(request):
-    
+
     spaces = ReferenceSpace.objects.filter(activated__part_of_project_id=request.project)[:3]
     project = get_object_or_404(Project, pk=request.project)
     blurb = """
