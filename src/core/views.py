@@ -472,7 +472,7 @@ def events_list(request, header_subtitle=None):
 
     context = {
         "list": events,  
-        "shortlist": upcoming_events, # only shows events that are latest than the current time
+        "upcoming_events": upcoming_events, # only shows events that are latest than the current time
         "add_link": "/admin/core/news/add/",
         "header_title": "Events",
         "header_subtitle": header_subtitle,

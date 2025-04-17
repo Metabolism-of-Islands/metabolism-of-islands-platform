@@ -31,34 +31,37 @@
 </div>
 {% endif %}
 
+{% if upcoming_events %}
 
-<section>
-  <h3>Upcoming Events</h3>
-  <div class="row">
-    {% for each in shortlist %}
-      <div class="col-lg-4 mb-sm-4 mb-lg-0">
-        <a class="card btn-card" href="../events/{{ each.id }}/{{ each.slug }}/">
-          {% if each.image %}
-            <img src="{{ each.image.url }}" class="card-img-top" alt="">
-          {% else %}
-            <img src="{% static "img/events-default.jpg" %}" class="card-img-top" alt="" data-source="https://www.freepik.com/free-vector/event-manager-typographic-header-celebration-meeting-organization-planning-pr-company-business-mass-media-social-network-promotion-isolated-vector-illustration_27953002.htm#fromView=search&page=2&position=1&uuid=eee7b969-61a6-43aa-a342-306bb0608d65&query=event+">
-          {% endif %}
-          <div class="card-body">
-            <h5 class="card-title">
-              {{ each }}
-            </h5>
-            <small class="d-inline-block text-muted">
-              {{ each.start_date|date:"M d, Y" }} - {{ each.end_date|date:"M d, Y" }}
-            </small>
-            <p class="card-text">
-              {{ each.location }}
-            </p>
-          </div>
-        </a>
-      </div>
-    {% endfor %}
-  </div>
-</section>
+  <section>
+    <h3>Upcoming Events</h3>
+    <div class="row">
+      {% for each in upcoming_events %}
+        <div class="col-lg-4 mb-sm-4 mb-lg-0">
+          <a class="card btn-card" href="../events/{{ each.id }}/{{ each.slug }}/">
+            {% if each.image %}
+              <img src="{{ each.image.url }}" class="card-img-top" alt="">
+            {% else %}
+              <img src="{% static "img/events-default.jpg" %}" class="card-img-top" alt="" data-source="https://www.freepik.com/free-vector/event-manager-typographic-header-celebration-meeting-organization-planning-pr-company-business-mass-media-social-network-promotion-isolated-vector-illustration_27953002.htm#fromView=search&page=2&position=1&uuid=eee7b969-61a6-43aa-a342-306bb0608d65&query=event+">
+            {% endif %}
+            <div class="card-body">
+              <h5 class="card-title">
+                {{ each }}
+              </h5>
+              <small class="d-inline-block text-muted">
+                {{ each.start_date|date:"M d, Y" }} - {{ each.end_date|date:"M d, Y" }}
+              </small>
+              <p class="card-text">
+                {{ each.location }}
+              </p>
+            </div>
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+{% endif %}
 
 <section>
     <h3 id="heading">Past Events</h3>
@@ -94,8 +97,6 @@
 {% endblock %}
 
 {% block footer %}
-<!-- Include jQuery -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
   $(document).ready(function() {
 
