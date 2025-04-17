@@ -229,7 +229,6 @@ def index(request):
     tag = None
     results = None
     search_tag = None
-    urban_only = True
     core_filter = get_site_tag(request)
     space = None
     title = "Library"
@@ -281,10 +280,6 @@ def index(request):
         if "type" in request.GET:
             results = results.filter(type__group__in=request.GET.getlist("type"))
 
-        if not request.GET.get("urban_only"):
-            urban_only = False
-        if urban_only:
-            results = results.filter(tags__id=core_filter)
         if "space" in request.GET and request.GET["space"]:
             space = ReferenceSpace.objects.get(pk=request.GET["space"])
             results = results.filter(spaces=space)
@@ -298,10 +293,6 @@ def index(request):
                 results = LibraryItem.objects.filter(type__group__in=request.GET.getlist("type"))
             else:
                 results = LibraryItem.objects.all()
-            if not request.GET.get("urban_only"):
-                urban_only = False
-            if urban_only:
-                results = results.filter(tags__id=core_filter)
             if "space" in request.GET and request.GET["space"]:
                 space = ReferenceSpace.objects.get(pk=request.GET["space"])
                 results = results.filter(spaces=space)
@@ -354,7 +345,6 @@ def index(request):
         "show_tags": True if space else False,
         "show_results": show_results,
         "load_datatables": True if show_results else False,
-        "urban_only": urban_only,
         "menu": "library",
         "starterskit": LibraryItem.objects.filter(tags__id=791).count(),
         "title": title if not tag else tag.name,
@@ -364,6 +354,7 @@ def index(request):
         "all_count": LibraryItem.objects.filter(tags__id=core_filter).count(),
         "ie_count": LibraryItem.objects.filter(tags__id=963).count(),
         "load_select2": True,
+        "current_year": timezone.now().year,
     }
     return render(request, "library/index.html", context)
 
