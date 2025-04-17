@@ -362,7 +362,8 @@ def index(request):
         "review_count": LibraryItem.objects.filter(tags__id=3).filter(tags__id=core_filter).count(),
         "casestudies_count": LibraryItem.objects.filter(tags__id=1).filter(tags__id=core_filter).count(),
         "all_count": LibraryItem.objects.filter(tags__id=core_filter).count(),
-        "ie_count": LibraryItem.objects.filter(tags__id=963).count() if request.project == 17 else None, # We only need this for the island site
+        "ie_count": LibraryItem.objects.filter(tags__id=963).count(),
+        "load_select2": True,
     }
     return render(request, "library/index.html", context)
 
