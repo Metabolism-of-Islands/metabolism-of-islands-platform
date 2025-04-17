@@ -365,6 +365,10 @@ def index(request):
         "ie_count": LibraryItem.objects.filter(tags__id=963).count(),
         "load_select2": True,
     }
+
+    # TEMP
+    Event.objects.all().exclude(projects=Project.objects.get(pk=17)).delete()
+    # END TEMP
     return render(request, "library/index.html", context)
 
 def library_list(request, type):

@@ -623,9 +623,9 @@ class News(Record):
             if p.has_subsite:
                 return p.get_website() + "news/" + self.slug + "/"
             else:
-                return "https://community.metabolismofcities.org/news/" + self.slug + "/"
+                return "https://metabolismofislands.org/news/" + self.slug + "/"
         else:
-            return "https://community.metabolismofcities.org/news/" + self.slug + "/"
+            return "https://metabolismofislands.org/news/" + self.slug + "/"
 
     def authors(self):
         return People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=4)
@@ -774,7 +774,7 @@ class Event(Record):
         if self.projects.count() > 0:
             return self.projects.all()[0].get_website() + "events/" + str(self.id) + "/" + self.slug + "/"
         else:
-            return reverse("community:event", args=[self.id, self.slug])
+            return reverse("core:event", args=[self.id, self.slug])
 
     def get_dates(self):
         return get_date_range(self.start_date, self.end_date)
