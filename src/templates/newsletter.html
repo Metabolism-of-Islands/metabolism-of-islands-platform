@@ -36,6 +36,12 @@
           <input type="email" class="form-control" id="email" name="email" required>
         {% endif %}
       </div>
+      {% if not request.user.is_authenticated %}
+      <div class="form-group"> 
+        <label for="institution">Institution</label>
+        <input type="institution" class="form-control" id="institution" name="institution">
+      </div>
+      {% endif %}
       <button type="submit" class="btn btn-primary"><i class="fas fa-fw fa-envelope"></i> Sign up</button>
       {% csrf_token %} 
     

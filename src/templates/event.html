@@ -1,6 +1,7 @@
 {% extends "_base.html" %}
 {% block page_name %}event{% endblock %}
 {% block title %}{{ info }}{% endblock %}
+{% load static %}
 
 {% block head %}
   <link rel="canonical" href="{{ info.get_absolute_url }}" />
@@ -12,6 +13,8 @@
   <article class="col-lg-8 pr-lg-5">
     {% if info.image %}
     <img class="img-fluid mb-4" src="{{ info.image.url }}">
+    {% else %}
+    <img class="img-fluid mb-4" src="{% static "img/events-default.png" %}">
     {% endif %}
     
     <h4>{{ info }}</h4>

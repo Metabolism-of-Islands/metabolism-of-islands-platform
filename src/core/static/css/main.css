@@ -742,7 +742,8 @@ label {
   background-color: #ffffff;
   border: 1px solid #ced4da;
   border-radius: 6px;
-  font-size: 0.875rem;
+  font-size: 1rem;
+  height: 50px !important;
   padding: 0.35rem 1rem;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
   width: 100%;
@@ -750,22 +751,6 @@ label {
   position: relative;
   display: flex;
   align-items: center;
-}
-
-/* Dropdown Arrow */
-.select2-container--bootstrap4 .select2-selection::after {
-  content: "▼"; /* Default down arrow */
-  font-size: 0.75rem;
-  color: #6c757d;
-  position: absolute;
-  right: 12px;
-  pointer-events: none;
-  transition: transform 0.3s ease;
-}
-
-/* When Dropdown is Open, Rotate the Arrow Upward */
-.select2-container--open .select2-selection::after {
-  content: "▲"; /* Change to upward arrow */
 }
 
 /* Focus Effect */
@@ -1960,6 +1945,9 @@ body.library.search .container.main-content {
   margin: 0 !important;
   width: 100% !important;
   max-width: unset !important; }
+
+body.library.search .advanced-options {
+  display: none; }
 
 body.library.search .search-wrapper {
   padding-top: 4rem;

@@ -1,0 +1,166 @@
+{% extends "_base.html" %}
+{% load static %}
+
+{% block title %}Events List{% endblock %}
+{% block page_name %}event list{% endblock %}
+
+{% block content %}
+
+<h2 class="text-center">Events</h2>
+
+{% if list.count > 10 %}
+<div class="row mb-4">
+  <div class="col-md-12">
+    <form method="get" action="">
+      <div class="row">
+        <!-- Search input -->
+        <div class="col-md-4">
+          <input type="text" class="form-control" name="search" id="search-input" value="{{ search_query }}" placeholder="Search...">
+        </div>
+        <!-- Start date filter -->
+        <div class="col-md-4">
+          <input type="date" class="form-control" name="start_date_filter" id="start-date-filter" placeholder="Start date">
+        </div>
+        <!-- End date filter -->
+        <div class="col-md-4">
+          <input type="date" class="form-control" name="end_date_filter" id="end-date-filter" placeholder="End date">
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+
+<section>
+  <h3>Upcoming Events</h3>
+  <div class="row">
+    {% for each in shortlist %}
+      <div class="col-lg-4 mb-sm-4 mb-lg-0">
+        <a class="card btn-card" href="../events/{{ each.id }}/{{ each.slug }}/">
+          {% if each.image %}
+            <img src="{{ each.image.url }}" class="card-img-top" alt="">
+          {% else %}
+            <img src="{% static "img/events-default.jpg" %}" class="card-img-top" alt="" data-source="https://www.freepik.com/free-vector/event-manager-typographic-header-celebration-meeting-organization-planning-pr-company-business-mass-media-social-network-promotion-isolated-vector-illustration_27953002.htm#fromView=search&page=2&position=1&uuid=eee7b969-61a6-43aa-a342-306bb0608d65&query=event+">
+          {% endif %}
+          <div class="card-body">
+            <h5 class="card-title">
+              {{ each }}
+            </h5>
+            <small class="d-inline-block text-muted">
+              {{ each.start_date|date:"M d, Y" }} - {{ each.end_date|date:"M d, Y" }}
+            </small>
+            <p class="card-text">
+              {{ each.location }}
+            </p>
+          </div>
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section>
+    <h3 id="heading">Past Events</h3>
+    <div class="row">
+      {% for each in list %}
+        <div class="col-lg-6 mb-3 events-card"
+             data-start-date="{{ each.start_date|date:"Y-m-d" }}"
+             data-end-date="{{ each.end_date|date:"Y-m-d" }}">
+          <a href="../events/{{ each.id }}/{{ each.slug }}/" class="card btn-card">
+            <div class="card-body media">
+              {% if each.image %}
+                <img class="rounded" src="{{ each.image.url }}" alt="">
+              {% else %}
+                <img class="rounded" src="{% static "img/events-default.png" %}" alt="">
+              {% endif %}
+              <div class="media-body pl-3 align-self-center">
+                <h5 class="mb-0 card-title">
+                  <span class="mr-1">{{ each }}</span>
+                  <br>
+                  <small class="text-muted">{{ each.start_date|date:"M d, Y" }} - {{ each.end_date|date:"M d, Y" }}</small>
+                  <br>
+                  <small>{{ each.location }}</small>
+                </h5>
+              </div>
+            </div>
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+</section>
+  
+
+{% endblock %}
+
+{% block footer %}
+<!-- Include jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  $(document).ready(function() {
+
+    function filterEvents() {
+      var searchInput = $("#search-input").val().toLowerCase();
+      // Get the filter dates as strings. They will be in the format "YYYY-MM-DD" if provided.
+      var startFilterVal = $("#start-date-filter").val();
+      var endFilterVal = $("#end-date-filter").val();
+
+      var filterStartDate = startFilterVal ? new Date(startFilterVal) : null;
+      var filterEndDate = endFilterVal ? new Date(endFilterVal) : null;
+      
+      $(".events-card").each(function() {
+        // Get the event title text.
+        var titleElem = $(this).find(".card-title");
+        if (titleElem.length === 0) {
+          titleElem = $(this).find("h5");
+        }
+        var eventsTitle = titleElem.text().toLowerCase();    
+
+        var eventStartStr = $(this).data("start-date");
+        var eventEndStr = $(this).data("end-date");
+
+        var eventStartDate = new Date(eventStartStr);
+        var eventEndDate = new Date(eventEndStr);
+
+        var matchesSearch = eventsTitle.includes(searchInput);
+        var matchesDateRange = true; 
+
+        if (filterStartDate && eventEndDate < filterStartDate) {
+          matchesDateRange = false;
+        }
+        if (filterEndDate && eventStartDate > filterEndDate) {
+          matchesDateRange = false;
+        }
+
+        if (matchesSearch && matchesDateRange) {
+          $(this).show();
+        } else {
+          $(this).hide();
+        }
+      });
+    }
+
+    function updateHeading() {
+        var searchInput = $("#search-input").val().trim();
+        var startDate = $("#start-date-filter").val();
+        var endDate = $("#end-date-filter").val();
+        // If any field has a value, change the heading.
+        if (searchInput.length > 0 || (startDate && startDate.trim()) || (endDate && endDate.trim())) {
+            $("#heading").text("Search Results");
+        } else {
+            $("#heading").text("Past Events");
+        }
+    }
+
+    $("#search-input").on("input", function() {
+        filterEvents();
+        updateHeading();
+    });
+    $("#start-date-filter, #end-date-filter").on("change", function() {
+        filterEvents();
+        updateHeading();
+    });
+  });
+</script>
+{% endblock %}
+

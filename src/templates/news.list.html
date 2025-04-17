@@ -1,5 +1,4 @@
 {% extends "_base.html" %}
-
 {% load static %}
 
 {% block title %}News List{% endblock %}
@@ -7,38 +6,76 @@
 
 {% block content %}
 
+<h2 class="text-center">News and Blogs</h2>
+
 {% if list.count > 10 %}
 <div class="row mb-4">
-  <div class="col-md-6 mb-2">
-    <input type="text" class="form-control" placeholder="Search...">
-  </div>
-  <div class="col-md-6 mb-2">
-    <select class="custom-select">
-      <option selected>Filter by years</option>
-      <option value="1">2020</option>
-      <option value="2">2019</option>
-      <option value="3">2018</option>
-    </select>
+  <div class="col-md-12">
+    <form method="get" action="">
+      <div class="row">
+        <!-- Search Input -->
+        <div class="col-md-4">
+          <input type="text" class="form-control" name="search" id="search-input" value="{{ search_query }}" placeholder="Search...">
+        </div>
+        <!-- Year Filter -->
+        <div class="col-md-4">
+          <select class="custom-select custom-select-lg" name="year" id="year-filter" style="height: 50px !important;">
+            <option value="">Filter by years</option>
+            {% for y in years %}
+              <option value="{{ y|date:"Y" }}" {% if year_filter == y|date:"Y" %}selected{% endif %}>
+                {{ y|date:"Y" }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <!-- Type Filter -->
+        <div class="col-md-4">
+          <select class="custom-select custom-select-lg" name="type" id="type-filter" style="height: 50px !important;">
+            <option value="">Filter by type</option>
+            <option value="news" {% if type_filter == "news" %}selected{% endif %}>NEWS</option>
+            <option value="blog" {% if type_filter == "blog" %}selected{% endif %}>BLOG</option>
+          </select>
+        </div>
+      </div>
+    </form>
   </div>
 </div>
 {% endif %}
 
+
+
 <section>
+  <h3>Most Recent News/Blogs</h3>
   <div class="row">
     {% for each in shortlist %}
       <div class="col-lg-4 mb-sm-4 mb-lg-0">
         <a class="card btn-card" href="{{ each.slug }}/">
           {% if each.image %}
             <img src="{{ each.image.url }}" class="card-img-top" alt="">
+          {% else %}
+            {% if each.article_type == "news" %}
+              <img
+                src="{% static 'img/news-default.png' %}"
+                class="card-img-top"
+                alt=""
+              >
+            {% else %}
+              <img
+                src="{% static 'img/blogs-default.png' %}"
+                class="card-img-top"
+                alt=""
+              >
+            {% endif %}
           {% endif %}
           <div class="card-body">
             <h5 class="card-title">
               {{ each }}
-              <small class="d-inline-block text-muted">{{ each.date }}</small>
             </h5>
+            <small class="d-inline-block text-muted">{{ each.date }}</small>
             <p class="card-text">
               {{ each.introduction }}
             </p>
+            <p class="badge badge-info" style="font-size: 0.9rem; padding: 0.5em 1em;">{{ each.get_article_type_display|upper }}</p>
           </div>
         </a>
       </div>
@@ -47,19 +84,36 @@
 </section>
 
 <section>
+  <h3 id="heading">Past News/Blogs</h3>
   <div class="row">
     {% for each in list %}
-      <div class="col-lg-6 mb-3">
+      <div class="col-lg-6 mb-3 news-card" data-year="{{ each.date|date:"Y" }}" data-type="{{ each.article_type }}">
         <a href="{{ each.slug }}/" class="card btn-card">
           <div class="card-body media">
             {% if each.image %}
               <img class="rounded" src="{{ each.image.url }}" alt="">
+            {% else %}
+              {% if each.article_type == "news" %}
+                <img
+                  src="{% static 'img/news-default.png' %}"
+                  class="rounded"
+                  alt=""
+                >
+              {% else %}
+                <img
+                  src="{% static 'img/blogs-default.png' %}"
+                  class="rounded"
+                  alt=""
+                >
+              {% endif %}
             {% endif %}
             <div class="media-body pl-3 align-self-center">
-              <h5 class="mb-0">
+              <h5 class="mb-0 card-title">
                 <span class="mr-1">{{ each }}</span>
-                <small class="d-inline-block text-muted">{{ each.date }}</small>
               </h5>
+              <small class="d-inline-block text-muted">{{ each.date }}</small>
+              <br>
+              <p id="type" class="badge badge-info mt-3" style="font-size: 0.75rem; padding: 0.5em 1em;">{{ each.get_article_type_display|upper }}</p>
             </div>
           </div>
         </a>
@@ -68,4 +122,60 @@
   </div>
 </section>
 
+{% endblock %}
+
+{% block footer %}
+<script>
+  $(document).ready(function() {
+    function filterNews() {
+      var searchInput = $("#search-input").val().toLowerCase();
+      var yearFilter = $("#year-filter").val();
+      var typeFilter = $("#type-filter").val();
+
+      $(".news-card").each(function() {
+        var titleElem = $(this).find(".card-title");
+        if (titleElem.length === 0) {
+          titleElem = $(this).find("h5");
+        }
+        var newsTitle = titleElem.text().toLowerCase();
+        var newsYear = $(this).data("year");
+        var newsType = $(this).data("type");
+
+        var matchesSearch = newsTitle.includes(searchInput);
+        var matchesYear = !yearFilter || newsYear == yearFilter;
+        var matchesType = !typeFilter || newsType == typeFilter;
+
+        if (matchesSearch && matchesYear && matchesType) {
+          $(this).show();
+        } else {
+          $(this).hide();
+        }
+      });
+    }
+
+    function updateHeading() {
+        var searchInput = $("#search-input").val().trim();
+        var date = $("#year-filter").val();
+        var type = $("#type-filter").val();
+        if (searchInput.length > 0 || (date && date.trim()) || (type && type.trim())) {
+          $("#heading").text("Search Results");
+        } else {
+          $("#heading").text("Past News/Blogs");
+        }
+    }
+
+    $("#search-input").on("input", function() {
+      filterNews();
+      updateHeading();
+    });
+    $("#year-filter").on("change", function() {
+      filterNews();
+      updateHeading();
+    });
+    $("#type-filter").on("change", function() {
+      filterNews();
+      updateHeading();
+    });
+  });
+</script>
 {% endblock %}

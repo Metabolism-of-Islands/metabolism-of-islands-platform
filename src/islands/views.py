@@ -119,6 +119,7 @@ def past_islands_visualisations(request):
     info = all_items[0]
     data = info.data
     properties = info.get_dataviz_properties
+    unit = None
     units = data.values("unit__name").filter(quantity__isnull=False).order_by("unit__name").distinct()
     if units.count() == 1:
         unit = units[0]
@@ -126,6 +127,7 @@ def past_islands_visualisations(request):
     info2 = all_items[1]
     data2 = info2.data
     properties2 = info2.get_dataviz_properties
+    unit2 = None
     units2 = data2.values("unit__name").filter(quantity__isnull=False).order_by("unit__name").distinct()
     if units2.count() == 1:
         unit2 = units[0]   

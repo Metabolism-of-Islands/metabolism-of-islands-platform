@@ -28,6 +28,8 @@ import math
 # To send mail
 from django.core.mail import EmailMultiAlternatives
 
+from django import forms
+
 
 THIS_PROJECT = PROJECT_ID["library"]
 
@@ -510,82 +512,6 @@ def journal(request, slug):
     }
     return render(request, "library/journal.html", context)
 
-'''
-    Export the library item to the user's zotero
-'''
-
-from requests_oauthlib import OAuth1Session
-from django.conf import settings
-from django.shortcuts import redirect
-
-REQUEST_TOKEN_URL = 'https://www.zotero.org/oauth/request'
-AUTHORIZE_URL = 'https://www.zotero.org/oauth/authorize'
-ACCESS_TOKEN_URL = 'https://www.zotero.org/oauth/access'
-
-@login_required
-def zotero_oauth_start(request, id):
-    oauth = OAuth1Session(
-        client_key=settings.ZOTERO_KEY,
-        client_secret=settings.ZOTERO_SECRET,
-        callback_uri=f'http://0.0.0.0:8000/islands/library/{id}/zotero/oauth/callback/'
-    )
-
-    fetch_response = oauth.fetch_request_token(REQUEST_TOKEN_URL)
-    request.session['oauth_token'] = fetch_response.get('oauth_token')
-    request.session['oauth_token_secret'] = fetch_response.get('oauth_token_secret')
-
-    auth_url = oauth.authorization_url(
-        AUTHORIZE_URL,
-        library_access='1',
-        write_access='1', # allow to write to the user's Zotero Library
-    )
-
-    return redirect(auth_url)
-
-ACCESS_TOKEN_URL = "https://www.zotero.org/oauth/access"
-
-@login_required
-def zotero_oauth_callback(request, id):
-    oauth_token = request.GET.get('oauth_token')
-    oauth_verifier = request.GET.get('oauth_verifier')
-
-    # Create OAuth session to exchange verifier for access token
-    oauth = OAuth1Session(
-        client_key=settings.ZOTERO_KEY,
-        client_secret=settings.ZOTERO_SECRET,
-        resource_owner_key=request.session.get('oauth_token'),
-        resource_owner_secret=request.session.get('oauth_token_secret'),
-        verifier=oauth_verifier
-    )
-
-    try:
-        access_token_data = oauth.fetch_access_token(ACCESS_TOKEN_URL)
-    except Exception as e:
-        return JsonResponse({"error": f"Failed to fetch access token: {str(e)}"}, status=400)
-
-    # Extract token and secret from returned dict
-    access_token = access_token_data.get("oauth_token")
-    access_token_secret = access_token_data.get("oauth_token_secret")
-
-    # Create a new OAuth session with the access token
-    newOauth = OAuth1Session(
-        client_key=settings.ZOTERO_KEY,
-        client_secret=settings.ZOTERO_SECRET,
-        resource_owner_key=access_token,
-        resource_owner_secret=access_token_secret
-    )
-
-    # Get user info
-    user_id = access_token_data.get("userID")
-    if not user_id:
-        return JsonResponse({"error": "Zotero user ID not found in access token response."}, status=400)
-
-    # Save the library item to Zotero
-    info = LibraryItem.objects.filter(id=id).first()
-    add_to_zotero(info=info, journal=None, userId=user_id, oauth=newOauth, access_token=access_token)
-
-    # return the user back to the library item page
-    return redirect(f'/islands/library/{id}/?zotero_export=success')
 
 def item(request, id, show_export=True, space=None, layer=None, data_section_type=None, json=False):
     project = get_project(request)
@@ -1410,12 +1336,8 @@ def search_spaces_ajax(request):
             r["results"].append({"id": each.id, "text": s})
     return JsonResponse(r, safe=False)
 
-from django_recaptcha.fields import ReCaptchaField
-from django_recaptcha.widgets import ReCaptchaV2Checkbox
-from django_ratelimit.decorators import ratelimit
 
 @login_required
-@ratelimit(key='ip', rate='3/m', method='POST')
 def form(request, id=None, project_name="library", type=None, slug=None, tag=None, space=None, referencespace_photo=None):
 
     # Slug is only there because one of the subsites has it in the URL; it does not do anything

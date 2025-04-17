@@ -112,8 +112,6 @@ baseline_urlpatterns = [
     path("library/<int:id>/report/", library.report_error, name="report_error"),
     path("library/<int:id>/data/json/", library.data_json, name="library_data_json"),
     path("library/<int:id>/download/<int:document>/", library.document_download, name="document_download"),
-    path("library/<int:id>/zotero/oauth/start/", library.zotero_oauth_start, name="zotero-oauth-start"),
-    path("library/<int:id>/zotero/oauth/callback/", library.zotero_oauth_callback, name="zotero-oauth-callback"),
     path("download/<int:document>/", library.document_download, name="document_download"),
 
     # Control panel URLS
@@ -147,6 +145,7 @@ baseline_urlpatterns = [
     # News links
     path("news/", core.news_list, name="news"),
     path("news/<slug:slug>/", core.news, name="news"),
+    path("events_list/", core.events_list, name="events_list"),
     path("events/", core.event_list, name="events"),
     path("events/<int:id>/<slug:slug>/", core.event, name="event"),
 

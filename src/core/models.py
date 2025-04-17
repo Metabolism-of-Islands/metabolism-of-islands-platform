@@ -611,6 +611,12 @@ class News(Record):
     projects = models.ManyToManyField(Project)
     include_in_timeline = models.BooleanField(default=False)
 
+    TYPE_CHOICES = (
+        ("news", "News"),
+        ("blog", "Blog"),
+    )
+    article_type = models.CharField(max_length=10, choices=TYPE_CHOICES, default="news")
+
     def get_absolute_url(self):
         if self.projects.count() > 0:
             p = self.projects.all()[0]

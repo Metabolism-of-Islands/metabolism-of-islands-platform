@@ -344,14 +344,6 @@
                     <span>.PDF</span>
                   </div>
                 </div>
-                <br>
-                <h6>Reference Manager:</h6>
-                <div class="export-options">
-                  <div class="export-card" id="exportZotero">
-                    <i class="fal fa-book fa-2x"></i>
-                    <span>Zotero</span>
-                  </div>
-                </div>
               </div>
             </div>    
 
@@ -364,19 +356,6 @@
                 </span>
               </div>
             </li>
-
-            <div id="zoteroSuccessModalOverlay" class="modal-overlay"></div>
-
-            <div id="zoteroSuccessModal" class="export-modal">
-              <div class="export-modal-content">
-                <span class="close-modal">&times;</span>
-                <h4 style="text-align:center;">
-                  <i class="fas fa-check-circle" style="color:green;"></i><br>
-                  Successfully Exported to Zotero!
-                </h4>
-                <p style="text-align:center;">This item was added to your Zotero library.</p>
-              </div>
-            </div>
 
           {% endif %}
           <li class="list-group-item table-item">
@@ -1439,30 +1418,6 @@
         }, 1000);  // Delay to ensure modal is hidden before export
       });
 
-      // add to zotero library
-      $('#exportZotero').on('click', function () {
-        window.location.href = 'zotero/oauth/start/';
-      });
-
-      // If add this item to the user's zotero successfully
-      $(document).ready(function() {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get("zotero_export") === "success") {
-          $("#zoteroSuccessModal").fadeIn();
-
-          // Optional: close modal on click
-          $(".close-modal").on("click", function () {
-            $("#zoteroSuccessModal").fadeOut();
-          });
-
-          // Optional: auto-hide after 5 seconds
-          setTimeout(() => {
-            $("#zoteroSuccessModal").fadeOut();
-          }, 5000);
-        }
-      });
-
-
       // Close modal helper
       function closeModal() {
         $("#exportModal").removeClass("show");
@@ -1473,27 +1428,6 @@
       }
     });
 
-    // this will show whenever the item is added successfully into the user's zotero library
-    $(document).ready(function () {
-      const params = new URLSearchParams(window.location.search);
-
-      if (params.get("zotero_export") === "success") {
-        $("#zoteroSuccessModal").addClass("show");
-        $("#zoteroSuccessModalOverlay").fadeIn();
-
-        // Close manually
-        $(".close-modal").on("click", function () {
-          $("#zoteroSuccessModal").removeClass("show");
-          $("#zoteroSuccessModalOverlay").fadeOut();
-        });
-
-        // Auto close after 4 seconds
-        setTimeout(() => {
-          $("#zoteroSuccessModal").removeClass("show");
-          $("#zoteroSuccessModalOverlay").fadeOut();
-        }, 4000);
-      }
-    });
 
     function openSharePopup() {
       $("#sharePopup").css("display", "block");
