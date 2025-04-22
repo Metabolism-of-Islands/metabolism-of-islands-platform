@@ -1397,6 +1397,8 @@ def form(request, id=None, project_name="library", type=None, slug=None, tag=Non
         # and only when we add, not when we edit items.
         view_processing = True
 
+    library_forms = ["Book", "Book Section", "Conference Paper", "Journal Article", "Poster", "Presentation", "Report", "Thesis", "Webpage"]
+
     if type.name == "Video Recording":
         fields = ["name", "description", "url", "video_site", "author_list", "duration", "spaces", "year", "language", "license", "comments"]
         labels = {
@@ -1514,7 +1516,6 @@ def form(request, id=None, project_name="library", type=None, slug=None, tag=Non
             fields.remove("language")
             fields.remove("url")
 
-        library_forms = ["Book", "Book Section", "Conference Paper", "Journal Article", "Poster", "Presentation", "Report", "Thesis", "Webpage"]
 
         if type.name in library_forms:
             fields.append("contact_email") # allow the uploader to be contacted through their email regarding their upload  

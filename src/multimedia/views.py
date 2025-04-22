@@ -7,14 +7,11 @@ from core.mocfunctions import *
 from django.contrib import messages
 
 def index(request):
-    webpage = get_object_or_404(Project, pk=PAGE_ID["multimedia_library"])
     videos = Video.objects.filter(tags__parent_tag__id=749).distinct()
     podcasts = LibraryItem.objects.filter(type__name="Podcast").order_by("-date_created")
     dataviz = LibraryItem.objects.filter(type__name="Data visualisation").order_by("-date_created")
     context = {
-        "edit_link": "/admin/core/project/" + str(webpage.id) + "/change/",
         "show_project_design": True,
-        "webpage": webpage,
         "videos_count": videos.count(),
         "videos": videos.order_by("-date_created")[:5],
         "podcasts_count": podcasts.count(),
@@ -28,10 +25,25 @@ def index(request):
 def videos(request, collection=750):
     collections = Tag.objects.get(pk=749)
     collection = Tag.objects.get(pk=collection)
+    
+    EXCLUDED_NAMES = [
+        "Starter Kit Video",
+        "MOOC Videos",
+        "Urban metabolism Interviews",
+        "2019 Seminar Series",
+        "Curso: Recopilación de datos",
+        "Masterclass: Designing with Flows",
+        "Curso: Procesamiento de datos",
+        "Programming contributor support videos",
+        "CitySessions",
+    ]
+
+    categories = Tag.objects.filter(parent_tag=collections).exclude(name__in=EXCLUDED_NAMES).order_by("id")
+
     context = {
         "webpage": get_object_or_404(Webpage, pk=61),
         "list": Video.objects.filter(tags=collection),
-        "categories": Tag.objects.filter(parent_tag=collections).order_by("id"),
+        "categories": categories,
         "collection": collection,
     }
     return render(request, "multimedia/video.list.html", context)

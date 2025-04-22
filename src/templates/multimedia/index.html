@@ -1,6 +1,6 @@
 {% extends "_base.html" %}
 
-{% block title %}{{ webpage }}{% endblock %}
+{% block title %}Metabolism of Island Multimedia Library{% endblock %}
 
 {% block css %}
   <style type="text/css">
@@ -23,9 +23,9 @@
 {% endblock %}
 
 {% block content %}
-  <h1>{{ webpage }}</h1>
+  <h1>Metabolism of Island Multimedia Library</h1>
 
-  {{ webpage.description|safe }}
+  <p>The multimedia library is a collection of resources for you to watch, listen and learn from.</p>
 
   <div class="row">
 
@@ -50,22 +50,6 @@
           the MOOC on Urban Metabolism for Policy Makers.
         </div>
       </div>
-      <div class="card mt-5">
-        <a href="{% url "multimedia:videos" %}">
-          <img src="/media/records/maxresdefaulteditedplay_ZmegQtl.jpg" class="card-img-top" alt="">
-        </a>
-        <div class="card-header">
-          Latest additions
-        </div>
-        <div class="list-group list-group-flush">
-        {% for each in videos %}
-          <a class="list-group-item" href="{{ each.get_absolute_url }}">
-            {{ each }}
-          </a>
-        {% endfor %}
-        </div>
-      </div>
-
     </div>
 
     <div class="col-4">
@@ -89,21 +73,6 @@
           <strong>Listen to episodes</strong> of the Circular Metabolism podcast hosted by
           Aristide Athanassiadis and Stephan Kampelmann as they discuss
           circular metabolism in theory and practice.
-        </div>
-      </div>
-      <div class="card mt-5">
-        <a href="{% url "multimedia:podcasts" %}">
-          <img src="/media/records/maxresdefaultPCM01.jpg" class="card-img-top" alt="">
-        </a>
-        <div class="card-header">
-          Latest additions
-        </div>
-        <div class="list-group list-group-flush">
-        {% for each in podcasts %}
-          <a class="list-group-item" href="{{ each.get_absolute_url }}">
-            {{ each }}
-          </a>
-        {% endfor %}
         </div>
       </div>
     </div>
@@ -130,21 +99,6 @@
           data-rich work into visual representations. Visualising data can not
           only enable to summarise big amounts of numbers, but it can also make
           it easier to share them and use them as policy instruments.
-        </div>
-      </div>
-      <div class="card mt-5">
-        <a href="{% url "multimedia:datavisualizations" %}">
-          <img src="/media/dataviz/70.jpg" class="card-img-top" alt="">
-        </a>
-        <div class="card-header">
-          Latest additions
-        </div>
-        <div class="list-group list-group-flush">
-        {% for each in dataviz %}
-          <a class="list-group-item" href="{{ each.get_absolute_url }}">
-            {{ each }}
-          </a>
-        {% endfor %}
         </div>
       </div>
 
