@@ -326,14 +326,14 @@
         <div class="row">
           <div class="col-sm-6 col-md-4">
             <div class="form-group">
-              <label for="before">Published before</label>
-              <input type="number" class="form-control" id="before" min="1900" max="{{ current_year }}" name="before" value="{{ request.GET.before }}">
+              <label for="after">Published after (included)</label>
+              <input type="number" class="form-control" id="after" min="1900" max="{{ current_year }}" name="after" value="{{ request.GET.after }}">
             </div>
           </div>
           <div class="col-sm-6 col-md-4">
             <div class="form-group">
-              <label for="after">Published after</label>
-              <input type="number" class="form-control" id="after" min="1900" max="{{ current_year }}" name="after" value="{{ request.GET.after }}">
+              <label for="before">Published before (included)</label>
+              <input type="number" class="form-control" id="before" min="1900" max="{{ current_year }}" name="before" value="{{ request.GET.before }}">
             </div>
           </div>
           <div class="col-sm-6 col-md-4">

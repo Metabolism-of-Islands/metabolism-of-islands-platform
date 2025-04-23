@@ -318,7 +318,12 @@
 
             <div id="exportModalOverlay" class="modal-overlay"></div>
 
-            <div id="exportModal" class="export-modal">
+            <div id="exportModal" class="export-modal"> 
+              <!-- Export these content -->
+              <div id="article-content" style="display: none;">
+                <h1>{{ info.name }}</h1>
+                <p>{{ info.description|safe }}</p>
+              </div>
               <div class="export-modal-content">
                 <span class="close-modal">&times;</span>
                 <h5>Please choose the format to export:</h5>
@@ -1381,14 +1386,14 @@
       // Export TXT functionality
       $("#exportTxt").on("click", function () {
         // Get all visible text content from the page
-        const content = $("body").text().trim();
+        const content = $("#article-content").text().trim();
 
         const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
         const url = URL.createObjectURL(blob);
 
         const link = document.createElement("a");
         link.href = url;
-        link.download = "page-export.txt";
+        link.download = "article-export.txt";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -1408,7 +1413,7 @@
 
           const opt = {
             margin:       0.5,
-            filename:     'page-export.pdf',
+            filename:     'article-export.pdf',
             image:        { type: 'jpeg', quality: 0.98 },
             html2canvas:  { scale: 2 },
             jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }

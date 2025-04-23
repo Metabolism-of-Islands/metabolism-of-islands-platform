@@ -377,7 +377,8 @@
     });
     $(document).ready(function () {
       $(".clickable-card").on("click", function () {
-        window.location.href = $(this).data("url");
+        const url = $(this).data("url");
+        window.open(url, "_blank"); // opens in a new tab
       });
     });
   </script>

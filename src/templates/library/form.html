@@ -45,19 +45,23 @@
   <form method="post" enctype="multipart/form-data">
 
     <!-- Attach the video for dataset, image upload -->
-    {% if type.name == "Dataset" or type.name == "Image"  %} 
+    {% if type.name == "Dataset" or type.name == "Image" %} 
       <div class="alert alert-warning">
         <i class="fa fa-fw fa-info-circle"></i>
         Instructions: make sure you watch the video tutorial on how to upload the {{ type.name }}
         <br>
-        <a id="instructionLink" href="" class="btn btn-primary mt-3">
+        <a id="instructionLink"
+          href=""
+          class="btn btn-primary mt-3"
+          target="_blank"
+          rel="noopener noreferrer">
           <i class="fa fa-video"></i> Instruction video on how to upload <span id="typeName">{{ type.name }}</span>
         </a>
+
         <script>
           // Get the link and text elements
           var linkElement = document.getElementById("instructionLink");
           var typeNameElement = document.getElementById("typeName").innerHTML;
-
 
           // Define different URLs based on type.name
           var tutorialLinks = {

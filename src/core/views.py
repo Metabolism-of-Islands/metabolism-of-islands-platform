@@ -33,6 +33,8 @@ from collections import defaultdict
 from django.template import Context
 from django.forms import modelform_factory
 
+from django import forms
+
 from datetime import datetime
 import csv
 
@@ -930,6 +932,38 @@ def hub_bookmark_items(request):
     }
     
     return render(request, "hub/bookmark_item.html", context)
+
+def subscribe(request):
+    return render(request, "subscribe.html")
+
+from django.core.mail import EmailMessage
+
+def contact(request):
+
+    success = False
+
+    if request.method == "POST":
+        name = request.POST.get("names")
+        email = request.POST.get("email")
+        organisation = request.POST.get("Affiliation")
+        message = request.POST.get("message")
+
+        email_msg = EmailMessage(
+            subject=f"New contact form submission from {name}" + (f" from {organisation}" if organisation else ""),
+            body=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,  
+            to=[settings.DEFAULT_FROM_EMAIL],
+            reply_to=[email], 
+        )
+        email_msg.send(fail_silently=False)
+        success = True
+
+    context = {
+        "success": success,
+    }
+
+    return render(request, "template/contact.html", context=context)
+
 
 # Control panel and general contribution components
 
@@ -2205,7 +2239,7 @@ def newsletter(request):
                 people = People.objects.create(
                     name = request.POST.get("name"),
                     email = email,
-                    institution = institution,
+                    affiliation = institution,
                 )
             RecordRelationship.objects.create(
                 relationship_id = 28,

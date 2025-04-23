@@ -1641,6 +1641,9 @@ def form(request, id=None, project_name="library", type=None, slug=None, tag=Non
     if type.name == "Shapefile" or type.name == "Dataset" or type.name == "GPS Coordinates":
         files = True
 
+    if type.name == "Video Recording" and curator:
+        form.fields["tags"].queryset = Tag.objects.all()
+        
     if request.method == "POST":
         if form.is_valid():
             info = form.save(commit=False)

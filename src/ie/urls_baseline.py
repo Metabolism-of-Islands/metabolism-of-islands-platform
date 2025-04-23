@@ -170,4 +170,6 @@ baseline_urlpatterns = [
     path("messages/<int:id>/edit/", community.message_form, name="message_form"),
     path("page/<slug:slug>/", core.article, {"prefix": "/page/"}, name="article"),
 
+    # contact form
+    path("about/contact/", core.contact, name="contact_form"),
 ]
