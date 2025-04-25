@@ -257,6 +257,15 @@
       color: #333;
     }
 
+    /* Copy Link */
+    #copy-link .fa-copy {
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    #copy-link .fa-copy:hover {
+      color: #007bff; 
+    }
   </style>
 {% endblock %}
 
@@ -308,9 +317,9 @@
                 <span class="bookmark-btn" data-item-id="{{ info.id }}" role="button" tabindex="0" 
                   style="cursor: pointer; color: inherit; background: none; border: none; padding: 0; font: inherit; display: inline-flex; align-items: center;">
                   {% if is_saved %}
-                      <i class="fas fa-fw fa-bookmark bookmark-icon" style="margin-right: 5px; color: gold;"></i> Remove
+                    <i class="fas fa-fw fa-bookmark bookmark-icon" style="margin-right: 5px; color: gold;"></i> Remove
                   {% else %}
-                      <i class="fal fa-fw fa-bookmark bookmark-icon" style="margin-right: 5px;"></i> Save
+                    <i class="fal fa-fw fa-bookmark bookmark-icon" style="margin-right: 5px;"></i> Save
                   {% endif %}
                 </span>
               </div>
@@ -357,7 +366,7 @@
               <div>
                 <span class="export-btn" data-item-id="{{ info.id }}" role="button" tabindex="0"
                   style="cursor: pointer; color: inherit; background: none; border: none; padding: 0; font: inherit; display: inline-flex; align-items: center;">
-                  <i class="fal fa-upload"></i>
+                  <i class="fal fa-upload" data-toggle="tooltip" title="Export this item"></i>
                 </span>
               </div>
             </li>
@@ -375,7 +384,15 @@
               <i class="fal fa-fw fa-share-square"></i>
               Share
             </div>
-            <div><i class="fal fa-fw fa-share share-button" onclick="openSharePopup()"></i></div>
+            <div><i class="fal fa-fw fa-share share-button" data-toggle="tooltip" title="Share this item" onclick="openSharePopup()"></i></div>
+          </li>
+
+          <li class="list-group-item table-item" id="copy-link">
+            <div>
+              <i class="fal fa-fw fa-link"></i>
+              Copy Link
+            </div>
+            <div><i class="fal fa-fw fa-copy" data-toggle="tooltip" title="Copy link to clipboard"></i></div>
           </li>
 
           <!-- Overlay -->
@@ -1489,6 +1506,36 @@
     // Share via Reddit
     function shareReddit() {
       window.open(`https://www.reddit.com/submit?url=${shareURL}&title=Check this out!`, "_blank");
+    }
+
+    // Copy Link to clipboard
+    $("#copy-link").on("click", function () {
+      const currentUrl = window.location.href;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(currentUrl).then(function () {
+          alert("Link copied to clipboard!");
+        }).catch(function (err) {
+          fallbackCopy(currentUrl);
+        });
+      } else {
+        fallbackCopy(currentUrl);
+      }
+    });
+
+    // Note: This fallback is for user's that using the old version of browser that do not support navigator.clipboard
+    function fallbackCopy(text) {
+      const tempInput = $("<input>");
+      $("body").append(tempInput);
+      tempInput.val(text).select();
+      try {
+        const successful = document.execCommand('copy');
+        alert(successful ? "Link copied to clipboard!" : "Copy failed.");
+      } catch (err) {
+        alert("Failed to copy link.");
+        console.error(err);
+      }
+      tempInput.remove();
     }
   </script>
 {% endblock %}
