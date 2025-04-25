@@ -964,6 +964,31 @@ def contact(request):
 
     return render(request, "template/contact.html", context=context)
 
+# This is the data processor form for user to request to become a data processor
+@login_required
+def data_processor_form(request):
+    success = False
+
+    if request.method == "POST":
+        name = request.user.first_name
+        email = request.user.email
+        message = request.POST.get("message")
+
+        email_msg = EmailMessage(
+            subject=f"User {name} with email {email} has requested to become a data processor",
+            body=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[settings.DEFAULT_FROM_EMAIL],
+            reply_to=[email], 
+        )
+        email_msg.send(fail_silently=False)
+        success = True
+
+    context = {
+        "success": success,
+    }
+    return render(request, "template/data_processor_form.html", context=context)
+
 
 # Control panel and general contribution components
 

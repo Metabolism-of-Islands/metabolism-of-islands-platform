@@ -172,4 +172,7 @@ baseline_urlpatterns = [
 
     # contact form
     path("about/contact/", core.contact, name="contact_form"),
+
+    # data processor form
+    path("data_processor_form/", core.data_processor_form, name="data_processor_form"),
 ]
