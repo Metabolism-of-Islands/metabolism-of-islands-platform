@@ -2,6 +2,13 @@
 
 {% block content %}
 
+{% if is_confirm %}
+<div class="alert alert-success mt-4" role="alert">
+  <h4 class="alert-heading">✅ Message Sent Successfully!</h4>
+  <p>Thank you for subscribing to our newsletter. We have sent you a confirmation email. Please confirm your email before proceeding.</p>
+  <hr>
+</div>
+{% else %}
 <div class="card register">
   <div class="card-body">
 
@@ -51,5 +58,5 @@
 
   </div>
 </div>
-
+{% endif %}
 {% endblock %}

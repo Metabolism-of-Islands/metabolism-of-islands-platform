@@ -5,7 +5,13 @@
 {% block title %}Contact us{% endblock %}
 
 {% block content %}
-{% if success %}
+{% if is_confirm %}
+<div class="alert alert-success mt-4" role="alert">
+  <h4 class="alert-heading">✅ Message Sent Successfully!</h4>
+  <p>Thank you for subscribing to our newsletter. We have sent you a confirmation email. Please confirm your email before proceeding.</p>
+  <hr>
+</div>
+{% elif success %}
 <div class="alert alert-success mt-4" role="alert">
   <h4 class="alert-heading">✅ Message Sent Successfully!</h4>
   <p>Thank you for reaching out. We’ve received your message and will typically respond within <strong>1–3 business days</strong>.</p>

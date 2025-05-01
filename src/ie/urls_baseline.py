@@ -166,12 +166,14 @@ baseline_urlpatterns = [
 
     # Various
     path("newsletter/", core.newsletter, name="newsletter"),
+    path("confirm/newsletter/<str:token>/", core.confirm_newsletter, name="confirm_newsletter"),
     path("massmail/", core.massmail, name="massmail"),
     path("messages/<int:id>/edit/", community.message_form, name="message_form"),
     path("page/<slug:slug>/", core.article, {"prefix": "/page/"}, name="article"),
 
     # contact form
     path("about/contact/", core.contact, name="contact_form"),
+    path("contact/confirm/<str:token>/", core.confirm_contact, name="confirm_contact"),
 
     # data processor form
     path("data_processor_form/", core.data_processor_form, name="data_processor_form"),

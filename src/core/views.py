@@ -936,11 +936,37 @@ def hub_bookmark_items(request):
 def subscribe(request):
     return render(request, "subscribe.html")
 
+from django.shortcuts import redirect
+
+def confirm_contact(request, token):
+    data = request.session.get(f"pending_contact_{token}")
+    if not data:
+        return HttpResponse("Invalid or expired confirmation link.", status=400)
+
+    # Send the actual message to your inbox
+    email_msg = EmailMessage(
+        subject=f"New contact form submission from {data['name']} with email {data['email']}" + (f" from {data['organisation']}" if data['organisation'] else ""),
+        body=data["message"],
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[settings.DEFAULT_FROM_EMAIL],
+        reply_to=[data["email"]],
+    )
+    email_msg.send()
+
+    # Cleanup session
+    del request.session[f"pending_contact_{token}"]
+
+    context = {
+        "success": True,
+    }
+
+    return render(request, "template/contact.html", context=context)
+
 from django.core.mail import EmailMessage
 
 def contact(request):
 
-    success = False
+    is_confirm = None
 
     if request.method == "POST":
         name = request.POST.get("names")
@@ -948,18 +974,35 @@ def contact(request):
         organisation = request.POST.get("Affiliation")
         message = request.POST.get("message")
 
-        email_msg = EmailMessage(
-            subject=f"New contact form submission from {name}" + (f" from {organisation}" if organisation else ""),
-            body=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,  
-            to=[settings.DEFAULT_FROM_EMAIL],
-            reply_to=[email], 
+        # Generate confirmation token
+        token = str(uuid.uuid4())
+
+        # Save data in session (you could also use a DB model)
+        request.session[f"pending_contact_{token}"] = {
+            "name": name,
+            "email": email,
+            "organisation": organisation,
+            "message": message,
+        }
+
+        # Create confirmation link
+        confirm_url = request.build_absolute_uri(
+            reverse("core:confirm_contact", args=[token])
         )
-        email_msg.send(fail_silently=False)
-        success = True
+
+        # Send confirmation email to the user
+        send_mail(
+            subject="Confirm your message to Metabolism of Islands",
+            message=f"Hi {name},\n\nPlease confirm your message by clicking the link below:\n{confirm_url}\n\nIf you did not make this request, you can ignore this email.",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+
+        is_confirm = True
 
     context = {
-        "success": success,
+        "is_confirm": is_confirm,
     }
 
     return render(request, "template/contact.html", context=context)
@@ -2239,6 +2282,8 @@ def newsletter(request):
     if request.user.is_authenticated:
         is_subscribed = RecordRelationship.objects.filter(relationship_id=28, record_parent=request.user.people, record_child_id=request.project)
 
+    is_confirm = None
+
     if request.method == "POST":
         if "unsubscribe" in request.POST and is_subscribed:
             is_subscribed.delete()
@@ -2254,48 +2299,114 @@ def newsletter(request):
 
             messages.success(request, "You have successfully unsubscribed.")
         elif not is_subscribed:
-            email, institution = None, None
             if request.user.is_authenticated:
                 people = request.user.people
                 email = request.user.email
+                RecordRelationship.objects.create(
+                    relationship_id = 28,
+                    record_parent = people,
+                    record_child_id = request.project,
+                )
+                is_subscribed = True
+                
+                message = f"User with an email {email} has subscribed to a newsletter."
+                
+                send_mail(
+                    subject="Newsletter Subscription",
+                    message=message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[settings.DEFAULT_FROM_EMAIL],
+                    fail_silently=False,
+                )
+
+                messages.success(request, "You have successfully subscribed to our newsletter")
             else:
+                name = request.POST.get("name")
                 email = request.POST.get("email")
                 institution = request.POST.get("institution")
-                people = People.objects.create(
-                    name = request.POST.get("name"),
-                    email = email,
-                    affiliation = institution,
+
+                # confirm the user's email
+                # Generate confirmation token
+                token = str(uuid.uuid4())
+
+                # Save data in session (you could also use a DB model)
+                request.session[f"pending_contact_{token}"] = {
+                    "name": name,
+                    "email": email,
+                    "institution": institution,
+                }
+
+                # Create confirmation link
+                confirm_url = request.build_absolute_uri(
+                    reverse("core:confirm_newsletter", args=[token])
                 )
-            RecordRelationship.objects.create(
-                relationship_id = 28,
-                record_parent = people,
-                record_child_id = request.project,
-            )
-            is_subscribed = True
-            
-            message = None
 
-            if institution:
-                message = f"User with an email {email} from institution {institution} has subscribed to a newsletter."
-            else:
-                message = f"User with an email {email} has subscribed to a newsletter."
-            
-            send_mail(
-                subject="Newsletter Subscription",
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[settings.DEFAULT_FROM_EMAIL],
-                fail_silently=False,
-            )
+                # Send confirmation email to the user
+                send_mail(
+                    subject="Confirm your message to Metabolism of Islands",
+                    message=f"Hi {name},\n\nPlease confirm your message by clicking the link below:\n{confirm_url}\n\nIf you did not make this request, you can ignore this email.",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email],
+                    fail_silently=False,
+                )
 
-            messages.success(request, "You have successfully subscribed to our newsletter")
+                is_confirm = True
+
+    context = {
+        "title": "Newsletter signup",
+        "is_subscribed": is_subscribed,
+        "is_confirm": is_confirm,
+    }
+    return render(request, "newsletter.html", context)
+
+def confirm_newsletter(request, token):
+    data = request.session.get(f"pending_contact_{token}")
+    if not data:
+        return HttpResponse("Invalid or expired confirmation link.", status=400)
+
+    message = None
+
+    people = People.objects.create(
+        name = data["name"],
+        email = data["email"],
+        affiliation = data["institution"],
+    )
+
+    RecordRelationship.objects.create(
+        relationship_id = 28,
+        record_parent = people,
+        record_child_id = request.project,
+    )
+    is_subscribed = True
+    
+    if data['institution']:
+        message = f"User with name {data['name']} and email {data['email']} from institution {data['institution']} has subscribed to a newsletter."
+    else:
+        message = f"User with name {data['name']} and email {data['email']} has subscribed to a newsletter."
+
+    # Send the actual message to your inbox
+    send_mail(
+        subject="Newsletter Subscription",
+        message=message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[settings.DEFAULT_FROM_EMAIL],
+        fail_silently=False,
+    )
+
+    messages.success(request, "You have successfully subscribed to our newsletter")
+
+    # Cleanup session
+    del request.session[f"pending_contact_{token}"]
+
+    context = {
+        "success": True,
+    }
 
     context = {
         "title": "Newsletter signup",
         "is_subscribed": is_subscribed,
     }
     return render(request, "newsletter.html", context)
-
 
 # TEMPORARY PAGES DURING DEVELOPMENT
 
