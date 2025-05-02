@@ -20,7 +20,7 @@ from markdown import markdown
 from tinymce.widgets import TinyMCE
 
 # These are used so that we can send mail
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.template.loader import render_to_string, get_template
 
 from django.conf import settings
@@ -936,7 +936,6 @@ def hub_bookmark_items(request):
 def subscribe(request):
     return render(request, "subscribe.html")
 
-from django.shortcuts import redirect
 
 def confirm_contact(request, token):
     data = request.session.get(f"pending_contact_{token}")
@@ -961,8 +960,6 @@ def confirm_contact(request, token):
     }
 
     return render(request, "template/contact.html", context=context)
-
-from django.core.mail import EmailMessage
 
 def contact(request):
 
