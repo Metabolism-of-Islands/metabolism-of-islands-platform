@@ -38,7 +38,6 @@ from django import forms
 from datetime import datetime
 import csv
 
-from django.contrib.admin.models import LogEntry, ADDITION, CHANGE
 from django.contrib.admin.utils import construct_change_message
 from django.contrib.contenttypes.models import ContentType
 

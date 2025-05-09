@@ -12,23 +12,39 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css">
 
-  <style>
-    table.results {
-      display:none
-    }
+  <style type="text/css">
+ #map {
+  height: 500px; }
+
+#article-list {
+  position: relative; }
+
+#list-anchor {
+  position: absolute;
+  top: -200px; }
+
+.cluster-circle {
+  background-color: rgba(20, 77, 88, 0.9);
+  color: #fbfbfb;
+  border: 2px solid #144d58;
+  border-radius: 100%;
+  text-align: center;
+  font-size: 1rem;
+  display: flex;
+  justify-content: center;
+  flex-direction: column; }
+
   </style>
+
 {% endblock %}
 
 {% block content %}
 
-  <h1>{{ article.title }}</h1>
-  <p>
-    {{ article.get_description }}
-  </p>
+  <h1>Case Studies</h1>
 
   <div id="map" class="leaflet-map mb-4"></div>
 
-  <h2 class="city-name mt-4"></h2>
+  <h2 class="island-name mt-4"></h2>
 
   <div id="article-list">
     <div id="list-anchor"></div>
@@ -37,11 +53,11 @@
         <tr>
           <th>Title</th>
           <th>Author(s)</th>
-          <th>Space(s)</th>
+          <th>Island(s)</th>
         </tr>
       </thead>
       {% for each in items %}
-        <tr class="single-article" data-cities="{% for space in each.spaces.all %}{{ space }}-{{ space.id }}{% if not forloop.last %} {% endif %}{% endfor %}">
+        <tr class="single-article" data-islands="{% for space in each.spaces.all %}{{ space }}-{{ space.id }}{% if not forloop.last %} {% endif %}{% endfor %}">
         <td>
             <a href="{{ each.get_absolute_url }}">{{ each }}</a>
           <br>
@@ -78,65 +94,63 @@
       center: [20, 0],
       zoom: 2,
     });
-    L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWV0YWJvbGlzbW9mY2l0aWVzIiwiYSI6ImNqcHA5YXh6aTAxcmY0Mm8yMGF3MGZjdGcifQ.lVZaiSy76Om31uXLP3hw-Q", {
-      attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "Map data &copy; <a href='https://www.openstreetmap.org/'>OpenStreetMap</a> contributors, <a href='https://creativecommons.org/licenses/by-sa/2.0/'>CC-BY-SA</a>",
       maxZoom: 15,
       id: "mapbox/streets-v11",
       tileSize: 512,
       zoomOffset: -1,
     }).addTo(map);
 
-    // add all cities to an array
-    var allCities = [];
+    // add all islands to an array
+    var allIslands = [];
     {% for each in items %}
       {% for space in each.spaces.all %}
         {% if space.geometry %}
-          {% if PROJECT.slug == "islands" and space.is_island or PROJECT.slug != "islands" and space.is_city %}
-            allCities.push({
-              "city": "{{ space }}",
-              "id": "{{ space.id }}",
-              "lat": {{ space.geometry.centroid.1 }},
-              "lon": {{ space.geometry.centroid.0 }},
-            });
-          {% endif %}
+          allIslands.push({
+            "island": "{{ space }}",
+            "id": "{{ space.id }}",
+            "lat": {{ space.geometry.centroid.1 }},
+            "lon": {{ space.geometry.centroid.0 }},
+          });
         {% endif %}
       {% endfor %}
     {% endfor %}
 
-    // remove duplicates from cities array
-    var cities = allCities.filter((city, index, self) =>
+    // remove duplicates from islands array
+    var islands = allIslands.filter((island, index, self) =>
       index === self.findIndex((t) => (
-        t.city === city.city
+        t.island === island.island
       ))
     )
 
-    // get number of articles per city - https://stackoverflow.com/a/43673826
-    var articlesPerCity = allCities.reduce( (acc, o) => (acc[o.city] = (acc[o.city] || 0)+1, acc), {} );
+    // get number of articles per island - https://stackoverflow.com/a/43673826
+    var articlesPerIsland = allIslands.reduce( (acc, o) => (acc[o.island] = (acc[o.island] || 0)+1, acc), {} );
 
-    // loop through cities and add number of articles for each
+    // loop through islands and add number of articles for each
     let i;
-    for (i = 0; i < Object.keys(cities).length; i++) {
-      cities[i].articles = articlesPerCity[cities[i].city];
+    for (i = 0; i < Object.keys(islands).length; i++) {
+      islands[i].articles = articlesPerIsland[islands[i].island];
     }
 
-    function openCity(e) {
-      let cityName = e.layer.options.city;
-      let cityId = e.layer.options.id;
+    function openIsland(e) {
+      let islandName = e.layer.options.island;
+      let islandId = e.layer.options.id;
 
       $("table.results").show();
-      $("h2.city-name").text(cityName);
-      $(".single-article").removeClass("visible");
+      $("h2.island-name").text(islandName);
+      $(".single-article").hide();
       $(".single-article").each(function() {
-        if ( $(this).data("cities").includes(cityName + "-" + cityId) ) {
-          $(this).addClass("visible")
+        if ( $(this).data("islands").includes(islandName + "-" + islandId) ) {
+          $(this).show();
         }
       });
 
       scrollToID("list-anchor");
     }
 
-    // create marker group for all cities
-    var citiesMarkers = L.markerClusterGroup({
+    // create marker group for all islands
+    var islandsMarkers = L.markerClusterGroup({
       iconCreateFunction: function(cluster) {
         var markers = cluster.getAllChildMarkers();
         var n = 0;
@@ -162,21 +176,21 @@
       }
     });
 
-    cities.forEach(
-      city => citiesMarkers.addLayer(L.marker([city.lat, city.lon], {
-        articles: city.articles,
-        city: city.city,
-        id: city.id,
+    islands.forEach(
+      island => islandsMarkers.addLayer(L.marker([island.lat, island.lon], {
+        articles: island.articles,
+        island: island.island,
+        id: island.id,
         icon: L.divIcon({
           className: "cluster-circle",
-          html: city.articles,
-          iconSize: L.point(30 + city.articles, 30 + city.articles),
+          html: island.articles,
+          iconSize: L.point(30 + island.articles, 30 + island.articles),
         }),
-        html: city.articles,
-      })).on("click", openCity)
+        html: island.articles,
+      })).on("click", openIsland)
     );
 
-    map.addLayer(citiesMarkers);
+    map.addLayer(islandsMarkers);
 
     // show (basically) the whole world
     function showWorld() {

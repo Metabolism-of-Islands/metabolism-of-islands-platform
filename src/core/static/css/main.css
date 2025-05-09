@@ -1865,29 +1865,6 @@ body.library.search .large-icon-box i {
   right: -.5rem;
   bottom: -.5rem; }
 
-body.library.map #map {
-  height: 500px; }
-
-body.library.map #article-list {
-  position: relative; }
-  body.library.map #article-list #list-anchor {
-    position: absolute;
-    top: -200px; }
-
-body.library.map .single-article:not(.visible) {
-  display: none; }
-
-body.library.map .cluster-circle {
-  background-color: rgba(20, 77, 88, 0.9);
-  color: #fbfbfb;
-  border: 2px solid #144d58;
-  border-radius: 100%;
-  text-align: center;
-  font-size: 1rem;
-  display: flex;
-  justify-content: center;
-  flex-direction: column; }
-
 body.library.item .item-title {
   font-size: 2rem; }
 

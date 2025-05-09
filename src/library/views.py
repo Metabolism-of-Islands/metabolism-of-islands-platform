@@ -1259,20 +1259,8 @@ Details
 
 def map(request, article, tag=None):
     info = get_object_or_404(Webpage, pk=article)
-    project = get_project(request)
-
-    if project.slug == "islands":
-        list = ReferenceSpace.objects.filter(geocodes=8355)
-        items = LibraryItem.objects.filter(status="active", spaces__in=list)
-    elif tag:
-        items = LibraryItem.objects.filter(status="active", tags__id=tag)
-    else:
-        core_filter = get_site_tag(request)
-        items = LibraryItem.objects.filter(tags__id=TAG_ID["case_study"]).filter(tags__id=core_filter) \
-            .prefetch_related("spaces").prefetch_related("tags").prefetch_related("spaces__geocodes").prefetch_related("tags__parent_tag")
-
-    if items:
-        items = items.select_related("type")
+    core_filter = get_site_tag(request)
+    items = LibraryItem.objects.filter(tags__id=1).select_related("type").prefetch_related("spaces")
 
     context = {
         "article": info,
