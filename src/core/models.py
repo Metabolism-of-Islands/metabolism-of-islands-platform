@@ -828,7 +828,7 @@ class People(Record):
         return self.name
 
     def get_absolute_url(self):
-        return reverse("community:person", args=[self.id])
+        return reverse("islands:user", args=[self.id])
 
     @property
     def points(self):

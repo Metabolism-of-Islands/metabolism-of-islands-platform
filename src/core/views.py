@@ -84,7 +84,7 @@ def user_register(request, project="core", section=None):
         check = User.objects.filter(email=email)
         if check:
             current_site = PROJECT_LIST["core"]["url"]
-            messages.error(request, "A Metabolism of Cities account already exists with this e-mail address. Please <a href='/accounts/login/'>log in first</a> or <a href='" + current_site + "accounts/passwordreset/'>reset your password</a>.")
+            messages.error(request, "A Metabolism of Islands account already exists with this e-mail address. Please <a href='/accounts/login/'>log in first</a> or <a href='/accounts/passwordreset/'>reset your password</a>.")
             error = True
         if not error:
             user = User.objects.create_user(email, email, password)
@@ -1051,7 +1051,7 @@ def controlpanel_users(request, id=None):
     if not has_permission(request, request.project, ["curator", "admin", "publisher"]):
         unauthorized_access(request)
 
-    users = RecordRelationship.objects.filter(record_child_id=request.project)
+    users = RecordRelationship.objects.filter(record_child_id=request.project, relationship__name="Team member")
 
     if request.method == "POST":
         user_id = request.POST.get("user_id")
@@ -1096,12 +1096,12 @@ def controlpanel_users_admins(request):
         if user:
             user = user[0]
             people = People.objects.get(user=user)
-            current_site = PROJECT_LIST["core"]["url"]
+            current_site = project.get_website()
             if RecordRelationship.objects.filter(record_parent=people, record_child_id=request.project, relationship_id=21).exists():
                 messages.warning(request, _("This user is already an administrator"))
                 error = True
             else:
-                messages.success(request, _("The user was added as an administrator. NOTE: this user already had an account on this website or any of the other websites in the Metabolism of Cities network. This same account can be used by this user to log in and access the control panel on this website."))
+                messages.success(request, _("The user was added as an administrator. NOTE: this user already had an account on this website or any of the other websites in the Metabolism of Islands network. This same account can be used by this user to log in and access the control panel on this website."))
         else:
             import random
             password = str(random.randrange(1000,9999))

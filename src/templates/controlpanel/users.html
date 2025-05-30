@@ -26,12 +26,11 @@
       <tr>
         <td>
           {% with link=PROJECT.slug|add:":user" %}
-            <a href="{% url link each.record_parent.id %}" class="mr-3"><i class="fa fa-user fa-fw"></i></a>
+            <a title="View user profile" href="{% url link each.record_parent.id %}" class="mr-3"><i class="fa fa-user fa-fw"></i></a>
           {% endwith %}
-          {% if not each.record_parent.people.user %}
-            <a href="../people/{{ each.record_parent.id }}/?next={{ request.get_full_path|urlencode }}" class="mr-3"><i class="fa fa-pencil"></i></a>
-          {% endif %}
-          <a href="{{ each.id }}/">{{ each.record_parent }}</a>
+          <a title="Edit user details" href="../people/{{ each.record_parent.id }}/?next={{ request.get_full_path|urlencode }}" class="mr-3"><i class="fa fa-pencil"></i></a>
+          <a title="Edit role details" href="{{ each.id }}/" class="mr-3"><i class="fa fa-cog"></i></a>
+          {{ each.record_parent }}
         </td>
         <td>{{ each.relationship.name }}</td>
         <td>{{ each.date_created|date:"M d, Y" }}</td>
