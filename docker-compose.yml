@@ -1,21 +1,26 @@
-services:  
+services:
   db:
     image: postgis/postgis:17-3.5
     container_name: moi_db
     environment:
-       POSTGRES_HOST_AUTH_METHOD: trust
-       POSTGRES_PASSWORD: postgres
-       POSTGRES_USER: postgres
-       POSTGRES_DB: moi
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: moi
+    networks:
+      - moi_network
 
   adminer:
     command: php -S 0.0.0.0:8080 -t /var/www/html
     image: adminer:4.8.1
-    depends_on: 
+    depends_on:
       - db
     ports:
       - 8080:8080
     container_name: moi_adminer
+    networks:
+      - moi_network
+
   web:
     build: .
     command: python3 manage.py runserver 0.0.0.0:8000
@@ -26,3 +31,9 @@ services:
     depends_on:
       - db
     container_name: moi_web
+    networks:
+      - moi_network
+
+networks:
+  moi_network:
+    driver: bridge
