@@ -4,11 +4,11 @@ from django.shortcuts import redirect
 from django.contrib.admin import AdminSite
 from django.contrib.auth.models import User, Group
 from django.contrib.admin.models import LogEntry
-#from django_cron.models import CronJobLog
 from django.contrib.gis import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.html import format_html
-from django_cron.helpers import humanize_duration
+#from django_cron.models import CronJobLog
+#from django_cron.helpers import humanize_duration
 
 DEFAULT_EXCLUDE = ["description_html", "date_created", "tags", "spaces", "sectors", "subscribers", "old_id", "meta_data", "materials"]
 DEFAULT_EXCLUDE_WITH_META = DEFAULT_EXCLUDE

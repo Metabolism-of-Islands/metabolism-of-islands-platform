@@ -1,8 +1,8 @@
-Django==4.2.26
-gunicorn==20.1.0
+Django==6.0
+gunicorn
 psycopg[binary]
 Pillow
-django_cron
+#django_cron Not compatible with latest django version; best to rewrite this as a regular command and then set up the cron command on the server directly
 python-dateutil
 django-stdimage
 requests
@@ -17,7 +17,6 @@ feedparser # Quick-fix but really let's sit down one day and review Zotero impor
 xhtml2pdf
 weasyprint
 markdown
-django-debug-toolbar
 pyshp
 python-twitter
 facebook-sdk

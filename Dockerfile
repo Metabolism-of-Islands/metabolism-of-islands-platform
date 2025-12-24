@@ -1,4 +1,4 @@
-FROM python:3.8.2
+FROM python:3.14
 
 # binutils libproj-dev gdal-bin are all required for GeoDjango to work
 # See https://docs.djangoproject.com/en/3.0/ref/contrib/gis/install/geolibs/#installing-geospatial-libraries
