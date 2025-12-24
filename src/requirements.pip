@@ -1,5 +1,4 @@
 Django==6.0
-gunicorn
 psycopg[binary]
 Pillow
 #django_cron Not compatible with latest django version; best to rewrite this as a regular command and then set up the cron command on the server directly
@@ -18,10 +17,6 @@ xhtml2pdf
 weasyprint
 markdown
 pyshp
-python-twitter
-facebook-sdk
-channels
-channels_redis
 bleach
 unidecode
 ffmpeg-python

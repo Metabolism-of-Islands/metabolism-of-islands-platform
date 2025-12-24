@@ -19,13 +19,13 @@ class GeoModelAdmin(admin.ModelAdmin):
 
 class MyAdminSite(AdminSite):
     # Text to put at the end of each page"s <title>.
-    site_title = "Metabolism of Cities Admin"
+    site_title = "Metabolism of Islands Admin"
 
     # Text to put in each page"s <h1> (and above login form).
-    site_header = "Metabolism of Cities Admin"
+    site_header = "Metabolism of Islands Admin"
 
     # Text to put at the top of the admin index page.
-    index_title = "Metabolism of Cities"
+    index_title = "Metabolism of Islands"
     enable_nav_sidebar = False
 
 admin_site = MyAdminSite()

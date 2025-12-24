@@ -1,18 +1,16 @@
 # Overview
 
-This repository contains the source code of [Metabolism of Cities](https://metabolismofcities.org/). The following technologies are used:
+This repository contains the source code of [Metabolism of Islands](https://metabolismofislands.org/). The following technologies are used:
 
-- Django 4
-- Python 3
+- Django
+- Python
 - PostgreSQL 
 - PostGIS
 - Docker
 
 In order to meaningfully contribute to this project (or clone it and use it for your own purposes), you should ideally be comfortable with (or willing to learn about) the aforementioned technologies. You can make a meaningful contribution if you know either about python/Django, or about HTML/CSS/Javascript (allowing you to contribute with back-end or front-end programming, respectively).
 
-The tech work on Metabolism of Cities has so far be done by a small number of people. However, we are very keen to get others involved. Due to the nature of the work, it would be ideal if you have a background both in urban metabolism/industrial ecology, and in web development. If you are not very familiar with our topic matter, but you are a keen programmer and willing to learn and spend time on this project, then we are happy to assist you in that journey.
-
-We don't manage tasks through github, but instead have an online forum and [task list](https://metabolismofcities.org/tasks/?type=9&status=open_unassigned&priority=&project=&tag=) integrated on our website. If you are thinking of contributing, please open a new [forum thread](https://metabolismofcities.org/forum/) and let us know what you have in mind.
+The tech work on Metabolism of Islands has so far be done by a small number of people. However, we are very keen to get others involved. Due to the nature of the work, it would be ideal if you have a background both in urban metabolism/industrial ecology, and in web development. If you are not very familiar with our topic matter, but you are a keen programmer and willing to learn and spend time on this project, then we are happy to assist you in that journey.
 
 # Getting started
 
@@ -29,29 +27,34 @@ To get started with this project, do the following:
 
 Once this is done, you have completed all the required steps to get the system running. Specific details below:
 
-Let's say you have cloned this repository to /home/user/metabolism-of-cities
+Let's say you have cloned this repository to /home/user/metabolism-of-islands
 
-    $ cd /home/user/metabolism-of-cities
+    $ cd /home/user/metabolism-of-islands
     $ mkdir src/{media,logs,static}
     $ cp src/ie/settings.sample.py src/ie/settings.py
     $ sudo docker-compose build
 
-If you are a MacOS user, you should run the MacOS Dockerfile:
+MACOS-SPECIFIC INSTRUCTIONS (ignore if using another OS)
+
+This will likely work on Linux and MacOS, but if you have an issue on MacOS, please run another dockerfile instead. Follow the steps below.
 
     $ sudo docker-compose -f docker-compose.macos.yml build
 
 If you encountered an error regarding the MacOS Python 3.8 Docker Image, you will have to pull this image manually:
+(NOTE: in Dec 2025 a new python dockerfile was loaded; check the latest regular dockerfile and update your own commands accordingly)
 
     $ docker pull python:3.8
 
 Now that this is done, you can run the container like so:
 
-    $ cd /home/user/metabolism-of-cities
+    $ cd /home/user/metabolism-of-islands
     $ sudo docker-compose up
 
 If you are a MacOS user, you should run the docker-compose file of MacOS:
 
     $ sudo docker-compose -f docker-compose.macos.yml up
+
+END OF MACOS-SPECIFIC INSTRUCTIONS
 
 Wait a few moments, and the containers should be up and running. Your main container (moc_web) will display errors because there is no database yet. Please select your preferred database below and import this as follows:
 
@@ -77,7 +80,7 @@ A copy of our database is available for development purposes. These are copies o
 
 518 Mb (1.4 Gb uncompressed)
 
-This file contains the entire Metabolism of Cities database, including all geometry and reference spaces. If you want to work with the data platform and you need mapping functionality, this is your file.
+This file contains the entire Metabolism of Islands database, including all geometry and reference spaces. If you want to work with the data platform and you need mapping functionality, this is your file.
 
 ### [db-without-geometry.sql.gz](http://metabolismofcities.org/media/files/db-without-geometry.sql.gz)
 
@@ -97,20 +100,16 @@ We made some instruction videos for contributors:
 
 ![Installing locally](https://multimedia.metabolismofcities.org/media/records/screenshot_0do6q2O.thumbnail.png)
 
-[Installing Metabolism of Cities locally](https://multimedia.metabolismofcities.org/videos/578485/)
+[Installing Metabolism of Islands locally](https://multimedia.metabolismofcities.org/videos/578485/)
 
 ![File structure](https://multimedia.metabolismofcities.org/media/records/Screenshot_2020-12-17_18-52-39.thumbnail.png)
 
-[Metabolism of Cities file structure](https://multimedia.metabolismofcities.org/videos/581189/)
+[Metabolism of Islands file structure](https://multimedia.metabolismofcities.org/videos/581189/)
 
 Also see the [Programming contributor support videos](https://multimedia.metabolismofcities.org/videos/collection/968/) in our multimedia library.
 
 # What to work on?
 
-Before doing any work, check in with us through our online [forum](https://metabolismofcities.org/forum/). We have an online task system where you can see [all open programming tasks](https://metabolismofcities.org/tasks/?type=9&status=open_unassigned&priority=&project=&tag=). Feel free to pick any task and assign it to yourself, but if it is your first time contributing it is highly recommended you leave a note on our site stating your intentions to make sure it fits with our current priorities.
-
-# What if I need help?
-
-Head over to our [forum](https://metabolismofcities.org/forum/) and give us a shout! We'll be glad to help debug any issues you may have with our site. Do note that operating-specific issues may be out of scope, but we will try to help where possible.
+Please get in touch with us to discuss contributions. 
 
 **Thanks for your contribution!**

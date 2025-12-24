@@ -1,0 +1,1 @@
+sudo docker exec -it moi_web npx @tailwindcss/cli -i /src/core/static/css/optamos.input.css -o /src/core/static/css/optamos.css

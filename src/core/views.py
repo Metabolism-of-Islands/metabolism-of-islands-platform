@@ -49,10 +49,6 @@ import json
 from django.utils.translation import gettext_lazy as _
 from django.utils import translation 
 
-# Social media imports
-import twitter
-import facebook
-
 from .mocfunctions import *
 
 def user_register(request, project="core", section=None):

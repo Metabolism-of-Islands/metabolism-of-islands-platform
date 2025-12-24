@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+@utility table {
+  @apply w-full border-collapse bg-white;
+
+  & th {
+    @apply bg-gray-100 text-left font-semibold p-3 border-b;
+    border-color: #dedede;
+  }
+
+  & td {
+    @apply p-3 border-b;
+    border-color: #dedede;
+  }
+
+  & tbody tr:nth-child(even) {
+    @apply bg-gray-50;
+  }
+
+}
+
+@utility btn-blue {
+  @apply text-sm bg-sky-600 text-white px-3.5 py-2.5  rounded-sm hover:bg-sky-700 focus:outline-hidden font-semibold focus:ring-sky-300 no-underline hover:text-white inline-block cursor-pointer;
+}
+
+@utility btn-green {
+  @apply text-sm bg-lime-600 text-white px-3.5 py-2.5 rounded-sm hover:bg-lime-700 focus:outline-hidden font-semibold focus:ring-lime-300 no-underline hover:text-white inline-block cursor-pointer;
+}
+
+@utility btn-danger {
+  @apply text-sm bg-red-600 text-white px-3.5 py-2.5 rounded-sm hover:bg-red-700 focus:outline-hidden font-semibold focus:ring-red-300 no-underline hover:text-white inline-block cursor-pointer;
+}
+
+@utility btn-orange {
+  @apply text-sm bg-orange-600 text-white px-3.5 py-2.5 rounded-sm hover:bg-orange-500 focus:outline-hidden font-semibold focus:ring-orange-300 no-underline hover:text-white inline-block cursor-pointer;
+}
+
+@utility btn-yellow {
+  @apply text-sm bg-yellow-500 text-white px-3.5 py-2.5 rounded-sm hover:bg-yellow-600 focus:outline-hidden font-semibold focus:ring-yellow-300 no-underline hover:text-white inline-block cursor-pointer;
+}
+
+@utility btn-edit {
+  @apply text-sm bg-amber-300 text-white px-3.5 py-2.5 rounded-sm hover:bg-amber-400 focus:outline-hidden font-semibold focus:ring-orange-300 no-underline hover:text-white inline-block cursor-pointer;
+}
+
+@utility btn-white {
+  @apply text-sm bg-white border border-gray-200 text-gray-500 px-3.5 py-2.5  rounded-sm hover:bg-gray-50 focus:outline-hidden font-semibold focus:ring-sky-300 no-underline inline-block cursor-pointer;
+}
+@utility btn-sm {
+  @apply px-2 py-1 text-xs;
+}
+
+@utility colorbox {
+  @apply p-2.5 border inline-block border-gray-500 rounded;
+}
+
+@utility badge {
+  @apply inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10;
+}
+
+@utility badge-success {
+  @apply inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20;
+}
+
+@utility badge-danger {
+  @apply inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10;
+}
+
+@utility badge-warning {
+  @apply inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20;
+}
+
+@utility badge-info {
+  @apply inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10;
+}
+
+@utility stdimg {
+  @apply p-2 border border-gray-500 rounded-sm;
+}
+
+@utility alert {
+  @apply p-4 border mb-2 rounded-sm;
+}
+
+@utility alert-icon {
+  @apply flex items-center p-4 border;
+}
+
+@utility alert-success {
+  @apply bg-lime-50 border-lime-500 text-lime-700;
+}
+
+@utility alert-info {
+  @apply bg-sky-100 border-sky-500 text-sky-700;
+}
+
+@utility alert-warning {
+  @apply bg-amber-50 border-amber-500 text-amber-700;
+}
+
+@utility alert-danger {
+  @apply bg-red-100 border-red-500 text-red-700;
+}
+
+@layer base {
+
+  main a {
+    @apply text-sky-800 underline font-bold hover:text-sky-700 hover:no-underline;
+  }
+
+  main h1 {
+    @apply text-3xl font-bold mb-6;
+  }
+
+  main h2 {
+    @apply text-2xl font-bold mb-4;
+  }
+
+  main h3 {
+    @apply text-xl font-bold mb-2;
+  }
+
+  main h4 {
+    @apply font-bold mb-2;
+  }
+
+  main p {
+    @apply mb-2;
+  }
+
+}
+

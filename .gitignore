@@ -16,3 +16,4 @@ config/*production*
 .idea/*
 sync*
 .DS_Store
+src/node_modules/*
