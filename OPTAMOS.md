@@ -1,7 +1,7 @@
 OPTamos readme
 ---------------
 
-Here's the content converted to proper Markdown with text-based links and code blocks:
+This readme provides specific details on how the OPTamos system is set up and integrated into the Metabolism of Islands platform.
 
 ## CSS
 

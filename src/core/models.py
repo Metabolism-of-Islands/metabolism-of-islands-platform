@@ -3086,6 +3086,11 @@ class OptamosProject(Record):
         primary_key=False,
     )
     user = models.ManyToManyField(User, related_name="optamos")
+    date_updated = models.DateTimeField(auto_now=True)
+    goal = models.CharField(max_length=255, blank=True)
+
+    def get_absolute_url(self):
+        return reverse("optamos:project", args=[self.uid])
 
 ###
 ### DUMMY FORMAT

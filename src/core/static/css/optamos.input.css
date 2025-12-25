@@ -143,3 +143,6 @@ div.bg {
 a svg {
   display: inline-block;
 }
+div.overlay { 
+  background:linear-gradient(180deg, #00000088 30%, #ffffff44 100%);
+}

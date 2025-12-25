@@ -37,7 +37,7 @@ def index(request):
     }
     return render(request, "optamos/index.html", context)
 
-def project(request, id=None):
+def project_settings(request, id=None):
 
     project = None
     if id:
@@ -45,11 +45,37 @@ def project(request, id=None):
         if not project:
             return redirect(reverse("optamos:login"))
 
+    if request.method == "POST":
+        if not project:
+            project = OptamosProject()
+            is_new = True
+            project.is_public = False
+        project.name = request.POST.get("name")
+        project.goal = request.POST.get("goal")
+        project.save()
+
+        if is_new:
+            project.user.add(request.user)
+
+        return redirect(reverse("optamos:project", args=[project.id]))
+
     context = {
         "bg": random.choice(OPTAMOS_BG),
         "projects": project,
     }
-    return render(request, "optamos/index.html", context)
+    return render(request, "optamos/project.settings.html", context)
+
+def project(request, id):
+
+    project = OptamosProject.objects_include_private.filter(pk=id, user=request.user).first()
+    if not project:
+        return redirect(reverse("optamos:login"))
+
+    context = {
+        "bg": random.choice(OPTAMOS_BG),
+        "info": project,
+    }
+    return render(request, "optamos/project.html", context)
 
 
 def account_login(request):
