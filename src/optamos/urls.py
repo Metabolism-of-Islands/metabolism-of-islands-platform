@@ -6,4 +6,6 @@ app_name = "optamos"
 
 urlpatterns = baseline_urlpatterns + [
     path("", views.index, name="index"),
+    path("login/", views.account_login, name="login"),
+    path("create/", views.project, name="project"),
 ]

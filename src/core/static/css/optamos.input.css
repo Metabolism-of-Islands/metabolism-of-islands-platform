@@ -20,7 +20,7 @@
 }
 
 @utility btn-blue {
-  @apply text-sm bg-sky-600 text-white px-3.5 py-2.5  rounded-sm hover:bg-sky-700 focus:outline-hidden font-semibold focus:ring-sky-300 no-underline hover:text-white inline-block cursor-pointer;
+  @apply text-sm bg-cyan-600 text-white px-3 py-2 rounded-sm hover:bg-cyan-700 focus:outline-hidden font-semibold focus:ring-cyan-300 no-underline hover:text-white inline-block cursor-pointer;
 }
 
 @utility btn-green {
@@ -44,7 +44,7 @@
 }
 
 @utility btn-white {
-  @apply text-sm bg-white border border-gray-200 text-gray-500 px-3.5 py-2.5  rounded-sm hover:bg-gray-50 focus:outline-hidden font-semibold focus:ring-sky-300 no-underline inline-block cursor-pointer;
+  @apply text-sm bg-white border border-gray-200 text-gray-500 px-3.5 py-2.5  rounded-sm hover:bg-gray-50 focus:outline-hidden font-semibold focus:ring-cyan-300 no-underline inline-block cursor-pointer;
 }
 @utility btn-sm {
   @apply px-2 py-1 text-xs;
@@ -91,7 +91,7 @@
 }
 
 @utility alert-info {
-  @apply bg-sky-100 border-sky-500 text-sky-700;
+  @apply bg-cyan-100 border-cyan-500 text-cyan-700;
 }
 
 @utility alert-warning {
@@ -105,7 +105,7 @@
 @layer base {
 
   main a {
-    @apply text-sky-800 underline font-bold hover:text-sky-700 hover:no-underline;
+    @apply text-cyan-800 underline font-bold hover:text-cyan-700 hover:no-underline;
   }
 
   main h1 {
@@ -130,3 +130,16 @@
 
 }
 
+nav svg {
+  width:1.1em;
+  height:1.1em;
+}
+nav li {
+  display: inline-block;
+}
+div.bg {
+  background-position: center;
+}
+a svg {
+  display: inline-block;
+}

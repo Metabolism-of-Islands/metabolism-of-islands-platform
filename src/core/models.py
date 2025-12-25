@@ -3078,6 +3078,15 @@ class DataViz(Record):
         except KeyError:
             pass
 
+class OptamosProject(Record):
+    uid = models.AutoField(primary_key=True)
+    record_id = models.OneToOneField(
+        Record, on_delete=models.CASCADE,
+        parent_link=True,
+        primary_key=False,
+    )
+    user = models.ManyToManyField(User, related_name="optamos")
+
 ###
 ### DUMMY FORMAT
 ###

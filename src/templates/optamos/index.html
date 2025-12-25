@@ -1,5 +1,49 @@
 {% extends "optamos/_base.html" %}
 
 {% block content %}
-  Hi there
+
+<h1>Your projects</h1>
+
+{% if projects %}
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Date created</th>
+      <th>Options</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for each in projects %}
+    <tr>
+      <td>{{ each }}</td>
+      <td>{{ each.created_at }}</td>
+      <td>{{ each.created_at }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<a href="" class="btn-blue">Create new project</a>
+
+{% else %}
+
+<div class="text-center">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" class="mx-auto size-12 text-gray-400">
+    <path d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>
+  <h3 class="mt-2 text-sm font-semibold text-gray-900">No projects</h3>
+  <p class="mt-1 text-sm text-gray-500">Get started by creating a new project.</p>
+  <div class="mt-6">
+    <a href="" class="btn-blue">
+      <svg viewBox="0 0 20 20" fill="currentColor" data-slot="icon" aria-hidden="true" class="mr-1.5 -ml-0.5 size-5">
+        <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+      </svg>
+      New Project
+    </a>
+  </div>
+</div>
+
+{% endif %}
+
 {% endblock %}
