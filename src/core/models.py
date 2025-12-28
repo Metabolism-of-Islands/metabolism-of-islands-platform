@@ -3092,6 +3092,21 @@ class OptamosProject(Record):
     def get_absolute_url(self):
         return reverse("optamos:project", args=[self.uid])
 
+class OptamosOption(models.Model):
+    name = models.CharField(max_length=255)
+    project = models.ForeignKey(OptamosProject, on_delete=models.CASCADE, related_name="options")
+
+    def __str__(self):
+        return self.name
+
+class OptamosCriteria(models.Model):
+    name = models.CharField(max_length=255)
+    project = models.ForeignKey(OptamosProject, on_delete=models.CASCADE, related_name="criteria")
+
+    def __str__(self):
+        return self.name
+
+
 ###
 ### DUMMY FORMAT
 ###

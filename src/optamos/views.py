@@ -33,7 +33,7 @@ OPTAMOS_BG = [
 def index(request):
     context = {
         "bg": random.choice(OPTAMOS_BG),
-        "projects": OptamosProject.objects_include_private.filter(user=request.user),
+        "projects": OptamosProject.objects_include_private.filter(user=request.user) if request.user.is_authenticated else None,
     }
     return render(request, "optamos/index.html", context)
 
@@ -56,6 +56,11 @@ def project_settings(request, id=None):
 
         if is_new:
             project.user.add(request.user)
+
+        if request.POST.getlist("option"):
+            for each in request.POST.getlist("option"):
+                if each:
+                    OptamosOption.objects.create(project=project, name=each)
 
         return redirect(reverse("optamos:project", args=[project.id]))
 
