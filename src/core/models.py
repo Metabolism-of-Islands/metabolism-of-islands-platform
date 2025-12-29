@@ -354,14 +354,14 @@ class Record(models.Model):
             self.description_html = markdown(bleach.clean(self.description))
             if hasattr(self, "dataarticle"):
                 # For data articles we have a special syntax that converts things like [@3893] to a link, or [#3983] to an iframe
-                p = re.compile("\[#(\d*)\]")
+                p = re.compile("\\[#(\\d*)\\]")
                 self.description_html = p.sub(r'<iframe class="libraryitem card" src="/library/preview/\1/" onload="resizeIframe(this)"></iframe>', self.description_html)
 
                 # For custom dataviz, the format is [#1111-222] with 222 indicating the ID of the data viz (converted to a GET parameter)
-                p = re.compile("\[#(\d*)-(\d*)\]")
+                p = re.compile("\\[#(\\d*)-(\\d*)\\]")
                 self.description_html = p.sub(r'<iframe class="libraryitem card" src="/library/preview/\1/?data-viz=\2" onload="resizeIframe(this)"></iframe>', self.description_html)
 
-                p = re.compile("\[@(\d*)\]")
+                p = re.compile("\\[@(\\d*)\\]")
                 # For local testing, add /data/ to src=
                 self.description_html = p.sub(r'<sup>[<a data-id="\1" href="/library/\1/">source</a>]</sup>', self.description_html)
 
@@ -3099,6 +3099,9 @@ class OptamosOption(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering = ["id"]
+
 class OptamosCriteria(models.Model):
     name = models.CharField(max_length=255)
     project = models.ForeignKey(OptamosProject, on_delete=models.CASCADE, related_name="criteria")
@@ -3106,6 +3109,19 @@ class OptamosCriteria(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering = ["id"]
+
+class OptamosOptionValue(models.Model):
+    criteria = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="option_pairs")
+    option1 = models.ForeignKey(OptamosOption, on_delete=models.CASCADE, related_name="setting1")
+    option2 = models.ForeignKey(OptamosOption, on_delete=models.CASCADE, related_name="setting2")
+    value = models.SmallIntegerField()
+
+class OptamosCriteriaValue(models.Model):
+    criteria1 = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="setting1")
+    criteria2 = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="setting2")
+    value = models.SmallIntegerField()
 
 ###
 ### DUMMY FORMAT

@@ -128,6 +128,16 @@
     @apply mb-2;
   }
 
+  main input:not([type="radio"]):not([type="checkbox"]) {
+    @apply w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 bg-white;
+  }
+  main select {
+    @apply w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 bg-gray-50;
+  }
+  main textarea {
+    @apply w-full px-3 py-1.5 mt-1 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 bg-white;
+  }
+
 }
 
 nav svg {

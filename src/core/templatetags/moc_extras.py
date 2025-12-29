@@ -48,6 +48,10 @@ def split_tag(value):
     value = str(value)
     return value.split('.')[0] + '.' + value.split('.')[1]
 
+# For OPTamos
+@register.filter
+def concat(value1, value2):
+    return f"{value1}{value2}"
 
 #### TEMP FOR MAP CONVERSION #####
 @register.filter

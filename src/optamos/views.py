@@ -2,8 +2,10 @@ from core.models import *
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.db.models import Count, Q
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
+from itertools import combinations
 import random
 
 OPTAMOS_BG = [
@@ -39,11 +41,14 @@ def index(request):
 
 def project_settings(request, id=None):
 
+    if not request.user.is_authenticated:
+        return redirect("optamos:login")
+
     project = None
     if id:
         project = OptamosProject.objects_include_private.filter(pk=id, user=request.user).first()
         if not project:
-            return redirect(reverse("optamos:login"))
+            return redirect("optamos:login")
 
     if request.method == "POST":
         if not project:
@@ -62,7 +67,12 @@ def project_settings(request, id=None):
                 if each:
                     OptamosOption.objects.create(project=project, name=each)
 
-        return redirect(reverse("optamos:project", args=[project.id]))
+        if (criteria_list := request.POST.get("criteria")):
+            for criteria in criteria_list.split("\n"):
+                if criteria:
+                    OptamosCriteria.objects.create(project=project, name=criteria)
+
+        return redirect(reverse("optamos:project", args=[project.uid]))
 
     context = {
         "bg": random.choice(OPTAMOS_BG),
@@ -72,13 +82,81 @@ def project_settings(request, id=None):
 
 def project(request, id):
 
+    if not request.user.is_authenticated:
+        return redirect("optamos:login")
+
     project = OptamosProject.objects_include_private.filter(pk=id, user=request.user).first()
     if not project:
-        return redirect(reverse("optamos:login"))
+        return redirect("optamos:login")
+
+    values = {}
+    pairs = None
+    page = None
+
+    if (criteria := request.GET.get("criteria")):
+        page = "criteria"
+        criteria = OptamosCriteria.objects.get(project=project, pk=criteria)
+
+        # Let's create a dict with the names of the <input> fields and the value for them
+        # so we can load them into the form
+        for each in OptamosOptionValue.objects.filter(criteria=criteria):
+            value = f"range-{each.option1_id}-{each.option2_id}"
+            values[value] = each.value
+
+        # This creates pairs of all possible combinations of options
+        pairs = list(combinations(project.options.all(), 2))
+
+    elif "rank_all_criteria" in request.GET:
+        page = "rank_all_criteria"
+        # Let's create a dict with the names of the <input> fields and the value for them
+        # so we can load them into the form
+        for each in OptamosCriteriaValue.objects.filter(criteria1__project=project):
+            value = f"range-{each.criteria1_id}-{each.criteria2_id}"
+            values[value] = each.value
+
+        # This creates pairs of all possible combinations of options
+        pairs = list(combinations(project.criteria.all(), 2))
+
+    if request.method == "POST":
+        if page == "criteria":
+            OptamosOptionValue.objects.filter(criteria=criteria).delete()
+            for option1,option2 in pairs:
+                # This creates the name of the relevant input field
+                value = f"range-{option1.id}-{option2.id}"
+                OptamosOptionValue.objects.create(
+                    option1 = option1,
+                    option2 = option2,
+                    criteria = criteria,
+                    value = request.POST[value],
+                )
+            next_criteria = project.criteria.filter(pk__gt=criteria.pk).first()
+            if next_criteria:
+                return redirect(reverse("optamos:project", args=[project.uid]) + f"?criteria={next_criteria.id}")
+            else:
+                return redirect(reverse("optamos:project", args=[project.uid]) + "?rank_all_criteria=true")
+
+        elif page == "rank_all_criteria":
+            OptamosCriteriaValue.objects.filter(criteria1__project=project).delete()
+            for criteria1,criteria2 in pairs:
+                # This creates the name of the relevant input field
+                value = f"range-{criteria1.id}-{criteria2.id}"
+                OptamosCriteriaValue.objects.create(
+                    criteria1 = criteria1,
+                    criteria2 = criteria2,
+                    value = request.POST[value],
+                )
+            return redirect(reverse("optamos:project", args=[project.uid]))
 
     context = {
         "bg": random.choice(OPTAMOS_BG),
-        "info": project,
+        "project": project,
+        "remove_padding_main_container": True,
+        "criteria": criteria,
+        "pairs": pairs,
+        "values": values,
+        "page": page,
+        "criteria_list": project.criteria.all().annotate(is_done=Count("option_pairs")),
+        "criteria_values": OptamosCriteriaValue.objects.filter(criteria1__project=project).count(), 
     }
     return render(request, "optamos/project.html", context)
 
@@ -88,7 +166,7 @@ def account_login(request):
         email = request.POST.get("email").lower()
         password = request.POST.get("password")
         user = authenticate(request, username=email, password=password)
-        redirect_url = request.GET.get("redirect", reverse("optamos:index"))
+        redirect_url = request.GET.get("redirect", "optamos:index")
 
         if user is not None:
             login(request, user)
