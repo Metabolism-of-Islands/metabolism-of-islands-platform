@@ -4,7 +4,7 @@
 
 <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
   <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-    <h2 class="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">Create new project</h2>
+    <h2 class="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">Edit project</h2>
   </div>
 
   <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
@@ -14,7 +14,8 @@
       <div>
         <label for="name" class="block text-sm/6 font-medium text-gray-900">Project name</label>
         <div class="mt-2">
-          <input id="name" type="text" name="name" required  class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-cyan-600 sm:text-sm/6" />
+          <input id="name" type="text" name="name" required  class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-cyan-600 sm:text-sm/6" 
+          value="{{ project.name }}" />
         </div>
       </div>
 
@@ -23,30 +24,58 @@
           <label for="goal" class="block text-sm/6 font-medium text-gray-900">Project goal</label>
         </div>
         <div class="mt-2">
-          <input id="goal" type="text" name="goal" required />
+          <input id="goal" type="text" name="goal" required value="{{ project.goal }}" />
         </div>
       </div>
 
-      <div>
+      <section id="criteria">
         <div class="flex items-center justify-between">
           <label for="goal" class="block text-sm/6 font-medium text-gray-900">Criteria</label>
         </div>
-        <div class="mt-2">
-          <textarea class="h-32" name="criteria" placeholder="Enter each on a new line; one-word criteria are best, e.g. 'Ecological', 'Social', or 'Cultural'"></textarea>
-        </div>
-      </div>
 
-      <section>
-        <div class="flex items-center justify-between">
-          <label class="block text-sm/6 font-medium text-gray-900">Options</label>
-        </div>
+        {% for each in project.criteria.all %}
+          <div class="mt-2 item">
+            <div class="flex items-center">
+              <input type="text" name="criteria_{{ each.id }}" value="{{ each }}" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white" />
+              <button type="button" class="remove cursor-pointer ml-2 focus:outline-none focus:ring-2 focus:ring-red-500 hover:text-red-600">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor">
+                  <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        {% endfor %}
         <div class="mt-2">
-          <input type="text" name="option" />
+          <input type="text" name="criteria" placeholder="Add a new criteria" />
         </div>
       </section>
 
+      <section id="options">
+        <div class="flex items-center justify-between">
+          <label class="block text-sm/6 font-medium text-gray-900">Options</label>
+        </div>
+
+        {% for each in project.options.all %}
+          <div class="mt-2 item">
+            <div class="flex items-center">
+              <input type="text" name="option_{{ each.id }}" value="{{ each }}" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white" />
+              <button type="button" class="remove cursor-pointer ml-2 focus:outline-none focus:ring-2 focus:ring-red-500 hover:text-red-600">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor">
+                  <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        {% endfor %}
+
+        <div class="mt-2">
+          <input type="text" name="option" placeholder="Add a new option" />
+        </div>
+
+      </section>
+
       <div>
-        <button type="submit" class="flex w-full justify-center btn-blue px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 cursor-pointer">Create project</button>
+        <button type="submit" class="flex w-full justify-center btn-blue px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 cursor-pointer">Save</button>
       </div>
     </form>
 
@@ -58,7 +87,7 @@
 {% block js %}
 <script type="text/javascript">
 $(function(){
-  $("section").on("input", "input[name='option']", function() {
+  $("section#options").on("input", "input[name='option']", function() {
     if ($(this).data("is-typed") !== true) {
       var newDiv = $(this).closest("div").clone();
       newDiv.find("input").val(""); // Clear the cloned input
@@ -66,6 +95,19 @@ $(function(){
       $(this).data("is-typed", true); // Mark this input as typed
     }
   }); 
+  $("section#criteria").on("input", "input[name='criteria']", function() {
+    if ($(this).data("is-typed") !== true) {
+      var newDiv = $(this).closest("div").clone();
+      newDiv.find("input").val(""); // Clear the cloned input
+      $(this).closest("section").append(newDiv);
+      $(this).data("is-typed", true); // Mark this input as typed
+    }
+  }); 
+  $(".remove").on("click", function() {
+    $(this).closest(".item").slideUp("fast", function() {
+      $(this).remove();
+    });
+  });
 });
 </script>
   

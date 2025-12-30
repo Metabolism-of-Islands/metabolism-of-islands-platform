@@ -35,32 +35,34 @@ OPTAMOS_BG = [
 def index(request):
     context = {
         "bg": random.choice(OPTAMOS_BG),
-        "projects": OptamosProject.objects_include_private.filter(user=request.user) if request.user.is_authenticated else None,
+        "menu": "index",
     }
     return render(request, "optamos/index.html", context)
 
-def project_settings(request, id=None):
+def projects(request):
+    if not request.user.is_authenticated:
+        return redirect("optamos:login")
+
+    context = {
+        "bg": random.choice(OPTAMOS_BG),
+        "projects": OptamosProject.objects_include_private.filter(user=request.user),
+        "menu": "projects",
+    }
+    return render(request, "optamos/projects.html", context)
+
+def project_create(request):
 
     if not request.user.is_authenticated:
         return redirect("optamos:login")
 
-    project = None
-    if id:
-        project = OptamosProject.objects_include_private.filter(pk=id, user=request.user).first()
-        if not project:
-            return redirect("optamos:login")
-
     if request.method == "POST":
-        if not project:
-            project = OptamosProject()
-            is_new = True
-            project.is_public = False
+        project = OptamosProject()
+        project.is_public = False
         project.name = request.POST.get("name")
         project.goal = request.POST.get("goal")
         project.save()
 
-        if is_new:
-            project.user.add(request.user)
+        project.user.add(request.user)
 
         if request.POST.getlist("option"):
             for each in request.POST.getlist("option"):
@@ -76,7 +78,58 @@ def project_settings(request, id=None):
 
     context = {
         "bg": random.choice(OPTAMOS_BG),
+        "menu": "projects",
+    }
+    return render(request, "optamos/project.create.html", context)
+
+def project_settings(request, id):
+
+    if not request.user.is_authenticated:
+        return redirect("optamos:login")
+
+    project = OptamosProject.objects_include_private.filter(pk=id, user=request.user).first()
+    if not project:
+        return redirect("optamos:login")
+
+    if request.method == "POST":
+        project.name = request.POST.get("name")
+        project.goal = request.POST.get("goal")
+        project.save()
+
+        for each in project.options.all():
+            label = f"option_{each.id}"
+            if request.POST.get(label):
+                each.name = request.POST[label]
+                each.save()
+            else:
+                each.delete()
+
+        for each in project.criteria.all():
+            label = f"criteria_{each.id}"
+            if request.POST.get(label):
+                each.name = request.POST[label]
+                each.save()
+            else:
+                each.delete()
+
+        if request.POST.getlist("option"):
+            for each in request.POST.getlist("option"):
+                if each:
+                    OptamosOption.objects.create(project=project, name=each)
+
+        if request.POST.getlist("criteria"):
+            for each in request.POST.getlist("criteria"):
+                if each:
+                    OptamosCriteria.objects.create(project=project, name=each)
+
+        messages.success(request, "Changes have been saved.")
+        return redirect(reverse("optamos:project", args=[project.uid]))
+
+    context = {
+        "bg": random.choice(OPTAMOS_BG),
         "projects": project,
+        "menu": "projects",
+        "project": project,
     }
     return render(request, "optamos/project.settings.html", context)
 
@@ -157,6 +210,7 @@ def project(request, id):
         "page": page,
         "criteria_list": project.criteria.all().annotate(is_done=Count("option_pairs")),
         "criteria_values": OptamosCriteriaValue.objects.filter(criteria1__project=project).count(), 
+        "menu": "projects",
     }
     return render(request, "optamos/project.html", context)
 
@@ -181,3 +235,59 @@ def account_login(request):
         "bg": random.choice(OPTAMOS_BG),
     }
     return render(request, "optamos/login.html", context)
+
+def account(request):
+    if not request.user.is_authenticated:
+        return redirect("optamos:login")
+
+    context = {
+        "bg": random.choice(OPTAMOS_BG),
+        "projects": OptamosProject.objects_include_private.filter(user=request.user),
+        "menu": "account",
+    }
+    return render(request, "optamos/projects.html", context)
+
+def account_create(request):
+
+    redirect_url = request.GET.get("next") if request.GET.get("next") else reverse("optamos:projects")
+
+    if request.user.is_authenticated:
+        is_logged_in = True
+        return redirect(redirect_url)
+
+    if request.method == "POST":
+        error = None
+        password = request.POST.get("password")
+        email = request.POST.get("email")
+        name = request.POST.get("name")
+        if request.POST.get("phone").lower() != "good morning":
+            messages.error(request, "Please enter 'Good morning' in the last box.")
+            error = True
+        elif not password:
+            messages.error(request, "You did not enter a password.")
+            error = True
+        elif User.objects.filter(email=email).exists():
+            messages.error(request, "An account already exists with this e-mail address. Please <a href='/login/'>log in</a>.")
+            error = True
+
+        if not error:
+            user = User.objects.create_user(email, email, password)
+            user.first_name = name
+            user.is_superuser = False
+            user.is_staff = False
+            user.save()
+            login(request, user)
+
+            people = People.objects.create(name=name, email=user.email)
+            people.user = user
+            people.meta_data = {}
+            people.save()
+
+            messages.success(request, "You are successfully registered.")
+
+            return redirect(redirect_url)
+
+    context = {
+        "bg": random.choice(OPTAMOS_BG),
+    }
+    return render(request, "optamos/account.html", context)

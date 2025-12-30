@@ -1,0 +1,72 @@
+{% extends "optamos/_base.html" %}
+
+{% block content %}
+
+<div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
+  <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+    <h2 class="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">Create new project</h2>
+  </div>
+
+  <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+
+    <form method="POST" class="space-y-6">
+      {% csrf_token %}
+      <div>
+        <label for="name" class="block text-sm/6 font-medium text-gray-900">Project name</label>
+        <div class="mt-2">
+          <input id="name" type="text" name="name" required  class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-cyan-600 sm:text-sm/6" />
+        </div>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between">
+          <label for="goal" class="block text-sm/6 font-medium text-gray-900">Project goal</label>
+        </div>
+        <div class="mt-2">
+          <input id="goal" type="text" name="goal" required />
+        </div>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between">
+          <label for="goal" class="block text-sm/6 font-medium text-gray-900">Criteria</label>
+        </div>
+        <div class="mt-2">
+          <textarea class="h-32" name="criteria" placeholder="Enter each on a new line; one-word criteria are best, e.g. 'Ecological', 'Social', or 'Cultural'"></textarea>
+        </div>
+      </div>
+
+      <section>
+        <div class="flex items-center justify-between">
+          <label class="block text-sm/6 font-medium text-gray-900">Options</label>
+        </div>
+        <div class="mt-2">
+          <input type="text" name="option" />
+        </div>
+      </section>
+
+      <div>
+        <button type="submit" class="flex w-full justify-center btn-blue px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 cursor-pointer">Create project</button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript">
+$(function(){
+  $("section").on("input", "input[name='option']", function() {
+    if ($(this).data("is-typed") !== true) {
+      var newDiv = $(this).closest("div").clone();
+      newDiv.find("input").val(""); // Clear the cloned input
+      $(this).closest("section").append(newDiv);
+      $(this).data("is-typed", true); // Mark this input as typed
+    }
+  }); 
+});
+</script>
+  
+{% endblock %}

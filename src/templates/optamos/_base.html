@@ -16,15 +16,19 @@
     <nav class="mainnav relative isolate z-10 shadow-sm">
       <div class="bg-white py-5">
         <div class="mx-auto max-w-7xl px-6 lg:px-8 z-10001 relative flex justify-between">
-          <ul class="{% if not request.user.is_authenticated %}opacity-30{% endif %}"> 
-            <li> 
-              <a class="nav-link active" aria-current="page" href="{% url "optamos:index" %}">
+          <ul> 
+            <li class="mr-3"> 
+              <a class="font-bold nav-link" aria-current="page" href="{% url "optamos:index" %}">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M341.8 72.6C329.5 61.2 310.5 61.2 298.3 72.6L74.3 280.6C64.7 289.6 61.5 303.5 66.3 315.7C71.1 327.9 82.8 336 96 336L112 336L112 512C112 547.3 140.7 576 176 576L464 576C499.3 576 528 547.3 528 512L528 336L544 336C557.2 336 569 327.9 573.8 315.7C578.6 303.5 575.4 289.5 565.8 280.6L341.8 72.6zM304 384L336 384C362.5 384 384 405.5 384 432L384 528L256 528L256 432C256 405.5 277.5 384 304 384z"/></svg>
+                <span {% if menu == "index" %}class="active"{% endif %}>
                 OPTamos
+                </span>
               </a>
             </li> 
-            <li><a href="#">Projects</a></li>
-            <li><a href="#">My Account</a></li>
+            <li class="mr-3"><a {% if menu == "projects" %}class="active"{% endif %} href="{% url "optamos:projects" %}">Projects</a></li>
+            {% if request.user.is_authenticated %}
+              <li><a {% if menu == "account" %}class="active"{% endif %} href="{% url "optamos:account" %}">My Account</a></li>
+            {% endif %}
           </ul>  
           {% if request.user.is_authenticated %}
             <a href="logout">Log out</a>
@@ -52,7 +56,7 @@
 
     <main class="-mt-32">
       <div class="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
-        <div class="rounded-lg bg-white {% if not remove_padding_main_container %}px-5 py-6 sm:px-6{% endif %} shadow-sm">
+        <div class="rounded-lg bg-white {% if not remove_padding_main_container %}px-5 py-10 sm:px-6{% endif %} shadow-sm relative">
           <div class="flex gap-15 ml-10 mr-10">
             <div class="flex-4">
 

@@ -41,7 +41,13 @@
 {% block content %}
 
 <div class="flex">
-  <div class="flex-1 border-r border-gray-200 py-10">
+  <div class="flex-1 border-r border-gray-200 py-10 relative">
+
+  <a href="{% url "optamos:project_settings" project.uid %}" class="absolute top-4 right-4 btn-white btn-sm">
+    <svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 -960 960 960" fill="currentColor"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg>
+    Edit project
+  </a>
+
 
     <section id="criteria" class="pr-5">
       <h2 class="text-xl">Criteria</h2>
@@ -84,13 +90,13 @@
            ">
 
             {% if criteria_values %}
-            <span class="flex size-6 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-lime-400 text-[0.625rem] font-medium {% if each == criteria %}text-sky-600 border-sky-600{% else %}text-gray-400{% endif %} group-hover:border-sky-600 group-hover:text-sky-600">
+            <span class="flex size-6 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-lime-400 text-[0.625rem] font-medium {% if page == "rank_all_criteria" %}text-sky-600 border-sky-600{% else %}text-gray-400{% endif %} group-hover:border-sky-600 group-hover:text-sky-600">
               {% if not page == "rank_all_criteria" %}
                 <svg class="h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M530.8 134.1C545.1 144.5 548.3 164.5 537.9 178.8L281.9 530.8C276.4 538.4 267.9 543.1 258.5 543.9C249.1 544.7 240 541.2 233.4 534.6L105.4 406.6C92.9 394.1 92.9 373.8 105.4 361.3C117.9 348.8 138.2 348.8 150.7 361.3L252.2 462.8L486.2 141.1C496.6 126.8 516.6 123.6 530.9 134z"/></svg>
               {% endif %}
             </span>
             {% else %}
-            <span class="flex size-6 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-[0.625rem] font-medium {% if each == criteria %}text-sky-600 border-sky-600{% else %}text-gray-400{% endif %} group-hover:border-sky-600 group-hover:text-sky-600">R</span>
+            <span class="flex size-6 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-[0.625rem] font-medium {% if page == "rank_all_criteria" %}text-sky-600 border-sky-600{% else %}text-gray-400{% endif %} group-hover:border-sky-600 group-hover:text-sky-600">R</span>
             {% endif %}
 
             <span class="truncate">Rank all criteria</span>
@@ -168,6 +174,27 @@
           <button type="submit" class="btn-green">Save &amp; next &raquo;</button>
         </p>
       </form>
+
+    {% else %}
+
+      <div class="bg-gray-100 shadow-sm sm:rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+          <div class="mt-2 sm:flex sm:items-start sm:justify-between">
+            <div class="mt-5 sm:mt-0 sm:mr-6 sm:flex sm:shrink-0 sm:items-center">
+              <div class="group relative inline-flex w-11 shrink-0 rounded-full bg-gray-200 p-0.5 inset-ring inset-ring-gray-900/5 outline-offset-2 outline-sky-600 transition-colors duration-200 ease-in-out has-checked:bg-sky-600 has-focus-visible:outline-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" stroke="currentColor" aria-hidden="true" class="mx-auto size-12 text-gray-700"><path d="M400-240 160-480l240-240 56 58-142 142h486v80H314l142 142-56 58Z"/></svg>
+              </div>
+            </div>
+            <div class="max-w-xl text-sm text-gray-600">
+              <p>
+                Select one of the options from the menu on the left-hand side to get started.
+                You can also <a href="{% url "optamos:project_settings" project.uid %}">edit your project settings</a> or click here to
+                <a href="{% url "optamos:projects" %}">view all your projects</a>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
     {% endif %}
 
