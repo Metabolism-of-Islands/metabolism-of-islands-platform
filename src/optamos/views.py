@@ -80,7 +80,7 @@ def project_create(request):
         if (criteria_list := request.POST.get("criteria")):
             for criteria in criteria_list.split("\n"):
                 if criteria:
-                    OptamosCriteria.objects.create(project=project, name=criteria)
+                    OptamosCriteria.objects.create(project=project, name=criteria.strip())
 
         return redirect(reverse("optamos:project", args=[project.uid]))
 
@@ -141,7 +141,7 @@ def project_settings(request, id):
     }
     return render(request, "optamos/project.settings.html", context)
 
-def project(request, id):
+def project(request, id, page="home"):
 
     if not request.user.is_authenticated:
         return redirect("optamos:login")
@@ -153,7 +153,6 @@ def project(request, id):
 
     values = {}
     pairs = None
-    page = None
 
     if (criteria := request.GET.get("criteria")):
         page = "criteria"
@@ -178,6 +177,24 @@ def project(request, id):
 
         # This creates pairs of all possible combinations of options
         pairs = list(combinations(project.criteria.all(), 2))
+
+    elif page == "results":
+        points_options = {}
+        points_criteria = {}
+        for each in project.options.all():
+            points_options[each] = 0
+        for each in project.criteria.all():
+            points_criteria[each] = 0
+        for each in OptamosCriteriaValue.objects.filter(criteria1__project=project):
+            if each.value > 0:
+                points_criteria[each.criteria2] += each.value
+            elif each.value < 0:
+                points_criteria[each.criteria1] += each.value*-1
+        for each in OptamosOptionValue.objects.filter(criteria__project=project):
+            if each.value > 0:
+                points_options[each.option2] += each.value
+            elif each.value < 0:
+                points_options[each.option1] += each.value*-1
 
     if request.method == "POST":
         if page == "criteria":
@@ -207,7 +224,7 @@ def project(request, id):
                     criteria2 = criteria2,
                     value = request.POST[value],
                 )
-            return redirect(reverse("optamos:project", args=[project.uid]))
+            return redirect(reverse("optamos:project_results", args=[project.uid]))
 
     context = {
         "bg": random.choice(OPTAMOS_BG),
@@ -224,8 +241,14 @@ def project(request, id):
         "total_required_criteria_values": len(list(combinations(project.criteria.all(), 2))), 
         "menu": "projects",
     }
+
+    if page == "results":
+        context["points_criteria"] = points_criteria
+        context["points_options"] = points_options
+
     return render(request, "optamos/project.html", context)
 
+# ACCOUNT-RELATED FUNCTIONS
 
 def account_login(request):
     if request.method == "POST":
