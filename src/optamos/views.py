@@ -43,9 +43,17 @@ def projects(request):
     if not request.user.is_authenticated:
         return redirect("optamos:login")
 
+    projects = OptamosProject.objects_include_private.filter(user=request.user)
+
+    if "delete" in request.GET:
+        project = projects.get(uid=request.GET["delete"])
+        project.delete()
+        messages.success(request, f"Project {project.name} has been deleted.")
+        return redirect(request.path)
+
     context = {
         "bg": random.choice(OPTAMOS_BG),
-        "projects": OptamosProject.objects_include_private.filter(user=request.user),
+        "projects": projects,
         "menu": "projects",
     }
     return render(request, "optamos/projects.html", context)
@@ -140,7 +148,8 @@ def project(request, id):
 
     project = OptamosProject.objects_include_private.filter(pk=id, user=request.user).first()
     if not project:
-        return redirect("optamos:login")
+        messages.error(request, "Project is not found - either it does not exist or you do not have access. Below are your projects.")
+        return redirect("optamos:projects")
 
     values = {}
     pairs = None
@@ -210,6 +219,9 @@ def project(request, id):
         "page": page,
         "criteria_list": project.criteria.all().annotate(is_done=Count("option_pairs")),
         "criteria_values": OptamosCriteriaValue.objects.filter(criteria1__project=project).count(), 
+        # Count how many there theoretically are, so that we can verify that all are saved -- this is particularly 
+        # relevant in case people edit the project and add criteria in which case we need to show an error
+        "total_required_criteria_values": len(list(combinations(project.criteria.all(), 2))), 
         "menu": "projects",
     }
     return render(request, "optamos/project.html", context)
@@ -220,7 +232,7 @@ def account_login(request):
         email = request.POST.get("email").lower()
         password = request.POST.get("password")
         user = authenticate(request, username=email, password=password)
-        redirect_url = request.GET.get("redirect", "optamos:index")
+        redirect_url = request.GET.get("redirect", "optamos:projects")
 
         if user is not None:
             login(request, user)
@@ -233,8 +245,14 @@ def account_login(request):
 
     context = {
         "bg": random.choice(OPTAMOS_BG),
+        "menu": "login",
     }
     return render(request, "optamos/login.html", context)
+
+def account_logout(request):
+    logout(request)
+    messages.success(request, "You are now logged out")
+    return redirect("optamos:index")
 
 def account(request):
     if not request.user.is_authenticated:
@@ -245,7 +263,7 @@ def account(request):
         "projects": OptamosProject.objects_include_private.filter(user=request.user),
         "menu": "account",
     }
-    return render(request, "optamos/projects.html", context)
+    return render(request, "optamos/account.settings.html", context)
 
 def account_create(request):
 
@@ -267,7 +285,8 @@ def account_create(request):
             messages.error(request, "You did not enter a password.")
             error = True
         elif User.objects.filter(email=email).exists():
-            messages.error(request, "An account already exists with this e-mail address. Please <a href='/login/'>log in</a>.")
+            url = reverse("optamos:login")
+            messages.error(request, f"An account already exists with this e-mail address. Please <a href='{url}'>log in</a>. <br>Remember that Metabolism of Islands accounts also work to log into OPTamos.")
             error = True
 
         if not error:

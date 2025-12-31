@@ -5,7 +5,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>OPTamos</title>
+  <title>
+    {% block title %}{% endblock %} - 
+    OPTamos
+  </title>
   <link href="{% static "css/optamos.css" %}" rel="stylesheet">
   <link class="favicon" rel="shortcut icon" sizes="126x126" href="/media/optamos/favicon.jpg">
   {% block css %}{% endblock %}
@@ -25,15 +28,15 @@
                 </span>
               </a>
             </li> 
-            <li class="mr-3"><a {% if menu == "projects" %}class="active"{% endif %} href="{% url "optamos:projects" %}">Projects</a></li>
             {% if request.user.is_authenticated %}
+              <li class="mr-3"><a {% if menu == "projects" %}class="active"{% endif %} href="{% url "optamos:projects" %}">Projects</a></li>
               <li><a {% if menu == "account" %}class="active"{% endif %} href="{% url "optamos:account" %}">My Account</a></li>
             {% endif %}
           </ul>  
           {% if request.user.is_authenticated %}
-            <a href="logout">Log out</a>
+            <a href="{% url "optamos:logout" %}">Log out</a>
           {% else %}
-            <a href="{% url "optamos:login" %}">Log in</a>
+            <a {% if menu == "login" %}class="active"{% endif %} href="{% url "optamos:login" %}">Log in</a>
           {% endif %}
         </div> 
       </div> 
@@ -61,7 +64,7 @@
             <div class="flex-4">
 
               {% if messages %}
-                <div class="top-message-box">
+                <div class="top-message-box mt-5 mb-10">
                   {% for message in messages %}
                     <div class="alert {{ message.tags }}" role="alert">
                       {{ message|safe }}
