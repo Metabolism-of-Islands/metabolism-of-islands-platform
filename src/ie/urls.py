@@ -65,10 +65,6 @@ for key,value in settings.PROJECT_LIST.items():
         path(get_path, include(key+".urls")),
     ]
 
-urlpatterns += [
-    path("optamos/", include("optamos.urls")),
-]
-
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
