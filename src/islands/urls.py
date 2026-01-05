@@ -45,5 +45,4 @@ urlpatterns = baseline_urlpatterns + baseline_library_urlpatterns + baseline_sta
     path("controlpanel/projects/create/", community.controlpanel_project_form),
     path("trim_database/", core.trim_database),
 
-    path("plan2021/", core.work_collection, {"slug": "plan2021"}, name="plan2021"),
 ]
