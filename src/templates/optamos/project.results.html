@@ -5,43 +5,6 @@
   {{ project }}
 {% endblock %}
 
-{% block css %}
-  <style>
-  .slider input {
-    -webkit-appearance: none;
-    appearance: none;
-    height: 8px;
-    background: #e5e7eb;
-    border-radius: 9999px;
-    outline: none;
-  }
-  .slider input::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 24px;
-    height: 24px;
-    background: #3b82f6;
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-  }
-  .slider input::-moz-range-thumb {
-    width: 24px;
-    height: 24px;
-    background: #3b82f6;
-    border-radius: 50%;
-    cursor: pointer;
-    border: none;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-  }
-  .slider input::-webkit-slider-runnable-track {
-    height: 8px;
-    background: #e5e7eb;
-    border-radius: 9999px;
-  }
-  </style> 
-{% endblock %}
-
 {% block content %}
 
 <div class="flex">
@@ -58,7 +21,7 @@
         <ul>
         {% for each in criteria_list %}
           <li>
-            <a href="?criteria={{ each.id }}" 
+            <a href="{% url "optamos:project" project.uid %}?criteria={{ each.id }}" 
               class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold no-underline
               {% if each == criteria %}
                 text-white bg-sky-600 
@@ -83,7 +46,7 @@
         {% endfor %}
 
         <li>
-          <a href="?rank_all_criteria=true" 
+          <a href="{% url "optamos:project" project.uid %}?rank_all_criteria=true" 
             class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold no-underline
             {% if page == "rank_all_criteria" %}
               text-white bg-sky-600 
@@ -161,68 +124,6 @@
   </div>
   <div class="flex-2 py-10 px-10">
 
-    {% if criteria or page == "rank_all_criteria" %}
-      {% if criteria %}
-        <h1>{{ criteria }}</h1>
-      {% else %}
-        <p class="mb-0 text-xl">Goal:</h1>
-        <h2 class="mb-8">{{ project.goal }}</h2>
-      {% endif %}
-
-      {% if not pairs %}
-        <div class="alert alert-warning">
-          You need to configure at least two 
-          {% if page == "rank_all_criteria" %}criteria{% else %}options{% endif %}
-          in your project.
-          <a href="{% url "optamos:project_settings" project.uid %}">Click here</a> to 
-          edit your project.
-        </div>
-      {% else %}
-        <form method="post">
-          {% for option1, option2 in pairs %}
-            <section class="mb-10">
-              <div class="flex justify-between">
-                <span class="truncate w-2/5">{{ option1 }}</span>
-                <span class="truncate w-2/5 text-right">{{ option2 }}</span>
-              </div>
-              <div class="slider">
-                {% with label="range-"|concat:option1.id|concat:"-"|concat:option2.id %}
-                  <input name="{{ label }}" type="range" min="-8" max="8" value="{{ values|get_item:label|default_if_none:0 }}" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-sky-500 hover:accent-sky-600 range range-lg range-primary">
-                {% endwith %}
-                <output class="block mt-2 text-center text-lg font-bold text-gray-900"></output>
-              </div>
-            </section>
-          {% endfor %}
-          {% csrf_token %}
-          <p class="flex justify-end">
-            <button type="submit" class="btn-green">Save &amp; next &raquo;</button>
-          </p>
-        </form>
-      {% endif %}
-
-    {% elif page == "home" %}
-
-      <div class="bg-gray-100 shadow-sm sm:rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-          <div class="mt-2 sm:flex sm:items-start sm:justify-between">
-            <div class="mt-5 sm:mt-0 sm:mr-6 sm:flex sm:shrink-0 sm:items-center">
-              <div class="group relative inline-flex w-11 shrink-0 rounded-full bg-gray-200 p-0.5 inset-ring inset-ring-gray-900/5 outline-offset-2 outline-sky-600 transition-colors duration-200 ease-in-out has-checked:bg-sky-600 has-focus-visible:outline-2">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" stroke="currentColor" aria-hidden="true" class="mx-auto size-12 text-gray-700"><path d="M400-240 160-480l240-240 56 58-142 142h486v80H314l142 142-56 58Z"/></svg>
-              </div>
-            </div>
-            <div class="max-w-xl text-sm text-gray-600">
-              <p>
-                Select one of the options from the menu on the left-hand side to get started.
-                You can also <a href="{% url "optamos:project_settings" project.uid %}">edit your project settings</a> or click here to
-                <a href="{% url "optamos:projects" %}">view all your projects</a>.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    {% elif page == "results" %}
-
       <div class="relative h-20">
         {% for each in criteria_list %}
           {% if not each.is_done %}
@@ -246,6 +147,43 @@
       <div id="chart_criteria" style="width:100%;height: 400px;"></div>
       <div id="chart_options" style="width:100%;height: 400px;"></div>
 
+      <h1 class="mt-5">Summary table</h1>
+
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            {% for o in options %}
+              <th>{{ o.name }}</th>
+            {% endfor %}
+            <th>CR</th>
+            <th>% Importance</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in summary_table %}
+            <tr>
+              <th>{{ row.criterion }}</th>
+              {% for val in row.options %}
+                <td>{{ val|floatformat:1 }}%</td>
+              {% endfor %}
+              <td>{{ row.cr|floatformat:2 }}</td>
+              <td>{{ row.importance|floatformat:1 }}%</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Totals</th>
+            {% for total in summary_totals %}
+              <th>{{ total|floatformat:1 }}%</th>
+            {% endfor %}
+            <th colspan="2"></th>
+          </tr>
+        </tfoot>
+      </table>
+
+      <h1 class="mt-5">Criteria evaluation</h1>
       <table class="table table-striped">
         <thead>
           <tr>
@@ -333,27 +271,132 @@
             <td>
               {{ cr|floatformat:4 }}
               {% if cr < 0.10 %}
-                <span style="color: green; font-weight: bold;">✓ Acceptable</span>
+                <span class="text-lime-600 font-bold">✓ Acceptable</span>
               {% else %}
-                <span style="color: red; font-weight: bold;">✗ Inconsistent</span>
+                <span class="text-red-600 font-bold">✗ Inconsistent</span>
               {% endif %}
             </td>
           </tr>
         </tbody>
       </table>
 
-    {% endif %}
+      <hr class="mt-5">
+      <h1 class="mt-5">Options evaluation</h1>
+
+    {% for c in criteria %}
+      <h3 class="mt-5">Criterion: {{ c.name }}</h3>
+
+      <h4 class="mt-5">Raw Matrix</h4>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th></th>
+            {% for o in options %}
+              <th>{{ o.name }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in options %}
+            <tr>
+              <th>{{ row.name }}</th>
+              {% for col in options %}
+                <td>
+                  {{ option_matrices|get_item:c.id|get_item:row.id|get_item:col.id|floatformat:4 }}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <h4 class="mt-5">Normalized Matrix</h4>
+
+      <p>Consistency Ratio (CR) for this criterion: 
+         {{ option_crs|get_item:c.id|floatformat:4 }}
+      </p>
+
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th></th>
+            {% for o in options %}
+              <th>{{ o.name }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in options %}
+            <tr>
+              <th>{{ row.name }}</th>
+              {% for col in options %}
+                <td>
+                  {{ normalized_option_matrices|get_item:c.id|get_item:row.id|get_item:col.id|floatformat:4 }}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Option weights -->
+      <h4 class="mt-5">Option Weights (Row Averages)</h4>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Option</th>
+            <th>Weight</th>
+            <th>Percentage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in options %}
+            <tr>
+              <td>{{ o.name }}</td>
+              <td>
+                {{ option_weights|get_item:c.id|get_item:o.id|floatformat:4 }}
+              </td>
+              <td>
+                {{ option_weights|get_item:c.id|get_item:o.id|multiply:100|floatformat:1 }}%
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    {% endfor %}
+
+    <!-- Global scores -->
+    <h3 class="mt-5">Global Scores & Ranking</h3>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Option</th>
+          <th>Global Score</th>
+          <th>Percentage</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% comment %} Sort by descending global score in view before passing {% endcomment %}
+        {% for item in global_ranking %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ item.option.name }}</td>
+            <td>{{ item.score|floatformat:4 }}</td>
+            <td>{{ item.score|multiply:100|floatformat:1 }}%</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
 
   </div>
 </div>
-
-
 
 {% endblock %}
 
 {% block js %}
 
-{% if page == "results" %}
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@6.0.0/dist/echarts.min.js"></script>
   <script type="text/javascript">
     var chart_criteria = echarts.init(document.getElementById('chart_criteria'));
@@ -426,32 +469,4 @@
 
   </script>
 
-{% else %}
-  <script type="text/javascript">
-    $(function() {
-      $(".slider").each(function() {
-        const $container = $(this);
-        const $slider = $container.find('input[type="range"]');
-        const $output = $container.find("output");
-        const $option1 = $container.siblings(".flex").find("span").first();
-        const $option2 = $container.siblings(".flex").find("span").last();
-        
-        function updateOpacity() {
-          const value = parseInt($slider.val(), 10);
-          $output.text(value);    
-          const maxOpacity = 1;
-          const minOpacity = 0.3;
-          const opacity2 = (value < 0) ? maxOpacity - (value / -8) * (1-minOpacity) : 1;
-          const opacity1 = (value > 0) ? maxOpacity - (value / 8) * (1-minOpacity) : 1;
-          
-          $option1.css("opacity", opacity1);
-          $option2.css("opacity", opacity2);
-        }
-        
-        updateOpacity();
-        $slider.on("input", updateOpacity);
-      });
-    });
-  </script>
-{% endif %}
 {% endblock %}

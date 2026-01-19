@@ -29,7 +29,7 @@ Once this is installed, you can run the following script:
 $ ./css_create
 ```
 
-This will generate the required CSS in a file called `optamos.css`, which is already included in all OPTamos pages.
+This will generate the required CSS in a file called `optamos.css`, which is already included in all OPTamos pages. Note that the CSS file might be cached so if you want to make sure people do not need to force a refresh you can give it a random, unique URL parameter (I generally put something like `?id=...` in `_base.html` after the css filename). 
 
 ## Logic
 
@@ -45,7 +45,9 @@ In the views all `OptamosOption` are being loaded when the user is managing the 
 
 There are a handful of models, and they are all self-explanatory when looking at their definition and fieldnames.
 
-Note that the models.py file is a shared file with the larger MoI project, so you will see many other models. However, all OPTamos models are prefaced by "Optamos" in the model name for easy recognition.
+Note that the `models.py` file is a shared file with the larger MoI project, so you will see many other models. However, all OPTamos models are prefaced by "Optamos" in the model name for easy recognition.
 
 
+## Additional details
 
+- The background images that are loaded on each page are selected at random from a list of images defined in `views.py` (see OPTAMOS_BG). Each file comes from Pexels (which provides images that can be used without the need for credits, which is hard to do with background images). Files are cut to 300px height (maintaining 1920px width), sliced in general at the center of the image. The original filenames are maintained, making it possible to look up the original files at Pexels if need be.

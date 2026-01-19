@@ -32,6 +32,62 @@ OPTAMOS_BG = [
     "pexels-vividcafe-681347.jpg",
 ]
 
+def calculate_consistency_ratio(project):
+    """
+    Calculate the Consistency Ratio (CR) for all Criteria of this project
+    We calculate this using numpy -- all we need is the CR itself to show on 
+    each page. On the results page we calculate it differently but it's left
+    separate intentionally to use it as a check that both procedures yield the 
+    same results.
+    
+    Returns:
+        float: CR value
+    """
+    # Step 1: Load all criteria and scores
+    criteria = list(project.criteria.all())
+    n = len(criteria)
+    if n < 2:
+        return 0.0  # trivial case
+
+    # Step 2: Build matrix
+    matrix = np.ones((n, n))  # diagonal = 1 automatically
+    crit_id_to_index = {c.id: idx for idx, c in enumerate(criteria)}
+
+    for score in OptamosCriteriaValue.objects.filter(criteria1__project=project):
+        i = crit_id_to_index[score.criteria1.id]
+        j = crit_id_to_index[score.criteria2.id]
+        value = score.value
+
+        # See explanation below in the results calculation where we do the same
+        if value > 0:
+            value += 1
+            matrix[i, j] = value
+            matrix[j, i] = 1/value
+        elif value < 0:
+            value -= 1
+            matrix[i, j] = 1/-value
+            matrix[j, i] = -value
+        else:
+            matrix[i, j] = 1
+            matrix[j, i] = 1
+
+    # Step 3: Compute principal eigenvalue
+    eigenvalues, _ = np.linalg.eig(matrix)
+    lambda_max = max(eigenvalues.real)
+
+    # Step 4: Consistency Index (CI)
+    ci = (lambda_max - n) / (n - 1)
+
+    # Step 5: Random Index (RI)
+    ri_dict = {1:0, 2:0, 3:0.58, 4:0.90, 5:1.12, 6:1.24, 7:1.32, 8:1.41, 9:1.45, 10:1.49}
+    ri = ri_dict.get(n, 0)
+    if ri == 0:
+        return 0.0
+
+    # Step 6: CR
+    cr = ci / ri
+    return cr
+
 def index(request):
     context = {
         "bg": random.choice(OPTAMOS_BG),
@@ -178,24 +234,6 @@ def project(request, id, page="home"):
         # This creates pairs of all possible combinations of options
         pairs = list(combinations(project.criteria.all(), 2))
 
-    elif page == "results":
-        points_options = {}
-        points_criteria = {}
-        for each in project.options.all():
-            points_options[each] = 0
-        for each in project.criteria.all():
-            points_criteria[each] = 0
-        for each in OptamosCriteriaValue.objects.filter(criteria1__project=project):
-            if each.value > 0:
-                points_criteria[each.criteria2] += each.value
-            elif each.value < 0:
-                points_criteria[each.criteria1] += each.value*-1
-        for each in OptamosOptionValue.objects.filter(criteria__project=project):
-            if each.value > 0:
-                points_options[each.option2] += each.value
-            elif each.value < 0:
-                points_options[each.option1] += each.value*-1
-
     if request.method == "POST":
         if page == "criteria":
             OptamosOptionValue.objects.filter(criteria=criteria).delete()
@@ -226,6 +264,7 @@ def project(request, id, page="home"):
                 )
             return redirect(reverse("optamos:project_results", args=[project.uid]))
 
+
     context = {
         "bg": random.choice(OPTAMOS_BG),
         "project": project,
@@ -240,13 +279,361 @@ def project(request, id, page="home"):
         # relevant in case people edit the project and add criteria in which case we need to show an error
         "total_required_criteria_values": len(list(combinations(project.criteria.all(), 2))), 
         "menu": "projects",
+        "cr": calculate_consistency_ratio(project),
     }
 
-    if page == "results":
-        context["points_criteria"] = points_criteria
-        context["points_options"] = points_options
-
     return render(request, "optamos/project.html", context)
+
+def project_results(request, id):
+
+    if not request.user.is_authenticated:
+        return redirect("optamos:login")
+
+    project = OptamosProject.objects_include_private.filter(pk=id, user=request.user).first()
+    if not project:
+        messages.error(request, "Project is not found - either it does not exist or you do not have access. Below are your projects.")
+        return redirect("optamos:projects")
+
+
+    # START OF CRITERIA EVALUATION
+    points_options = {}
+    points_criteria = {}
+    for each in project.options.all():
+        points_options[each] = 0
+    for each in project.criteria.all():
+        points_criteria[each] = 0
+    for each in OptamosCriteriaValue.objects.filter(criteria1__project=project):
+        if each.value > 0:
+            points_criteria[each.criteria2] += each.value
+        elif each.value < 0:
+            points_criteria[each.criteria1] += each.value*-1
+    for each in OptamosOptionValue.objects.filter(criteria__project=project):
+        if each.value > 0:
+            points_options[each.option2] += each.value
+        elif each.value < 0:
+            points_options[each.option1] += each.value*-1
+
+
+    # Create a matrix with all criteria (values are 0 for each item)
+    matrix_criteria = list(OptamosCriteria.objects.filter(project=project))
+    criteria_ids = [c.id for c in matrix_criteria]
+    matrix = {
+        c1.id: {c2.id: (1 if c1.id == c2.id else 0) for c2 in matrix_criteria} # Default if 0 if not set, but 1 for the diagonal values
+        for c1 in matrix_criteria
+    }
+
+    # Load the actual scores into the matrix
+    for score in OptamosCriteriaValue.objects.filter(criteria1__project=project):
+        c1 = score.criteria1.id
+        c2 = score.criteria2.id
+        value = score.value
+
+        # We need to calibrate the scores. 
+        # Firstly, the default scale is 1-9, but we use -8 - 8. That is done so we can use a slider more easily.
+        # But it means that a score of 0 in our system represents a score of 1 for both criteria in the AHP system
+        # And any other score (e.g. 6) represents a n+1 (e.g. 7 in the example) in our system
+        # A negative score simply means it's "in favor" of the other criteria, so we do the same procedure in reverse
+        # We need to get the fraction listed in the matrix so that is the other part of the calculation
+        # E.g. C1-C2 = 6, then C2-C1 = 1/6
+        if value > 0:
+            value += 1
+            matrix[c1][c2] = value
+            matrix[c2][c1] = 1/value
+        elif value < 0:
+            value -= 1
+            matrix[c1][c2] = 1/-value
+            matrix[c2][c1] = -value
+        else:
+            matrix[c1][c2] = 1
+            matrix[c2][c1] = 1
+
+    # Give the proper labels to the matrix columns and rows
+    named_matrix = {
+        c1.name: {
+            c2.name: matrix[c1.id][c2.id]
+            for c2 in matrix_criteria
+        }
+        for c1 in matrix_criteria
+    }
+
+    # Initialize totals per column
+    column_totals = {c.id: 0 for c in matrix_criteria}
+
+    # Sum column values
+    for row in matrix_criteria:
+        for col in matrix_criteria:
+            column_totals[col.id] += matrix[row.id][col.id]
+
+    # Normalized matrix
+    normalized_matrix_criteria = {
+        row.id: {} for row in matrix_criteria
+    }
+
+    for row in matrix_criteria:
+        for col in matrix_criteria:
+            total = column_totals[col.id]
+
+            if total != 0:
+                normalized_matrix_criteria[row.id][col.id] = (
+                    matrix[row.id][col.id] / total
+                )
+            else:
+                normalized_matrix_criteria[row.id][col.id] = 0
+
+    # Calculate the total and the average for each row in the normalized matrix
+    row_totals = {}
+    row_averages = {}
+
+    num_criteria = len(matrix_criteria)
+
+    for row in matrix_criteria:
+        total = 0
+        for col in matrix_criteria:
+            total += normalized_matrix_criteria[row.id][col.id]
+
+        row_totals[row.id] = total
+        row_averages[row.id] = (
+            total / num_criteria if num_criteria > 0 else 0
+        )
+
+    # END OF CRITERIA EVALUTION
+
+    # Calculate the Consistency Ratio
+    # Step 1: Compute weighted sum vector
+    weighted_sum = {}
+
+    for row in matrix_criteria:
+        total = 0
+        for col in matrix_criteria:
+            total += matrix[row.id][col.id] * row_averages[col.id]
+        weighted_sum[row.id] = total
+
+    # Step 2: Compute consistency vector (λ values)
+    lambda_values = {}
+
+    for row in matrix_criteria:
+        weight = row_averages[row.id]
+        lambda_values[row.id] = (
+            weighted_sum[row.id] / weight if weight != 0 else 0
+        )
+
+    # Step 3: Compute λₘₐₓ (principal eigenvalue)
+    n = len(matrix_criteria)
+    lambda_max = sum(lambda_values.values()) / n if n > 0 else 0
+
+    # Step 4: Compute Consistency Index (CI)
+    ci = (lambda_max - n) / (n - 1) if n > 1 else 0
+
+    # Step 5: Compute Consistency Ratio (CR)
+
+    # Random Index (RI) table (Saaty)
+    RI_TABLE = {
+        1: 0.00,
+        2: 0.00,
+        3: 0.58,
+        4: 0.90,
+        5: 1.12,
+        6: 1.24,
+        7: 1.32,
+        8: 1.41,
+        9: 1.45,
+        10: 1.49,
+    }
+
+    ri = RI_TABLE.get(n, 1.49)  # fallback for n > 10
+    cr = ci / ri if ri != 0 else 0
+
+    # START OF OPTIONS EVALATION
+
+    # Get all criteria and options
+    criteria = list(OptamosCriteria.objects.filter(project=project))
+    options = list(OptamosOption.objects.filter(project=project))
+    option_values = OptamosOptionValue.objects.filter(criteria__project=project)
+
+    # Step 1: Initialize matrices per criterion
+    option_matrices = {}
+    for c in criteria:
+        option_matrices[c.id] = {
+            o1.id: {o2.id: 1 if o1.id == o2.id else 0 for o2 in options}
+            for o1 in options
+        }
+
+    # Step 2: Fill matrices with OptionValue data
+    for ov in option_values:
+        c_id = ov.criteria.id
+        o1_id = ov.option1.id
+        o2_id = ov.option2.id
+        value = ov.value
+
+        # Fill reciprocal matrix
+        if value > 0:
+            value += 1
+            option_matrices[c_id][o1_id][o2_id] = value
+            option_matrices[c_id][o2_id][o1_id] = 1/value
+        elif value < 0:
+            value -= 1
+            option_matrices[c_id][o1_id][o2_id] = 1/-value
+            option_matrices[c_id][o2_id][o1_id] = -value
+        else:
+            option_matrices[c_id][o1_id][o2_id] = 1
+            option_matrices[c_id][o2_id][o1_id] = 1
+
+    # Step 3: Normalize matrices and compute option weights
+    normalized_option_matrices = {}
+    option_weights = {}  # row averages per criterion
+
+    for c in criteria:
+        matrix = option_matrices[c.id]
+
+        # Compute column totals
+        col_totals = {o.id: 0 for o in options}
+        for col in options:
+            for row in options:
+                col_totals[col.id] += matrix[row.id][col.id]
+
+        # Normalize matrix
+        normalized_matrix = {}
+        for row in options:
+            normalized_matrix[row.id] = {}
+            for col in options:
+                total = col_totals[col.id]
+                normalized_matrix[row.id][col.id] = (
+                    matrix[row.id][col.id] / total if total != 0 else 0
+                )
+
+        normalized_option_matrices[c.id] = normalized_matrix
+
+        # Compute row averages → option weights for this criterion
+        row_avg = {}
+        for row in options:
+            total = sum(normalized_matrix[row.id][col.id] for col in options)
+            row_avg[row.id] = total / len(options)
+        option_weights[c.id] = row_avg
+
+    # END OF OPTIONS EVALUATION
+
+
+    # Calculate global scores
+
+    global_scores = {o.id: 0 for o in options}
+
+    for o in options:
+        total_score = 0
+        for c in criteria:
+            weight_c = row_averages[c.id]  # criteria weight
+            weight_o = option_weights[c.id][o.id]  # option weight under this criterion
+            total_score += weight_c * weight_o
+        global_scores[o.id] = total_score
+
+    global_ranking = sorted(
+        [{'option': o, 'score': global_scores[o.id]} for o in options],
+        key=lambda x: x['score'],
+        reverse=True  # highest score first
+    )
+
+    # Compute CR per criterion
+    ri_dict = {1:0, 2:0, 3:0.58, 4:0.90, 5:1.12, 6:1.24, 7:1.32, 8:1.41, 9:1.45, 10:1.49}
+    option_crs = {}
+
+    n_options = len(options)
+    option_id_to_index = {o.id: idx for idx, o in enumerate(options)}
+
+    for c in criteria:
+        # build matrix
+        matrix = np.ones((n_options, n_options))
+        for ov in option_values.filter(criteria=c):
+            i = option_id_to_index[ov.option1.id]
+            j = option_id_to_index[ov.option2.id]
+            value = ov.value
+
+            # Fill reciprocal matrix
+            if value > 0:
+                value += 1
+                matrix[i, j] = value
+                matrix[j, i] = 1/value
+            elif value < 0:
+                value -= 1
+                matrix[i, j] = 1/-value
+                matrix[j, i] = -value
+            else:
+                matrix[i, j] = 1
+                matrix[j, i] = 1
+
+        # compute CR
+        if n_options < 2:
+            cr = 0.0
+        else:
+            eigenvalues, _ = np.linalg.eig(matrix)
+            lambda_max = max(eigenvalues.real)
+            ci = (lambda_max - n_options) / (n_options - 1)
+            ri = ri_dict.get(n_options, 0)
+            cr = ci / ri if ri != 0 else 0.0
+
+        option_crs[c.id] = cr
+
+    # Build a summary taable
+
+    summary_table = []
+
+    for c in criteria:
+        row = {
+            "criterion": c.name,
+            "options": [
+                option_weights[c.id][o.id] * row_averages[c.id] * 100
+                for o in options
+            ],
+            "cr": option_crs[c.id],
+            "importance": row_averages[c.id] * 100
+        }
+        summary_table.append(row)
+
+    # Compute totals for each option column
+    totals = []
+    n_options = len(options)
+    for idx in range(n_options):
+        total = sum(row["options"][idx] for row in summary_table)
+        totals.append(total)
+
+    context = {
+        "bg": random.choice(OPTAMOS_BG),
+        "project": project,
+        "remove_padding_main_container": True,
+        "criteria": criteria,
+        "page": "results",
+        "criteria_list": project.criteria.all().annotate(is_done=Count("option_pairs")),
+        "criteria_values": OptamosCriteriaValue.objects.filter(criteria1__project=project).count(), 
+        # Count how many there theoretically are, so that we can verify that all are saved -- this is particularly 
+        # relevant in case people edit the project and add criteria in which case we need to show an error
+        "total_required_criteria_values": len(list(combinations(project.criteria.all(), 2))), 
+        "menu": "projects",
+
+        "criteria": criteria,
+        "options": options,
+        "option_matrices": option_matrices,
+        "normalized_option_matrices": normalized_option_matrices,
+        "option_weights": option_weights,
+
+        "global_scores": global_scores,
+        "global_ranking": global_ranking,
+        "option_crs": option_crs,
+        "summary_table": summary_table,
+        "summary_totals": totals,
+
+        "points_criteria": points_criteria,
+        "points_options": points_options,
+        "matrix": named_matrix,
+        "matrix_criteria": matrix_criteria,
+        "column_totals": column_totals,
+        "normalized_matrix": normalized_matrix_criteria,
+        "row_totals": row_totals,
+        "row_averages": row_averages,
+        "lambda_max": lambda_max,
+        "ci": ci,
+        "cr": cr,
+
+    }
+
+    return render(request, "optamos/project.results.html", context)
 
 # ACCOUNT-RELATED FUNCTIONS
 

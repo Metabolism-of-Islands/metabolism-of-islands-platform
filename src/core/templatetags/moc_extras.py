@@ -8,6 +8,8 @@ def get_item(dictionary, key):
     try:
         if dictionary.get(key):
             return dictionary.get(key)
+        elif dictionary.get(key) == 0:
+            return 0
         elif dictionary.get(str(key)):
             return dictionary.get(str(key))
         else:
@@ -52,6 +54,14 @@ def split_tag(value):
 @register.filter
 def concat(value1, value2):
     return f"{value1}{value2}"
+
+# Also for OPTamos
+@register.filter
+def multiply(value, arg):
+    try:
+        return float(value) * float(arg)
+    except (ValueError, TypeError):
+        return 0
 
 #### TEMP FOR MAP CONVERSION #####
 @register.filter
