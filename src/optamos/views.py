@@ -56,20 +56,8 @@ def calculate_consistency_ratio(project):
     for score in OptamosCriteriaValue.objects.filter(criteria1__project=project):
         i = crit_id_to_index[score.criteria1.id]
         j = crit_id_to_index[score.criteria2.id]
-        value = score.value
-
-        # See explanation below in the results calculation where we do the same
-        if value > 0:
-            value += 1
-            matrix[i, j] = value
-            matrix[j, i] = 1/value
-        elif value < 0:
-            value -= 1
-            matrix[i, j] = 1/-value
-            matrix[j, i] = -value
-        else:
-            matrix[i, j] = 1
-            matrix[j, i] = 1
+        matrix[i, j] = score.value1
+        matrix[j, i] = score.value2
 
     # Step 3: Compute principal eigenvalue
     eigenvalues, _ = np.linalg.eig(matrix)
@@ -87,6 +75,25 @@ def calculate_consistency_ratio(project):
     # Step 6: CR
     cr = ci / ri
     return cr
+
+def create_matrix(project):
+    # Create a matrix with all criteria (values are 0 for each item)
+    matrix_criteria = list(project.criteria.all())
+
+    criteria_ids = [c.id for c in matrix_criteria]
+    matrix = {
+        c1.id: {c2.id: (1 if c1.id == c2.id else 0) for c2 in matrix_criteria} # Default if 0 if not set, but 1 for the diagonal values
+        for c1 in matrix_criteria
+    }
+
+    # Load the actual scores into the matrix
+    for score in OptamosCriteriaValue.objects.filter(criteria1__project=project):
+        c1 = score.criteria1.id
+        c2 = score.criteria2.id
+        matrix[c1][c2] = score.value1
+        matrix[c2][c1] = score.value2
+
+    return matrix
 
 def index(request):
     context = {
@@ -246,7 +253,7 @@ def project(request, id, page="home"):
                     criteria = criteria,
                     value = request.POST[value],
                 )
-            next_criteria = project.criteria.filter(pk__gt=criteria.pk).first()
+            next_criteria = project.criteria.filter(pk__gt=criteria.pk).order_by("name").first()
             if next_criteria:
                 return redirect(reverse("optamos:project", args=[project.uid]) + f"?criteria={next_criteria.id}")
             else:
@@ -273,7 +280,7 @@ def project(request, id, page="home"):
         "pairs": pairs,
         "values": values,
         "page": page,
-        "criteria_list": project.criteria.all().annotate(is_done=Count("option_pairs")),
+        "criteria_list": project.criteria.all().order_by("id").annotate(is_done=Count("option_pairs")),
         "criteria_values": OptamosCriteriaValue.objects.filter(criteria1__project=project).count(), 
         # Count how many there theoretically are, so that we can verify that all are saved -- this is particularly 
         # relevant in case people edit the project and add criteria in which case we need to show an error
@@ -313,39 +320,8 @@ def project_results(request, id):
         elif each.value < 0:
             points_options[each.option1] += each.value*-1
 
-
-    # Create a matrix with all criteria (values are 0 for each item)
-    matrix_criteria = list(OptamosCriteria.objects.filter(project=project))
-    criteria_ids = [c.id for c in matrix_criteria]
-    matrix = {
-        c1.id: {c2.id: (1 if c1.id == c2.id else 0) for c2 in matrix_criteria} # Default if 0 if not set, but 1 for the diagonal values
-        for c1 in matrix_criteria
-    }
-
-    # Load the actual scores into the matrix
-    for score in OptamosCriteriaValue.objects.filter(criteria1__project=project):
-        c1 = score.criteria1.id
-        c2 = score.criteria2.id
-        value = score.value
-
-        # We need to calibrate the scores. 
-        # Firstly, the default scale is 1-9, but we use -8 - 8. That is done so we can use a slider more easily.
-        # But it means that a score of 0 in our system represents a score of 1 for both criteria in the AHP system
-        # And any other score (e.g. 6) represents a n+1 (e.g. 7 in the example) in our system
-        # A negative score simply means it's "in favor" of the other criteria, so we do the same procedure in reverse
-        # We need to get the fraction listed in the matrix so that is the other part of the calculation
-        # E.g. C1-C2 = 6, then C2-C1 = 1/6
-        if value > 0:
-            value += 1
-            matrix[c1][c2] = value
-            matrix[c2][c1] = 1/value
-        elif value < 0:
-            value -= 1
-            matrix[c1][c2] = 1/-value
-            matrix[c2][c1] = -value
-        else:
-            matrix[c1][c2] = 1
-            matrix[c2][c1] = 1
+    matrix = create_matrix(project)
+    matrix_criteria = list(project.criteria.all())
 
     # Give the proper labels to the matrix columns and rows
     named_matrix = {
@@ -398,8 +374,9 @@ def project_results(request, id):
 
     # END OF CRITERIA EVALUTION
 
-    # Calculate the Consistency Ratio
+    # CONSISTENCY RATIO CALCULATION
     # Step 1: Compute weighted sum vector
+
     weighted_sum = {}
 
     for row in matrix_criteria:
@@ -468,12 +445,12 @@ def project_results(request, id):
         # Fill reciprocal matrix
         if value > 0:
             value += 1
-            option_matrices[c_id][o1_id][o2_id] = value
-            option_matrices[c_id][o2_id][o1_id] = 1/value
+            option_matrices[c_id][o2_id][o1_id] = value
+            option_matrices[c_id][o1_id][o2_id] = 1/value
         elif value < 0:
             value -= 1
-            option_matrices[c_id][o1_id][o2_id] = 1/-value
-            option_matrices[c_id][o2_id][o1_id] = -value
+            option_matrices[c_id][o2_id][o1_id] = 1/-value
+            option_matrices[c_id][o1_id][o2_id] = -value
         else:
             option_matrices[c_id][o1_id][o2_id] = 1
             option_matrices[c_id][o2_id][o1_id] = 1
@@ -540,36 +517,26 @@ def project_results(request, id):
 
     for c in criteria:
         # build matrix
-        matrix = np.ones((n_options, n_options))
+        c_matrix = np.ones((n_options, n_options))
         for ov in option_values.filter(criteria=c):
             i = option_id_to_index[ov.option1.id]
             j = option_id_to_index[ov.option2.id]
-            value = ov.value
 
             # Fill reciprocal matrix
-            if value > 0:
-                value += 1
-                matrix[i, j] = value
-                matrix[j, i] = 1/value
-            elif value < 0:
-                value -= 1
-                matrix[i, j] = 1/-value
-                matrix[j, i] = -value
-            else:
-                matrix[i, j] = 1
-                matrix[j, i] = 1
+            c_matrix[i, j] = ov.value1
+            c_matrix[j, i] = ov.value2
 
         # compute CR
         if n_options < 2:
-            cr = 0.0
+            c_cr = 0.0
         else:
-            eigenvalues, _ = np.linalg.eig(matrix)
-            lambda_max = max(eigenvalues.real)
-            ci = (lambda_max - n_options) / (n_options - 1)
-            ri = ri_dict.get(n_options, 0)
-            cr = ci / ri if ri != 0 else 0.0
+            eigenvalues, _ = np.linalg.eig(c_matrix)
+            c_lambda_max = max(eigenvalues.real)
+            c_ci = (c_lambda_max - n_options) / (n_options - 1)
+            c_ri = ri_dict.get(n_options, 0)
+            c_cr = c_ci / c_ri if c_ri != 0 else 0.0
 
-        option_crs[c.id] = cr
+        option_crs[c.id] = c_cr
 
     # Build a summary taable
 
@@ -600,7 +567,7 @@ def project_results(request, id):
         "remove_padding_main_container": True,
         "criteria": criteria,
         "page": "results",
-        "criteria_list": project.criteria.all().annotate(is_done=Count("option_pairs")),
+        "criteria_list": project.criteria.all().order_by("id").annotate(is_done=Count("option_pairs")),
         "criteria_values": OptamosCriteriaValue.objects.filter(criteria1__project=project).count(), 
         # Count how many there theoretically are, so that we can verify that all are saved -- this is particularly 
         # relevant in case people edit the project and add criteria in which case we need to show an error
@@ -630,10 +597,9 @@ def project_results(request, id):
         "lambda_max": lambda_max,
         "ci": ci,
         "cr": cr,
-
     }
 
-    return render(request, "optamos/project.results.html", context)
+    return render(request, "optamos/project.html", context)
 
 # ACCOUNT-RELATED FUNCTIONS
 

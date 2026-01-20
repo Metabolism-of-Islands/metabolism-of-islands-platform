@@ -691,9 +691,12 @@ def article(request, id=None, slug=None, prefix=None, project=None, subtitle=Non
         slug = slug + "/"
         if project:
             info = Webpage.objects.filter(slug=slug, part_of_project_id=project)
+            if info.exists():
+                info = info[0]
             if not info:
                 info = Webpage.objects.filter(slug="/" + slug, part_of_project_id=project)
-            info = info[0]
+                if info.exists():
+                    info = info[0]
         else:
             info = get_object_or_404(Webpage, slug=slug)
 

@@ -3118,10 +3118,40 @@ class OptamosOptionValue(models.Model):
     option2 = models.ForeignKey(OptamosOption, on_delete=models.CASCADE, related_name="setting2")
     value = models.SmallIntegerField()
 
+    #### SCORE CALCULATION ####
+    # We need to calibrate the scores. 
+    # Firstly, the default scale is 1-9, but we use -8 - 8. That is done so we can use a slider more easily.
+    # But it means that a score of 0 in our system represents a score of 1 for both criteria in the AHP system
+    # And any other score (e.g. 6) represents a n+1 (e.g. 7 in the example) in our system
+    # A negative score simply means it's "in favor" of the other criteria, so we do the same procedure in reverse
+
+    @property
+    def value1(self):
+        if self.value < 0: # This score is "in favor" of option 1
+            return -(self.value-1)
+        else:
+            return 1/(self.value+1) # If the score is 0, it will be 1/(1) = 1, which is what we want
+
+    @property
+    def value2(self):
+        return 1/self.value1 # This is always the inverse of the other score
+
 class OptamosCriteriaValue(models.Model):
     criteria1 = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="setting1")
     criteria2 = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="setting2")
     value = models.SmallIntegerField()
+
+    # See OptamosOptionValue for an explanation on this procedure
+    @property
+    def value1(self):
+        if self.value < 0: # This score is "in favor" of option 1
+            return -(self.value-1)
+        else:
+            return 1/(self.value+1) # If the score is 0, it will be 1/(1) = 1, which is what we want
+
+    @property
+    def value2(self):
+        return 1/self.value1 # This is always the inverse of the other score
 
 ###
 ### DUMMY FORMAT

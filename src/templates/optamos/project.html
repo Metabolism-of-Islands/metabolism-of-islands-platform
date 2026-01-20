@@ -58,7 +58,7 @@
         <ul>
         {% for each in criteria_list %}
           <li>
-            <a href="?criteria={{ each.id }}" 
+            <a href="{% url "optamos:project" project.uid %}?criteria={{ each.id }}" 
               class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold no-underline
               {% if each == criteria %}
                 text-white bg-sky-600 
@@ -83,7 +83,7 @@
         {% endfor %}
 
         <li>
-          <a href="?rank_all_criteria=true" 
+          <a href="{% url "optamos:project" project.uid %}?rank_all_criteria=true" 
             class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold no-underline
             {% if page == "rank_all_criteria" %}
               text-white bg-sky-600 
@@ -149,7 +149,7 @@
     <section class="mt-10" id="inconsistency">
       <h2>Consistency ratio</h2>
       Current ratio:
-      {{ cr|floatformat:4 }}
+      {{ cr|floatformat:2 }}
       <br>
       {% if cr < 0.10 %}
         <span class="text-lime-600 font-bold">✓ Acceptable</span>
@@ -161,7 +161,7 @@
   </div>
   <div class="flex-2 py-10 px-10">
 
-    {% if criteria or page == "rank_all_criteria" %}
+    {% if request.GET.criteria or page == "rank_all_criteria" %}
       {% if criteria %}
         <h1>{{ criteria }}</h1>
       {% else %}
@@ -222,7 +222,6 @@
       </div>
 
     {% elif page == "results" %}
-
       <div class="relative h-20">
         {% for each in criteria_list %}
           {% if not each.is_done %}
@@ -246,6 +245,65 @@
       <div id="chart_criteria" style="width:100%;height: 400px;"></div>
       <div id="chart_options" style="width:100%;height: 400px;"></div>
 
+      <h1 class="mt-5">Summary table</h1>
+
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            {% for o in options %}
+              <th>{{ o.name }}</th>
+            {% endfor %}
+            <th>CR</th>
+            <th>% Importance</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in summary_table %}
+            <tr>
+              <th>{{ row.criterion }}</th>
+              {% for val in row.options %}
+                <td>{{ val|floatformat:1 }}%</td>
+              {% endfor %}
+              <td>{{ row.cr|floatformat:2 }}</td>
+              <td>{{ row.importance|floatformat:1 }}%</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Totals</th>
+            {% for total in summary_totals %}
+              <th>{{ total|floatformat:1 }}%</th>
+            {% endfor %}
+            <th colspan="2"></th>
+          </tr>
+        </tfoot>
+      </table>
+
+    <h3 class="mt-5">Global Scores & Ranking</h3>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Option</th>
+          <th>Percentage</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% comment %} Sort by descending global score in view before passing {% endcomment %}
+        {% for item in global_ranking %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ item.option.name }}</td>
+            <td>{{ item.score|multiply:100|floatformat:1 }}%</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+
+      <h1 class="mt-5">Criteria evaluation</h1>
       <table class="table table-striped">
         <thead>
           <tr>
@@ -302,14 +360,14 @@
               <th>{{ row.name }}</th>
               {% for col in matrix_criteria %}
                 <td>
-                  {{ normalized_matrix|get_item:row.id|get_item:col.id|floatformat:4 }}
+                  {{ normalized_matrix|get_item:row.id|get_item:col.id|floatformat:2 }}
                 </td>
               {% endfor %}
               <td>
-                {{ row_totals|get_item:row.id|floatformat:4 }}
+                {{ row_totals|get_item:row.id|floatformat:2 }}
               </td>
               <td style="font-weight: bold;">
-                {{ row_averages|get_item:row.id|floatformat:4 }}
+                {{ row_averages|get_item:row.id|floatformat:2 }}
               </td>
             </tr>
           {% endfor %}
@@ -333,21 +391,105 @@
             <td>
               {{ cr|floatformat:4 }}
               {% if cr < 0.10 %}
-                <span style="color: green; font-weight: bold;">✓ Acceptable</span>
+                <span class="text-lime-600 font-bold">✓ Acceptable</span>
               {% else %}
-                <span style="color: red; font-weight: bold;">✗ Inconsistent</span>
+                <span class="text-red-600 font-bold">✗ Inconsistent</span>
               {% endif %}
             </td>
           </tr>
         </tbody>
       </table>
 
+      <hr class="mt-5">
+      <h1 class="mt-5">Options evaluation</h1>
+
+    {% for c in criteria %}
+      <h3 class="mt-5">Criterion: {{ c.name }}</h3>
+
+      <h4 class="mt-5">Raw Matrix</h4>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th></th>
+            {% for o in options %}
+              <th>{{ o.name }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in options %}
+            <tr>
+              <th>{{ row.name }}</th>
+              {% for col in options %}
+                <td>
+                  {{ option_matrices|get_item:c.id|get_item:row.id|get_item:col.id|floatformat:2 }}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <h4 class="mt-5">Normalized Matrix</h4>
+
+      <p>Consistency Ratio (CR) for this criterion: 
+         {{ option_crs|get_item:c.id|floatformat:2 }}
+      </p>
+
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th></th>
+            {% for o in options %}
+              <th>{{ o.name }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in options %}
+            <tr>
+              <th>{{ row.name }}</th>
+              {% for col in options %}
+                <td>
+                  {{ normalized_option_matrices|get_item:c.id|get_item:row.id|get_item:col.id|floatformat:2 }}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Option weights -->
+      <h4 class="mt-5">Option Weights (Row Averages)</h4>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Option</th>
+            <th>Weight</th>
+            <th>Percentage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in options %}
+            <tr>
+              <td>{{ o.name }}</td>
+              <td>
+                {{ option_weights|get_item:c.id|get_item:o.id|floatformat:2 }}
+              </td>
+              <td>
+                {{ option_weights|get_item:c.id|get_item:o.id|multiply:100|floatformat:1 }}%
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    {% endfor %}
+
     {% endif %}
 
   </div>
 </div>
-
-
 
 {% endblock %}
 
@@ -454,4 +596,5 @@
     });
   </script>
 {% endif %}
+
 {% endblock %}
