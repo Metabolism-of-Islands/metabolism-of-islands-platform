@@ -7,6 +7,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from itertools import combinations
 import random
+from dataclasses import dataclass
 
 OPTAMOS_BG = [
     "pexels-altaf-shah-3143825-7751849.jpg",
@@ -32,7 +33,27 @@ OPTAMOS_BG = [
     "pexels-vividcafe-681347.jpg",
 ]
 
-def calculate_consistency_ratio(project):
+# Random Index (RI) table (Saaty) used for consistency ratio calculations
+RI_TABLE = {
+    1: 0.00,
+    2: 0.00,
+    3: 0.58,
+    4: 0.90,
+    5: 1.12,
+    6: 1.24,
+    7: 1.32,
+    8: 1.41,
+    9: 1.45,
+    10: 1.49,
+}
+
+@dataclass(frozen=True)
+class ConsistencyResult:
+    cr: float
+    ci: float
+    lambda_max: float
+
+def calculate_consistency_ratio(items_to_review, score_list):
     """
     Calculate the Consistency Ratio (CR) for all Criteria of this project
     We calculate this using numpy -- all we need is the CR itself to show on 
@@ -43,19 +64,19 @@ def calculate_consistency_ratio(project):
     Returns:
         float: CR value
     """
-    # Step 1: Load all criteria and scores
-    criteria = list(project.criteria.all())
-    n = len(criteria)
+    # Step 1: Load all items and scores
+    items_to_review = items_to_review
+    n = len(items_to_review)
     if n < 2:
-        return 0.0  # trivial case
+        return ConsistencyResult(cr=0.0, ci=0.0, lambda_max=0.0)
 
     # Step 2: Build matrix
     matrix = np.ones((n, n))  # diagonal = 1 automatically
-    crit_id_to_index = {c.id: idx for idx, c in enumerate(criteria)}
+    crit_id_to_index = {c.id: idx for idx, c in enumerate(items_to_review)}
 
-    for score in OptamosCriteriaValue.objects.filter(criteria1__project=project):
-        i = crit_id_to_index[score.criteria1.id]
-        j = crit_id_to_index[score.criteria2.id]
+    for score in score_list:
+        i = crit_id_to_index[score.id1]
+        j = crit_id_to_index[score.id2]
         matrix[i, j] = score.value1
         matrix[j, i] = score.value2
 
@@ -67,14 +88,11 @@ def calculate_consistency_ratio(project):
     ci = (lambda_max - n) / (n - 1)
 
     # Step 5: Random Index (RI)
-    ri_dict = {1:0, 2:0, 3:0.58, 4:0.90, 5:1.12, 6:1.24, 7:1.32, 8:1.41, 9:1.45, 10:1.49}
-    ri = ri_dict.get(n, 0)
-    if ri == 0:
-        return 0.0
+    ri = RI_TABLE.get(n, 1.49) # Highly doubtful it goes beyond 10 but setting 1.49 if it does is an easy way to deal with that might it happen
 
     # Step 6: CR
     cr = ci / ri
-    return cr
+    return ConsistencyResult(cr=cr, ci=ci, lambda_max=lambda_max)
 
 def create_matrix(project):
     # Create a matrix with all criteria (values are 0 for each item)
@@ -286,7 +304,7 @@ def project(request, id, page="home"):
         # relevant in case people edit the project and add criteria in which case we need to show an error
         "total_required_criteria_values": len(list(combinations(project.criteria.all(), 2))), 
         "menu": "projects",
-        "cr": calculate_consistency_ratio(project),
+        "cr": calculate_consistency_ratio(list(project.criteria.all()), OptamosCriteriaValue.objects.filter(criteria1__project=project)).cr,
     }
 
     return render(request, "optamos/project.html", context)
@@ -300,7 +318,6 @@ def project_results(request, id):
     if not project:
         messages.error(request, "Project is not found - either it does not exist or you do not have access. Below are your projects.")
         return redirect("optamos:projects")
-
 
     # START OF CRITERIA EVALUATION
     points_options = {}
@@ -374,52 +391,6 @@ def project_results(request, id):
 
     # END OF CRITERIA EVALUTION
 
-    # CONSISTENCY RATIO CALCULATION
-    # Step 1: Compute weighted sum vector
-
-    weighted_sum = {}
-
-    for row in matrix_criteria:
-        total = 0
-        for col in matrix_criteria:
-            total += matrix[row.id][col.id] * row_averages[col.id]
-        weighted_sum[row.id] = total
-
-    # Step 2: Compute consistency vector (λ values)
-    lambda_values = {}
-
-    for row in matrix_criteria:
-        weight = row_averages[row.id]
-        lambda_values[row.id] = (
-            weighted_sum[row.id] / weight if weight != 0 else 0
-        )
-
-    # Step 3: Compute λₘₐₓ (principal eigenvalue)
-    n = len(matrix_criteria)
-    lambda_max = sum(lambda_values.values()) / n if n > 0 else 0
-
-    # Step 4: Compute Consistency Index (CI)
-    ci = (lambda_max - n) / (n - 1) if n > 1 else 0
-
-    # Step 5: Compute Consistency Ratio (CR)
-
-    # Random Index (RI) table (Saaty)
-    RI_TABLE = {
-        1: 0.00,
-        2: 0.00,
-        3: 0.58,
-        4: 0.90,
-        5: 1.12,
-        6: 1.24,
-        7: 1.32,
-        8: 1.41,
-        9: 1.45,
-        10: 1.49,
-    }
-
-    ri = RI_TABLE.get(n, 1.49)  # fallback for n > 10
-    cr = ci / ri if ri != 0 else 0
-
     # START OF OPTIONS EVALATION
 
     # Get all criteria and options
@@ -440,20 +411,10 @@ def project_results(request, id):
         c_id = ov.criteria.id
         o1_id = ov.option1.id
         o2_id = ov.option2.id
-        value = ov.value
 
         # Fill reciprocal matrix
-        if value > 0:
-            value += 1
-            option_matrices[c_id][o2_id][o1_id] = value
-            option_matrices[c_id][o1_id][o2_id] = 1/value
-        elif value < 0:
-            value -= 1
-            option_matrices[c_id][o2_id][o1_id] = 1/-value
-            option_matrices[c_id][o1_id][o2_id] = -value
-        else:
-            option_matrices[c_id][o1_id][o2_id] = 1
-            option_matrices[c_id][o2_id][o1_id] = 1
+        option_matrices[c_id][o1_id][o2_id] = ov.value1
+        option_matrices[c_id][o2_id][o1_id] = ov.value2
 
     # Step 3: Normalize matrices and compute option weights
     normalized_option_matrices = {}
@@ -508,38 +469,15 @@ def project_results(request, id):
         reverse=True  # highest score first
     )
 
+    # CONSISTENCY RATIO CALCULATION
+    consistency = calculate_consistency_ratio(list(project.criteria.all()), OptamosCriteriaValue.objects.filter(criteria1__project=project))
+
     # Compute CR per criterion
-    ri_dict = {1:0, 2:0, 3:0.58, 4:0.90, 5:1.12, 6:1.24, 7:1.32, 8:1.41, 9:1.45, 10:1.49}
     option_crs = {}
-
-    n_options = len(options)
-    option_id_to_index = {o.id: idx for idx, o in enumerate(options)}
-
     for c in criteria:
-        # build matrix
-        c_matrix = np.ones((n_options, n_options))
-        for ov in option_values.filter(criteria=c):
-            i = option_id_to_index[ov.option1.id]
-            j = option_id_to_index[ov.option2.id]
-
-            # Fill reciprocal matrix
-            c_matrix[i, j] = ov.value1
-            c_matrix[j, i] = ov.value2
-
-        # compute CR
-        if n_options < 2:
-            c_cr = 0.0
-        else:
-            eigenvalues, _ = np.linalg.eig(c_matrix)
-            c_lambda_max = max(eigenvalues.real)
-            c_ci = (c_lambda_max - n_options) / (n_options - 1)
-            c_ri = ri_dict.get(n_options, 0)
-            c_cr = c_ci / c_ri if c_ri != 0 else 0.0
-
-        option_crs[c.id] = c_cr
+        option_crs[c.id] = calculate_consistency_ratio(options, option_values.filter(criteria=c)).cr
 
     # Build a summary taable
-
     summary_table = []
 
     for c in criteria:
@@ -594,9 +532,9 @@ def project_results(request, id):
         "normalized_matrix": normalized_matrix_criteria,
         "row_totals": row_totals,
         "row_averages": row_averages,
-        "lambda_max": lambda_max,
-        "ci": ci,
-        "cr": cr,
+        "lambda_max": consistency.lambda_max,
+        "ci": consistency.ci,
+        "cr": consistency.cr,
     }
 
     return render(request, "optamos/project.html", context)

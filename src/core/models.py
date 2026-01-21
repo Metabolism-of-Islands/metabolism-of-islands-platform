@@ -3136,6 +3136,15 @@ class OptamosOptionValue(models.Model):
     def value2(self):
         return 1/self.value1 # This is always the inverse of the other score
 
+    # We create id1 and id2 so that we can use the same fields for criteria and option loops
+    @property
+    def id1(self):
+        return self.option1.id
+
+    @property
+    def id2(self):
+        return self.option2.id
+
 class OptamosCriteriaValue(models.Model):
     criteria1 = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="setting1")
     criteria2 = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="setting2")
@@ -3152,6 +3161,15 @@ class OptamosCriteriaValue(models.Model):
     @property
     def value2(self):
         return 1/self.value1 # This is always the inverse of the other score
+
+    # We create id1 and id2 so that we can use the same fields for criteria and option loops
+    @property
+    def id1(self):
+        return self.criteria1.id
+
+    @property
+    def id2(self):
+        return self.criteria2.id
 
 ###
 ### DUMMY FORMAT
