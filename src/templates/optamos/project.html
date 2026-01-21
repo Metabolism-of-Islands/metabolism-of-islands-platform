@@ -281,7 +281,7 @@
         </tfoot>
       </table>
 
-    <h3 class="mt-5">Global Scores & Ranking</h3>
+    <h3 class="mt-8">Global Scores & Ranking</h3>
     <table class="table table-striped">
       <thead>
         <tr>
@@ -291,7 +291,6 @@
         </tr>
       </thead>
       <tbody>
-        {% comment %} Sort by descending global score in view before passing {% endcomment %}
         {% for item in global_ranking %}
           <tr>
             <td>{{ forloop.counter }}</td>
@@ -302,7 +301,12 @@
       </tbody>
     </table>
 
+    <div class="mt-5 p-5 bg-gray-100 flex justify-between">
+      <a class="btn btn-blue" href="">Excel data export</a>
+      <a class="btn btn-blue" href="#full-details" id="view-details">View all calculations</a>
+    </div>
 
+    <div id="full-details" class="hidden">
       <h1 class="mt-5">Criteria evaluation</h1>
       <table class="table table-striped">
         <thead>
@@ -486,6 +490,8 @@
 
     {% endfor %}
 
+    </div>
+
     {% endif %}
 
   </div>
@@ -498,6 +504,12 @@
 {% if page == "results" %}
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@6.0.0/dist/echarts.min.js"></script>
   <script type="text/javascript">
+
+    $("#view-details").click(function(e){
+      $(this).hide();
+      $("#full-details").show();
+    });
+
     var chart_criteria = echarts.init(document.getElementById('chart_criteria'));
     var criteria_config = {
       title: {
@@ -508,12 +520,13 @@
       },
       yAxis: {
         type: 'category',
-        data: [{% for each in criteria_list %}'{{ each|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}]
+        data: [{% for name,value in importance.items %}'{{ name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        inverse: true
       },
       series: [{
         name: 'Criteria',
         type: 'bar',
-        data: [{% for each in criteria_list %}{{ points_criteria|get_item:each }}{% if not forloop.last %},{% endif %}{% endfor %}],
+        data: [{% for name,value in importance.items %}{{ value }}{% if not forloop.last %},{% endif %}{% endfor %}],
         showBackground: true,
         backgroundStyle: {
           color: 'rgba(220, 220, 220, 0.3)'
@@ -542,12 +555,13 @@
       },
       yAxis: {
         type: 'category',
-        data: [{% for each in project.options.all %}'{{ each|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}]
+        data: [{% for each in options %}'{{ each.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        inverse: true
       },
       series: [{
         name: 'Option',
         type: 'bar',
-        data: [{% for each in project.options.all %}{{ points_options|get_item:each }}{% if not forloop.last %},{% endif %}{% endfor %}],
+        data: [{% for each in summary_totals %}{{ each }}{% if not forloop.last %},{% endif %}{% endfor %}],
         showBackground: true,
         backgroundStyle: {
           color: 'rgba(220, 220, 220, 0.3)'

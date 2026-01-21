@@ -480,6 +480,7 @@ def project_results(request, id):
     # Build a summary taable
     summary_table = []
 
+    importance = {}
     for c in criteria:
         row = {
             "criterion": c.name,
@@ -490,6 +491,7 @@ def project_results(request, id):
             "cr": option_crs[c.id],
             "importance": row_averages[c.id] * 100
         }
+        importance[c.name] = row["importance"]
         summary_table.append(row)
 
     # Compute totals for each option column
@@ -535,6 +537,7 @@ def project_results(request, id):
         "lambda_max": consistency.lambda_max,
         "ci": consistency.ci,
         "cr": consistency.cr,
+        "importance": importance,
     }
 
     return render(request, "optamos/project.html", context)
