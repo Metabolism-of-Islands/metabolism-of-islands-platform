@@ -1,13 +1,17 @@
 from core.models import *
+from dataclasses import dataclass
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
+from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
+from io import BytesIO
 from itertools import combinations
+from openpyxl.styles import Font
+import openpyxl
 import random
-from dataclasses import dataclass
 
 OPTAMOS_BG = [
     "pexels-altaf-shah-3143825-7751849.jpg",
@@ -289,7 +293,6 @@ def project(request, id, page="home"):
                 )
             return redirect(reverse("optamos:project_results", args=[project.uid]))
 
-
     context = {
         "bg": random.choice(OPTAMOS_BG),
         "project": project,
@@ -500,6 +503,62 @@ def project_results(request, id):
     for idx in range(n_options):
         total = sum(row["options"][idx] for row in summary_table)
         totals.append(total)
+
+    if "export" in request.GET:
+        workbook = openpyxl.Workbook()
+        worksheet = workbook.active
+        worksheet.title = "Summary Table"
+
+        header = ["Criterion"] + [o.name for o in options] + ["CR", "% Importance"]
+        worksheet.append(header)
+
+        for row in summary_table:
+            data_row = (
+                [row["criterion"]]
+                + [val / 100 for val in row["options"]]
+                + [row["cr"], row["importance"] / 100]
+            )
+            worksheet.append(data_row)
+
+        totals_row = ["Totals"] + [total / 100 for total in totals] + [""]
+        worksheet.append(totals_row)
+
+        for row in worksheet.iter_rows(min_row=2, min_col=2):
+            for i, cell in enumerate(row):
+                if isinstance(cell.value, (int, float)):
+                    # options and importance columns are percentages
+                    if i < len(options) or i == len(options) + 1:  
+                        cell.number_format = "0.0%"
+                    else:  # CR column
+                        cell.number_format = "0.00"
+
+        bold_font = Font(bold=True)
+
+        # Make header row bold
+        for cell in worksheet[1]:
+            cell.font = bold_font
+
+        # Make first column (Column A) bold
+        for cell in worksheet["A"]:
+            cell.font = bold_font
+
+        # Make totals row bold
+        totals_row_index = worksheet.max_row
+        for cell in worksheet[totals_row_index]:
+            cell.font = bold_font
+
+        buffer = BytesIO()
+        workbook.save(buffer)
+        buffer.seek(0)
+
+        response = HttpResponse(
+            buffer.getvalue(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        filename = f"Summary table - {project.name}.xlsx"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+        return response
 
     context = {
         "bg": random.choice(OPTAMOS_BG),
