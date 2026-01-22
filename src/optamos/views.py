@@ -4,8 +4,9 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
+from django.template.loader import render_to_string
 from django.urls import reverse
 from io import BytesIO
 from itertools import combinations
@@ -58,16 +59,6 @@ class ConsistencyResult:
     lambda_max: float
 
 def calculate_consistency_ratio(items_to_review, score_list):
-    """
-    Calculate the Consistency Ratio (CR) for all Criteria of this project
-    We calculate this using numpy -- all we need is the CR itself to show on 
-    each page. On the results page we calculate it differently but it's left
-    separate intentionally to use it as a check that both procedures yield the 
-    same results.
-    
-    Returns:
-        float: CR value
-    """
     # Step 1: Load all items and scores
     items_to_review = items_to_review
     n = len(items_to_review)
@@ -275,7 +266,7 @@ def project(request, id, page="home"):
                     criteria = criteria,
                     value = request.POST[value],
                 )
-            next_criteria = project.criteria.filter(pk__gt=criteria.pk).order_by("name").first()
+            next_criteria = project.criteria.filter(pk__gt=criteria.pk).order_by("id").first()
             if next_criteria:
                 return redirect(reverse("optamos:project", args=[project.uid]) + f"?criteria={next_criteria.id}")
             else:
@@ -312,7 +303,7 @@ def project(request, id, page="home"):
 
     return render(request, "optamos/project.html", context)
 
-def project_results(request, id):
+def project_results(request, id, page="results"):
 
     if not request.user.is_authenticated:
         return redirect("optamos:login")
@@ -483,7 +474,7 @@ def project_results(request, id):
     # Build a summary taable
     summary_table = []
 
-    importance = {}
+    importance = []
     for c in criteria:
         row = {
             "criterion": c.name,
@@ -494,7 +485,11 @@ def project_results(request, id):
             "cr": option_crs[c.id],
             "importance": row_averages[c.id] * 100
         }
-        importance[c.name] = row["importance"]
+        importance.append({
+            "id": c.id,
+            "name": c.name,
+            "value": row["importance"],
+        })
         summary_table.append(row)
 
     # Compute totals for each option column
@@ -560,12 +555,57 @@ def project_results(request, id):
 
         return response
 
+    if request.method == "POST" and page == "sensitivity":
+        crit_id = int(request.POST.get("criterion_id"))
+        new_weight = float(request.POST.get("new_weight")) / 100
+
+        adjusted_weights = row_averages.copy()
+        old_weight = adjusted_weights[crit_id]
+        remaining_weight = 1.0 - new_weight
+        old_remaining_weight = 1.0 - old_weight
+
+        for c_id in adjusted_weights:
+            if c_id == crit_id:
+                adjusted_weights[c_id] = new_weight
+            else:
+                adjusted_weights[c_id] = (
+                    adjusted_weights[c_id] * remaining_weight / old_remaining_weight
+                    if old_remaining_weight > 0 else 0
+                )
+
+        sensitivity_global_scores = {o.id: 0 for o in options}
+        for o in options:
+            total_score = 0
+            for c in criteria:
+                weight_c = adjusted_weights[c.id]
+                weight_o = option_weights[c.id][o.id]
+                total_score += weight_c * weight_o
+            sensitivity_global_scores[o.id] = total_score
+
+        sensitivity_ranking = sorted(
+            [
+                {
+                    "option_id": o.id,
+                    "option_name": o.name,
+                    "score": sensitivity_global_scores[o.id] * 100
+                }
+                for o in options
+            ],
+            key=lambda x: x["score"],
+            reverse=True
+        )
+
+        return JsonResponse({
+            "sensitivity_ranking": sensitivity_ranking,
+            "adjusted_weights": {k: v * 100 for k, v in adjusted_weights.items()}
+        })
+
     context = {
         "bg": random.choice(OPTAMOS_BG),
         "project": project,
         "remove_padding_main_container": True,
         "criteria": criteria,
-        "page": "results",
+        "page": page,
         "criteria_list": project.criteria.all().order_by("id").annotate(is_done=Count("option_pairs")),
         "criteria_values": OptamosCriteriaValue.objects.filter(criteria1__project=project).count(), 
         # Count how many there theoretically are, so that we can verify that all are saved -- this is particularly 

@@ -242,8 +242,8 @@
         {% endif %}
       </div>
 
-      <div id="chart_criteria" style="width:100%;height: 400px;"></div>
       <div id="chart_options" style="width:100%;height: 400px;"></div>
+      <div id="chart_criteria" style="width:100%;height: 400px;"></div>
 
       <h1 class="mt-5">Summary table</h1>
 
@@ -492,6 +492,39 @@
 
     </div>
 
+    {% elif page == "sensitivity" %}
+
+      <h1>Sensitivity analysis</h1>
+
+      <form id="sensitivity-form">
+        {% for each in importance %}
+          <div class="mb-10">
+            <label for="weight_{{ each.id }}" class="block text-sm font-medium text-gray-700">{{ each.name }}</label>
+
+            <input
+              type="range"
+              id="weight_{{ each.id }}"
+              name="weight_{{ each.id }}"
+              data-id="{{ each.id }}"
+              min="0"
+              max="100"
+              value="{{ each.value|floatformat:0 }}"
+              class="mt-1 w-full h-2 bg-gray-200 rounded-lg cursor-pointer range"
+            />
+
+            <span
+              id="weight_value_{{ each.id }}"
+              class="mt-2 text-lg font-semibold"
+            >
+              {{ each.value|floatformat:0 }}%
+            </span>
+          </div>
+        {% endfor %}
+      </form>
+
+      <h2 class="mt-10 text-lg font-bold">Adjusted Results</h2>
+      <div id="chart_options" style="width:100%;height: 400px;"></div>
+
     {% endif %}
 
   </div>
@@ -501,7 +534,7 @@
 
 {% block js %}
 
-{% if page == "results" %}
+{% if page == "results" or page == "sensitivity" %}
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@6.0.0/dist/echarts.min.js"></script>
   <script type="text/javascript">
 
@@ -510,40 +543,42 @@
       $("#full-details").show();
     });
 
-    var chart_criteria = echarts.init(document.getElementById('chart_criteria'));
-    var criteria_config = {
-      title: {
-        text: 'Criteria importance'
-      },
-      xAxis: {
-        type: 'value'
-      },
-      yAxis: {
-        type: 'category',
-        data: [{% for name,value in importance.items %}'{{ name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
-        inverse: true
-      },
-      series: [{
-        name: 'Criteria',
-        type: 'bar',
-        data: [{% for name,value in importance.items %}{{ value }}{% if not forloop.last %},{% endif %}{% endfor %}],
-        showBackground: true,
-        backgroundStyle: {
-          color: 'rgba(220, 220, 220, 0.3)'
+    {% if page == "results" %}
+      var chart_criteria = echarts.init(document.getElementById('chart_criteria'));
+      var criteria_config = {
+        title: {
+          text: 'Criteria importance'
         },
-        itemStyle: {
-          color: function(params) {
-            return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: '#0084d1' },
-              { offset: 0.5, color: '#0678ba' },
-              { offset: 1, color: '#0c6fa9' }
-            ]);
+        xAxis: {
+          type: 'value'
+        },
+        yAxis: {
+          type: 'category',
+          data: [{% for each in importance %}'{{ each.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+          inverse: true
+        },
+        series: [{
+          name: 'Criteria',
+          type: 'bar',
+          data: [{% for each in importance %}{{ each.value }}{% if not forloop.last %},{% endif %}{% endfor %}],
+          showBackground: true,
+          backgroundStyle: {
+            color: 'rgba(220, 220, 220, 0.3)'
           },
-          borderRadius: [0, 5, 5, 0]
-        }
-      }]
-    };
-    chart_criteria.setOption(criteria_config);
+          itemStyle: {
+            color: function(params) {
+              return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: '#0084d1' },
+                { offset: 0.5, color: '#0678ba' },
+                { offset: 1, color: '#0c6fa9' }
+              ]);
+            },
+            borderRadius: [0, 5, 5, 0]
+          }
+        }]
+      };
+      chart_criteria.setOption(criteria_config);
+    {% endif %}
 
     var chart_options = echarts.init(document.getElementById('chart_options'));
     var options_config = {
@@ -581,6 +616,66 @@
     chart_options.setOption(options_config);
 
   </script>
+
+  {% if page == "sensitivity" %}
+
+<script type="text/javascript">
+$(function(){
+  let debounceTimer;
+  $("input[type=range]").on("input", function() {
+    clearTimeout(debounceTimer);
+    var slider = $(this);
+    var critId = slider.data("id");
+    var value = slider.val();
+
+    $("#weight_value_" + critId).text(value + "%");
+
+    debounceTimer = setTimeout(function() {
+
+      $.ajax({
+        url: "{% url 'optamos:project_sensitivity' project.uid %}",
+        type: "POST",
+        data: {
+          "criterion_id": critId,
+          "new_weight": value,
+          "csrfmiddlewaretoken": "{{ csrf_token }}"
+        },
+        success: function(data) {
+
+            // Update sliders with new weights
+            $.each(data.adjusted_weights, function(id, weight) {
+                var sliderElem = $("#weight_" + id);
+                sliderElem.val(weight.toFixed(0));
+                $("#weight_value_" + id).text(weight.toFixed(0) + "%");
+            });
+
+            // Update the chart
+            var names = [];
+            var scores = [];
+            $.each(data.sensitivity_ranking, function(i, item) {
+                names.push(item.option_name);
+                scores.push(item.score);
+            });
+
+            chart_options.setOption({
+                yAxis: { data: names },
+                series: [{ data: scores }]
+            });
+        },
+        error: function(xhr, status, error) {
+            $("input[type=range]").prop("disabled", true).fadeTo(150, 0.5);
+            $("#chart_options").fadeTo(150, 0.5);
+            console.error("Sensitivity update failed:", error);
+            alert("Sorry, an error ocurred. Please reload the page");
+        }
+      });
+
+    }, 150); // wait 150ms after last input
+  });
+});
+</script>
+
+  {% endif %}
 
 {% else %}
   <script type="text/javascript">

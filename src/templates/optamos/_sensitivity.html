@@ -1,0 +1,5 @@
+<ol class="list-decimal ml-6">
+  {% for r in sensitivity_ranking %}
+    <li>{{ r.option.name }} — {{ r.score|floatformat:2 }}</li>
+  {% endfor %}
+</ol>
