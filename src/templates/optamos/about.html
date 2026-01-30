@@ -1,0 +1,122 @@
+{% extends "optamos/_base.html" %}
+
+{% block title %}
+  Homepage
+{% endblock %}
+
+{% block content %}
+
+<h1>About AHP</h1>
+
+<h2>What Is the Analytic Hierarchy Process (AHP)?</h2>
+
+<p>
+OPTamos is a tool that uses the Analytic Hierarchy Process (AHP) to support
+evaluation of options for participatory transformation and management of
+sustainable land use. AHP is a structured decision-making methodology used to
+evaluate complex choices involving multiple criteria. Developed by Thomas L.
+Saaty, AHP helps individuals and groups make decisions by breaking them down
+into smaller, more manageable comparisons.
+</p>
+
+<p>
+Rather than forcing users to assign absolute scores, AHP relies on pairwise
+comparisons—asking how much more one option or criterion matters relative to
+another. These comparisons are then translated into priority weights that
+reflect overall preferences in a transparent and mathematically consistent way.
+</p>
+
+<p>
+AHP is widely used in fields such as strategic planning, resource allocation,
+policy analysis, product selection, and risk assessment.
+</p>
+
+<h2 class="mt-10">Structuring a Decision with AHP</h2>
+
+<p>
+AHP organizes a decision problem into a hierarchy with multiple levels:
+</p>
+
+<ul class="mb-5 list-disc pl-8">
+  <li><strong>Goal</strong> – the decision you are trying to make</li>
+  <li><strong>Criteria</strong> – the factors that influence the decision</li>
+  <li><strong>Alternatives</strong> – the options being evaluated</li>
+</ul>
+
+<p>
+  This hierarchical structure ensures that all relevant factors are considered
+  and clearly related to the overall goal. It also makes complex decisions easier
+  to communicate and review.
+</p>
+
+<h2 class="mt-10">Pairwise Comparisons and Preference Scales</h2>
+
+<p>
+At the core of AHP is pairwise comparison. Instead of evaluating many items at
+once, users compare two elements at a time and indicate which is preferred and
+by how much.
+</p>
+
+<p>
+AHP typically uses a 1–9 scale to express preference strength:
+</p>
+
+<ul class="mb-5 list-disc pl-8">
+<li>1 indicates equal importance</li>
+<li>Higher values indicate stronger preference of one element over another</li>
+</ul>
+
+<p>
+These comparisons form a comparison matrix, from which priority weights are
+calculated. The reciprocal nature of comparisons ensures internal consistency
+and logical coherence.
+</p>
+
+<h2 class="mt-10">Consistency and Decision Quality</h2>
+
+<p>
+AHP includes a built-in mechanism to measure consistency in judgments. Because
+human judgments are not always perfectly logical, AHP calculates a Consistency
+Ratio (CR) to indicate whether the comparisons are reasonably consistent.
+</p>
+
+<p>The Consistency Ratio:</p>
+
+<ul class="mb-5 list-disc pl-8">
+  <li>Improves decision reliability</li>
+  <li>Highlights contradictory judgments</li>
+  <li>Encourages thoughtful review rather than blind scoring</li>
+</ul>
+
+<p>
+By combining structure, mathematical rigor, and human judgment, AHP produces
+decisions that are both analytically sound and intuitively defensible.
+</p>
+
+<h2 class="mt-10">Learn More About AHP</h2>
+
+<ul class="mb-5 list-disc pl-8">
+  <li><a href="https://en.wikipedia.org/wiki/Analytic_hierarchy_process">Wikipedia – Analytic Hierarchy Process</a></li>
+  <li><a href="https://www.sciencedirect.com/topics/engineering/analytic-hierarchy-process">ScienceDirect - AHP topic overview</a></li>
+  <li><a href="https://weadapt.org/knowledge-base/adaptation-decision-making/ahp/">weADAPT - AHP: an introduction with examples and resources</a></li>
+</ul>
+
+<h2 class="mt-10">License</h2>
+
+<p>
+  OPTamos is part of the Metabolism of Islands platform. All code for this platform, including the 
+  OPTamos code, is licensed under an open source license and <a href="https://www.sciencedirect.com/topics/engineering/analytic-hierarchy-process">freely available on github</a>. The code and tool are licensed under an MIT license:
+</p>
+
+<div class="font-mono p-5 bg-gray-100 mt-10">
+Copyright (c) 2026 Metabolism of Islands Development Team
+<br><br>
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+<br><br>
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+<br><br>
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+</div>
+
+
+{% endblock %}

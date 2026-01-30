@@ -8,6 +8,7 @@ urlpatterns = baseline_urlpatterns + [
     path("", views.index, name="index"),
     path("login/", views.account_login, name="login"),
     path("logout/", views.account_logout, name="logout"),
+    path("about/", views.about, name="about"),
     path("projects/create/", views.project_create, name="project_create"),
     path("projects/", views.projects, name="projects"),
     path("projects/<int:id>/", views.project, name="project"),

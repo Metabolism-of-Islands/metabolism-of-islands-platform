@@ -115,6 +115,13 @@ def index(request):
     }
     return render(request, "optamos/index.html", context)
 
+def about(request):
+    context = {
+        "bg": random.choice(OPTAMOS_BG),
+        "menu": "about",
+    }
+    return render(request, "optamos/about.html", context)
+
 def projects(request):
     if not request.user.is_authenticated:
         return redirect("optamos:login")
@@ -266,7 +273,10 @@ def project(request, id, page="home"):
                     criteria = criteria,
                     value = request.POST[value],
                 )
-            next_criteria = project.criteria.filter(pk__gt=criteria.pk).order_by("id").first()
+            if "back" in request.POST:
+                next_criteria = project.criteria.filter(pk__lt=criteria.pk).order_by("-id").first()
+            else:
+                next_criteria = project.criteria.filter(pk__gt=criteria.pk).order_by("id").first()
             if next_criteria:
                 return redirect(reverse("optamos:project", args=[project.uid]) + f"?criteria={next_criteria.id}")
             else:
