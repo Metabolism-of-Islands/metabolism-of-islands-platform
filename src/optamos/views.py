@@ -565,6 +565,145 @@ def project_results(request, id, page="results"):
 
         return response
 
+    elif "export_full" in request.GET:
+        workbook = openpyxl.Workbook()
+
+        bold = Font(bold=True)
+
+        # --------------------------------------------------
+        # 1. SUMMARY TABLE
+        # --------------------------------------------------
+        ws = workbook.active
+        ws.title = "Summary"
+
+        ws.append(["Criterion"] + [o.name for o in options] + ["CR", "Importance (%)"])
+        for cell in ws[1]:
+            cell.font = bold
+
+        for row in summary_table:
+            ws.append(
+                [row["criterion"]]
+                + row["options"]
+                + [row["cr"], row["importance"]]
+            )
+
+        ws.append(["Totals"] + totals + ["", ""])
+        for cell in ws[ws.max_row]:
+            cell.font = bold
+
+        # --------------------------------------------------
+        # 2. GLOBAL RANKING
+        # --------------------------------------------------
+        ws = workbook.create_sheet("Global Ranking")
+        ws.append(["Rank", "Option", "Score (%)"])
+        for cell in ws[1]:
+            cell.font = bold
+
+        for idx, item in enumerate(global_ranking, start=1):
+            ws.append([idx, item["option"].name, item["score"] * 100])
+
+        # --------------------------------------------------
+        # 3. CRITERIA – RAW MATRIX
+        # --------------------------------------------------
+        ws = workbook.create_sheet("Criteria Raw Matrix")
+        ws.append([""] + [c.name for c in matrix_criteria])
+        for cell in ws[1]:
+            cell.font = bold
+
+        for row in matrix_criteria:
+            ws.append(
+                [row.name]
+                + [named_matrix[row.name][col.name] for col in matrix_criteria]
+            )
+
+        ws.append(["TOTAL"] + [column_totals[c.id] for c in matrix_criteria])
+        for cell in ws[ws.max_row]:
+            cell.font = bold
+
+        # --------------------------------------------------
+        # 4. CRITERIA – NORMALIZED MATRIX
+        # --------------------------------------------------
+        ws = workbook.create_sheet("Criteria Normalized")
+        ws.append([""] + [c.name for c in matrix_criteria] + ["Total", "Average"])
+        for cell in ws[1]:
+            cell.font = bold
+
+        for row in matrix_criteria:
+            ws.append(
+                [row.name]
+                + [normalized_matrix_criteria[row.id][col.id] for col in matrix_criteria]
+                + [row_totals[row.id], row_averages[row.id]]
+            )
+
+        # --------------------------------------------------
+        # 5. CRITERIA – CONSISTENCY
+        # --------------------------------------------------
+        ws = workbook.create_sheet("Criteria Consistency")
+        ws.append(["Metric", "Value"])
+        for cell in ws[1]:
+            cell.font = bold
+
+        ws.append(["Lambda max", consistency.lambda_max])
+        ws.append(["Consistency Index (CI)", consistency.ci])
+        ws.append(["Consistency Ratio (CR)", consistency.cr])
+
+        # --------------------------------------------------
+        # 6–8. OPTIONS EVALUATION (PER CRITERION)
+        # --------------------------------------------------
+        for c in criteria:
+            # Raw matrix
+            ws = workbook.create_sheet(f"{c.name} – Raw")
+            ws.append([""] + [o.name for o in options])
+            for cell in ws[1]:
+                cell.font = bold
+
+            for row in options:
+                ws.append(
+                    [row.name]
+                    + [option_matrices[c.id][row.id][col.id] for col in options]
+                )
+
+            # Normalized matrix
+            ws = workbook.create_sheet(f"{c.name} – Normalized")
+            ws.append([""] + [o.name for o in options])
+            for cell in ws[1]:
+                cell.font = bold
+
+            for row in options:
+                ws.append(
+                    [row.name]
+                    + [
+                        normalized_option_matrices[c.id][row.id][col.id]
+                        for col in options
+                    ]
+                )
+
+            # Option weights
+            ws = workbook.create_sheet(f"{c.name} – Weights")
+            ws.append(["Option", "Weight", "Percentage"])
+            for cell in ws[1]:
+                cell.font = bold
+
+            for o in options:
+                weight = option_weights[c.id][o.id]
+                ws.append([o.name, weight, weight * 100])
+
+        # --------------------------------------------------
+        # RESPONSE
+        # --------------------------------------------------
+        buffer = BytesIO()
+        workbook.save(buffer)
+        buffer.seek(0)
+
+        response = HttpResponse(
+            buffer.getvalue(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = (
+            f'attachment; filename="Full AHP Results - {project.name}.xlsx"'
+        )
+        return response
+
     if request.method == "POST" and page == "sensitivity":
         crit_id = int(request.POST.get("criterion_id"))
         new_weight = float(request.POST.get("new_weight")) / 100

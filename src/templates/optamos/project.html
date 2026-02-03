@@ -39,6 +39,9 @@
     background: #e5e7eb;
     border-radius: 9999px;
   }
+  .btn svg {
+    width:20px;
+  }
   </style> 
 {% endblock %}
 
@@ -307,220 +310,267 @@
         </tfoot>
       </table>
 
-    <h3 class="mt-8">Global Scores & Ranking</h3>
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th>Rank</th>
-          <th>Option</th>
-          <th>Percentage</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in global_ranking %}
-          <tr>
-            <td>{{ forloop.counter }}</td>
-            <td>{{ item.option.name }}</td>
-            <td>{{ item.score|multiply:100|floatformat:1 }}%</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
-    <div class="mt-5 p-5 bg-gray-100 flex justify-between">
-      <a class="btn btn-blue" href="?export=true">Excel data export</a>
-      <a class="btn btn-blue" href="#full-details" id="view-details">View all calculations</a>
-    </div>
-
-    <div id="full-details" class="hidden">
-      <h1 class="mt-5">Criteria evaluation</h1>
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th></th>
-            {% for c in matrix_criteria %}
-              <th>{{ c.name }}</th>
-            {% endfor %}
-          </tr>
-        </thead>
-
-        <tbody>
-          {% for row in matrix_criteria %}
-            <tr>
-              <th>{{ row.name }}</th>
-              {% for col in matrix_criteria %}
-                <td>
-                  {{ matrix|get_item:row.name|get_item:col.name|floatformat:2 }}
-                </td>
-              {% endfor %}
-            </tr>
-          {% endfor %}
-        </tbody>
-
-        <tfoot>
-          <tr>
-            <th>TOTAL</th>
-            {% for col in matrix_criteria %}
-              <th>
-                {{ column_totals|get_item:col.id|floatformat:2 }}
-              </th>
-            {% endfor %}
-          </tr>
-        </tfoot>
-
-      </table>
-
-      <h3 class="mt-5">Normalized Matrix</h3>
+      <h3 class="mt-8">Global Scores & Ranking</h3>
 
       <table class="table table-striped">
         <thead>
           <tr>
-            <th></th>
-            {% for c in matrix_criteria %}
-              <th>{{ c.name }}</th>
-            {% endfor %}
-            <th>TOTAL</th>
-            <th>AVERAGE</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {% for row in matrix_criteria %}
-            <tr>
-              <th>{{ row.name }}</th>
-              {% for col in matrix_criteria %}
-                <td>
-                  {{ normalized_matrix|get_item:row.id|get_item:col.id|floatformat:2 }}
-                </td>
-              {% endfor %}
-              <td>
-                {{ row_totals|get_item:row.id|floatformat:2 }}
-              </td>
-              <td style="font-weight: bold;">
-                {{ row_averages|get_item:row.id|floatformat:2 }}
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-
-      <h3 class="mt-5">Consistency Check</h3>
-
-      <table class="table table-striped">
-        <tbody>
-          <tr>
-            <th>λ max</th>
-            <td>{{ lambda_max|floatformat:4 }}</td>
-          </tr>
-          <tr>
-            <th>Consistency Index (CI)</th>
-            <td>{{ ci|floatformat:4 }}</td>
-          </tr>
-          <tr>
-            <th>Consistency Ratio (CR)</th>
-            <td>
-              {{ cr|floatformat:4 }}
-              {% if cr < 0.10 %}
-                <span class="text-lime-600 font-bold">✓ Acceptable</span>
-              {% else %}
-                <span class="text-red-600 font-bold">✗ Inconsistent</span>
-              {% endif %}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <hr class="mt-5">
-      <h1 class="mt-5">Options evaluation</h1>
-
-    {% for c in criteria %}
-      <h3 class="mt-5">Criterion: {{ c.name }}</h3>
-
-      <h4 class="mt-5">Raw Matrix</h4>
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th></th>
-            {% for o in options %}
-              <th>{{ o.name }}</th>
-            {% endfor %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in options %}
-            <tr>
-              <th>{{ row.name }}</th>
-              {% for col in options %}
-                <td>
-                  {{ option_matrices|get_item:c.id|get_item:row.id|get_item:col.id|floatformat:2 }}
-                </td>
-              {% endfor %}
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-
-      <h4 class="mt-5">Normalized Matrix</h4>
-
-      <p>Consistency Ratio (CR) for this criterion: 
-         {{ option_crs|get_item:c.id|floatformat:2 }}
-      </p>
-
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th></th>
-            {% for o in options %}
-              <th>{{ o.name }}</th>
-            {% endfor %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in options %}
-            <tr>
-              <th>{{ row.name }}</th>
-              {% for col in options %}
-                <td>
-                  {{ normalized_option_matrices|get_item:c.id|get_item:row.id|get_item:col.id|floatformat:2 }}
-                </td>
-              {% endfor %}
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-
-      <!-- Option weights -->
-      <h4 class="mt-5">Option Weights (Row Averages)</h4>
-      <table class="table table-striped">
-        <thead>
-          <tr>
+            <th>Rank</th>
             <th>Option</th>
-            <th>Weight</th>
             <th>Percentage</th>
           </tr>
         </thead>
         <tbody>
-          {% for o in options %}
+          {% for item in global_ranking %}
             <tr>
-              <td>{{ o.name }}</td>
-              <td>
-                {{ option_weights|get_item:c.id|get_item:o.id|floatformat:2 }}
-              </td>
-              <td>
-                {{ option_weights|get_item:c.id|get_item:o.id|multiply:100|floatformat:1 }}%
-              </td>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ item.option.name }}</td>
+              <td>{{ item.score|multiply:100|floatformat:1 }}%</td>
             </tr>
           {% endfor %}
         </tbody>
       </table>
 
-    {% endfor %}
+      <div class="mt-5 p-5 bg-gray-100">
+        <h2>Excel data export</h2>
+        <a class="btn btn-blue" href="?export=true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path fill="#ffffff" d="M352 96C352 78.3 337.7 64 320 64C302.3 64 288 78.3 288 96L288 306.7L246.6 265.3C234.1 252.8 213.8 252.8 201.3 265.3C188.8 277.8 188.8 298.1 201.3 310.6L297.3 406.6C309.8 419.1 330.1 419.1 342.6 406.6L438.6 310.6C451.1 298.1 451.1 277.8 438.6 265.3C426.1 252.8 405.8 252.8 393.3 265.3L352 306.7L352 96zM160 384C124.7 384 96 412.7 96 448L96 480C96 515.3 124.7 544 160 544L480 544C515.3 544 544 515.3 544 480L544 448C544 412.7 515.3 384 480 384L433.1 384L376.5 440.6C345.3 471.8 294.6 471.8 263.4 440.6L206.9 384L160 384zM464 440C477.3 440 488 450.7 488 464C488 477.3 477.3 488 464 488C450.7 488 440 477.3 440 464C440 450.7 450.7 440 464 440z"/></svg>
+          Download summary
+        </a>
+        <a class="btn btn-blue" href="?export_full=true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path fill="#ffffff" d="M352 96C352 78.3 337.7 64 320 64C302.3 64 288 78.3 288 96L288 306.7L246.6 265.3C234.1 252.8 213.8 252.8 201.3 265.3C188.8 277.8 188.8 298.1 201.3 310.6L297.3 406.6C309.8 419.1 330.1 419.1 342.6 406.6L438.6 310.6C451.1 298.1 451.1 277.8 438.6 265.3C426.1 252.8 405.8 252.8 393.3 265.3L352 306.7L352 96zM160 384C124.7 384 96 412.7 96 448L96 480C96 515.3 124.7 544 160 544L480 544C515.3 544 544 515.3 544 480L544 448C544 412.7 515.3 384 480 384L433.1 384L376.5 440.6C345.3 471.8 294.6 471.8 263.4 440.6L206.9 384L160 384zM464 440C477.3 440 488 450.7 488 464C488 477.3 477.3 488 464 488C450.7 488 440 477.3 440 464C440 450.7 450.7 440 464 440z"/></svg>
+          Download all tables
+        </a>
+      </div>
 
-    </div>
+      <h2 class="mt-10" id="detailed">Detailed calculations</h2>
+      <a class="btn btn-blue" href="#full-details" id="view-details">View all calculations +</a>
+
+      <div id="full-details" class="hidden">
+
+        <h1 class="mt-5">Criteria evaluation</h1>
+
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th></th>
+              {% for c in matrix_criteria %}
+                <th>{{ c.name }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in matrix_criteria %}
+              <tr>
+                <th>{{ row.name }}</th>
+                {% for col in matrix_criteria %}
+                  <td>
+                    {{ matrix|get_item:row.name|get_item:col.name|floatformat:2 }}
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr>
+              <th>TOTAL</th>
+              {% for col in matrix_criteria %}
+                <th>{{ column_totals|get_item:col.id|floatformat:2 }}</th>
+              {% endfor %}
+            </tr>
+          </tfoot>
+        </table>
+
+        <p class="mt-2 mb-4 text-gray-700 text-sm">
+          This pairwise comparison matrix captures how important each criterion is relative to every other criterion,
+          based on the judgments that have been set.
+        </p>
+
+        <h3 class="mt-5">Normalized Matrix</h3>
+
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th></th>
+              {% for c in matrix_criteria %}
+                <th>{{ c.name }}</th>
+              {% endfor %}
+              <th>TOTAL</th>
+              <th>AVERAGE</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in matrix_criteria %}
+              <tr>
+                <th>{{ row.name }}</th>
+                {% for col in matrix_criteria %}
+                  <td>
+                    {{ normalized_matrix|get_item:row.id|get_item:col.id|floatformat:2 }}
+                  </td>
+                {% endfor %}
+                <td>{{ row_totals|get_item:row.id|floatformat:2 }}</td>
+                <td style="font-weight: bold;">
+                  {{ row_averages|get_item:row.id|floatformat:2 }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <p class="mt-2 mb-4 text-gray-700 text-sm">
+          This normalized matrix converts the raw comparisons into comparable proportions,
+          and the row averages represent the final weight (importance) of each criterion.
+        </p>
+
+        <h3 class="mt-5">Consistency Check</h3>
+
+        <table class="table table-striped">
+          <tbody>
+            <tr>
+              <th>λ max</th>
+              <td>{{ lambda_max|floatformat:4 }}</td>
+            </tr>
+            <tr>
+              <th>Consistency Index (CI)</th>
+              <td>{{ ci|floatformat:4 }}</td>
+            </tr>
+            <tr>
+              <th>Consistency Ratio (CR)</th>
+              <td>
+                {{ cr|floatformat:4 }}
+                {% if cr < 0.10 %}
+                  <span class="text-lime-600 font-bold">✓ Acceptable</span>
+                {% else %}
+                  <span class="text-red-600 font-bold">✗ Inconsistent</span>
+                {% endif %}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p class="mt-2 mb-4 text-gray-700 text-sm">
+          The consistency check indicates whether the pairwise judgments are logically coherent;
+          a low consistency ratio means the comparisons are reliable.
+        </p>
+
+        <hr class="mt-5">
+        <h1 class="mt-5">Options evaluation</h1>
+
+        {% for c in criteria %}
+          <h3 class="mt-5">Criterion: {{ c.name }}</h3>
+
+          <h4 class="mt-5">Raw Matrix</h4>
+
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th></th>
+                {% for o in options %}
+                  <th>{{ o.name }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in options %}
+                <tr>
+                  <th>{{ row.name }}</th>
+                  {% for col in options %}
+                    <td>
+                      {{ option_matrices|get_item:c.id|get_item:row.id|get_item:col.id|floatformat:2 }}
+                    </td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+        <p class="mt-2 mb-4 text-gray-700 text-sm">
+            This matrix compares the available options against each other with respect to the current criterion.
+          </p>
+
+          <h4 class="mt-5">Normalized Matrix</h4>
+
+          <p>
+            Consistency Ratio (CR) for this criterion:
+            {{ option_crs|get_item:c.id|floatformat:2 }}
+          </p>
+
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th></th>
+                {% for o in options %}
+                  <th>{{ o.name }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in options %}
+                <tr>
+                  <th>{{ row.name }}</th>
+                  {% for col in options %}
+                    <td>
+                      {{ normalized_option_matrices|get_item:c.id|get_item:row.id|get_item:col.id|floatformat:2 }}
+                    </td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+        <p class="mt-2 mb-4 text-gray-700 text-sm">
+            This table shows the relative performance of each option after normalizing the comparisons
+            so they can be meaningfully compared.
+          </p>
+
+          <h4 class="mt-5">Option Weights (Row Averages)</h4>
+
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Option</th>
+                <th>Weight</th>
+                <th>Percentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for o in options %}
+                <tr>
+                  <td>{{ o.name }}</td>
+                  <td>{{ option_weights|get_item:c.id|get_item:o.id|floatformat:2 }}</td>
+                  <td>
+                    {{ option_weights|get_item:c.id|get_item:o.id|multiply:100|floatformat:1 }}%
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+        <p class="mt-2 mb-4 text-gray-700 text-sm">
+            These weights represent how well each option satisfies this specific criterion,
+            and they are later combined with the criterion’s importance.
+          </p>
+
+        {% endfor %}
+      </div>
+
 
     {% elif page == "sensitivity" %}
 
       <h1>Sensitivity analysis</h1>
+
+      <p class="mb-5">
+        Sensitivity analysis shows how stable the decision is when the
+        importance of criteria changes. By moving a slider, you can increase
+        or decrease the importance of a specific criterion and immediately see
+        how the overall rankings respond.  As one criterion becomes more
+        important, the system automatically adjusts the importance of the
+        remaining criteria so that the total importance stays balanced.  This
+        helps you explore “what-if” scenarios and understand which criteria
+        have the biggest influence on the final result.
+        <br>
+        <a href="{% url "optamos:about" %}">More about the AHP methodology &raquo;</a>
+      </p>
 
       <form id="sensitivity-form">
         {% for each in importance %}
@@ -566,6 +616,7 @@
 
     $("#view-details").click(function(e){
       $(this).hide();
+      $("#detailed").hide();
       $("#full-details").show();
     });
 
