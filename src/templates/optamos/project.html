@@ -206,10 +206,12 @@
               </div>
               <div class="slider">
                 {% with label="range-"|concat:option1.id|concat:"-"|concat:option2.id %}
-                  <input name="{{ label }}" type="range" min="-8" max="8" value="{{ values|get_item:label|default_if_none:0 }}" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-sky-500 hover:accent-sky-600 range range-lg range-primary">
+                  <input name="{{ label }}" type="range" min="-8" max="8" step="1" value="{{ values|get_item:label|default_if_none:0 }}" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-sky-500 hover:accent-sky-600 range range-lg range-primary">
                 {% endwith %}
                 <output class="block mt-2 text-center text-lg font-bold text-gray-900"></output>
+
               </div>
+
             </section>
           {% endfor %}
           {% csrf_token %}
@@ -554,7 +556,6 @@
         {% endfor %}
       </div>
 
-
     {% elif page == "sensitivity" %}
 
       <h1>Sensitivity analysis</h1>
@@ -696,61 +697,61 @@
 
   {% if page == "sensitivity" %}
 
-<script type="text/javascript">
-$(function(){
-  let debounceTimer;
-  $("input[type=range]").on("input", function() {
-    clearTimeout(debounceTimer);
-    var slider = $(this);
-    var critId = slider.data("id");
-    var value = slider.val();
+    <script type="text/javascript">
+    $(function(){
+      let debounceTimer;
+      $("input[type=range]").on("input", function() {
+        clearTimeout(debounceTimer);
+        var slider = $(this);
+        var critId = slider.data("id");
+        var value = slider.val();
 
-    $("#weight_value_" + critId).text(value + "%");
+        $("#weight_value_" + critId).text(value + "%");
 
-    debounceTimer = setTimeout(function() {
+        debounceTimer = setTimeout(function() {
 
-      $.ajax({
-        url: "{% url 'optamos:project_sensitivity' project.uid %}",
-        type: "POST",
-        data: {
-          "criterion_id": critId,
-          "new_weight": value,
-          "csrfmiddlewaretoken": "{{ csrf_token }}"
-        },
-        success: function(data) {
+          $.ajax({
+            url: "{% url 'optamos:project_sensitivity' project.uid %}",
+            type: "POST",
+            data: {
+              "criterion_id": critId,
+              "new_weight": value,
+              "csrfmiddlewaretoken": "{{ csrf_token }}"
+            },
+            success: function(data) {
 
-            // Update sliders with new weights
-            $.each(data.adjusted_weights, function(id, weight) {
-                var sliderElem = $("#weight_" + id);
-                sliderElem.val(weight.toFixed(0));
-                $("#weight_value_" + id).text(weight.toFixed(0) + "%");
-            });
+                // Update sliders with new weights
+                $.each(data.adjusted_weights, function(id, weight) {
+                    var sliderElem = $("#weight_" + id);
+                    sliderElem.val(weight.toFixed(0));
+                    $("#weight_value_" + id).text(weight.toFixed(0) + "%");
+                });
 
-            // Update the chart
-            var names = [];
-            var scores = [];
-            $.each(data.sensitivity_ranking, function(i, item) {
-                names.push(item.option_name);
-                scores.push(item.score);
-            });
+                // Update the chart
+                var names = [];
+                var scores = [];
+                $.each(data.sensitivity_ranking, function(i, item) {
+                    names.push(item.option_name);
+                    scores.push(item.score);
+                });
 
-            chart_options.setOption({
-                yAxis: { data: names },
-                series: [{ data: scores }]
-            });
-        },
-        error: function(xhr, status, error) {
-            $("input[type=range]").prop("disabled", true).fadeTo(150, 0.5);
-            $("#chart_options").fadeTo(150, 0.5);
-            console.error("Sensitivity update failed:", error);
-            alert("Sorry, an error ocurred. Please reload the page");
-        }
+                chart_options.setOption({
+                    yAxis: { data: names },
+                    series: [{ data: scores }]
+                });
+            },
+            error: function(xhr, status, error) {
+                $("input[type=range]").prop("disabled", true).fadeTo(150, 0.5);
+                $("#chart_options").fadeTo(150, 0.5);
+                console.error("Sensitivity update failed:", error);
+                alert("Sorry, an error ocurred. Please reload the page");
+            }
+          });
+
+        }, 150); // wait 150ms after last input
       });
-
-    }, 150); // wait 150ms after last input
-  });
-});
-</script>
+    });
+    </script>
 
   {% endif %}
 
@@ -766,7 +767,8 @@ $(function(){
         
         function updateOpacity() {
           const value = parseInt($slider.val(), 10);
-          $output.text(value);    
+          const ahpValue = Math.abs(value) + 1; // Remember we are actually saving values from -8 to 8, with 0 being neutral, but we must show 1-9 to the user
+          $output.text(ahpValue);
           const maxOpacity = 1;
           const minOpacity = 0.3;
           const opacity2 = (value < 0) ? maxOpacity - (value / -8) * (1-minOpacity) : 1;

@@ -1,4 +1,4 @@
-Django==6.0
+Django==6.0.2
 psycopg[binary]
 Pillow
 #django_cron Not compatible with latest django version; best to rewrite this as a regular command and then set up the cron command on the server directly
