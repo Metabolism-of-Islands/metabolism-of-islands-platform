@@ -13,9 +13,21 @@
   </h2>
 </hgroup>
 
-<p class="text-gray-600">
-  Short description of what this tool does? 
-  {% lorem 1 %}
+<p>
+  OPTamos (Options for Participatory Transformation and Sustainability
+  Management) is an open access web-based software tool designed to support
+  multi-criteria decision making in complex socio-ecological contexts. Originally
+  developed for land-use management decisions, it is versatile to be used for any
+  context. It can be used individually or during a stakeholder process to
+  evaluate complex, conflicting, and often uncertain scenarios across a set of
+  options and criteria. Developed under the European project ROBIN, and led by
+  Simron J. Singh (in collaboration with Nelson Grima and Barbara Smetschka), the
+  tool is specifically engineered to handle the large volumes of qualitative and
+  quantitative data generated during stakeholder workshops. We encourage you to
+  look at the Analytical Hierarchy Process (AHP) 
+  <a href="{% url "optamos:about" %}">methodology</a>
+  used in OPTamos, and
+  other <a href="{% url "optamos:resources" %}">resources</a>.
 </p>
 
 {% if request.user.is_authenticated %}
@@ -65,7 +77,17 @@
       </div>
     </div>
   </div>
-    
+
 {% endif %}
+
+<h2 class="mt-10">Credits</h2>
+<div class="text-gray-600">
+  <p>© Simron J. Singh</p>
+  <p>
+  This improved version of OPTamos was re-designed and the code re-written by
+  Paul Hoekman in 2026, with funding received by the Government of British
+  Colombia, Ministry of Water, Land and Resource Stewardship, Canada.
+  </p>
+</div>
 
 {% endblock %}

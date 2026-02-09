@@ -122,6 +122,13 @@ def about(request):
     }
     return render(request, "optamos/about.html", context)
 
+def resources(request):
+    context = {
+        "bg": random.choice(OPTAMOS_BG),
+        "menu": "resources",
+    }
+    return render(request, "optamos/resources.html", context)
+
 def projects(request):
     if not request.user.is_authenticated:
         return redirect("optamos:login")

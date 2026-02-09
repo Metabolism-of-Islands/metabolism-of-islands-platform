@@ -9,6 +9,7 @@ urlpatterns = baseline_urlpatterns + [
     path("login/", views.account_login, name="login"),
     path("logout/", views.account_logout, name="logout"),
     path("about/", views.about, name="about"),
+    path("resources/", views.resources, name="resources"),
     path("projects/create/", views.project_create, name="project_create"),
     path("projects/", views.projects, name="projects"),
     path("projects/<int:id>/", views.project, name="project"),

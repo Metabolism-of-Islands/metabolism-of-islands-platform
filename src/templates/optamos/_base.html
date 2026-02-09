@@ -9,7 +9,7 @@
     {% block title %}{% endblock %} - 
     OPTamos
   </title>
-  <link href="{% static "css/optamos.css" %}?id=03-1111" rel="stylesheet">
+  <link href="{% static "css/optamos.css" %}?id=09-1312" rel="stylesheet">
   <link class="favicon" rel="shortcut icon" sizes="126x126" href="/media/optamos/favicon.jpg">
   {% block css %}{% endblock %}
 </head>
@@ -32,7 +32,8 @@
               <li class="mr-3"><a {% if menu == "projects" %}class="active"{% endif %} href="{% url "optamos:projects" %}">Projects</a></li>
               <li class="mr-3"><a {% if menu == "account" %}class="active"{% endif %} href="{% url "optamos:account" %}">My Account</a></li>
             {% endif %}
-              <li><a {% if menu == "about" %}class="active"{% endif %} href="{% url "optamos:about" %}">Methodology</a></li>
+              <li class="mr-3"><a {% if menu == "about" %}class="active"{% endif %} href="{% url "optamos:about" %}">Methodology</a></li>
+              <li><a {% if menu == "resources" %}class="active"{% endif %} href="{% url "optamos:resources" %}">Resources</a></li>
           </ul>  
           {% if request.user.is_authenticated %}
             <a href="{% url "optamos:logout" %}">Log out</a>
