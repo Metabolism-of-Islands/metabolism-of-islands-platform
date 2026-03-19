@@ -56,7 +56,7 @@
 
       <section id="options">
         <div class="flex items-center justify-between">
-          <label class="block font-medium text-gray-900">Options</label>
+          <label class="block font-medium text-gray-900">Alternatives</label>
         </div>
 
         {% for each in project.options.all %}
@@ -78,6 +78,39 @@
 
       </section>
 
+      <section class="bg-gray-100 p-4 rounded-lg">
+        <h3>Meta data (optional)</h3>
+        <div>
+          <div class="flex items-center justify-between">
+            <label for="goal" class="block font-medium text-gray-900">Description</label>
+          </div>
+          <div class="mt-2">
+            <textarea class="h-32" name="description" placeholder="Short description of your project">{{ project.description|default_if_none:"" }}</textarea>
+          </div>
+        </div>
+
+        <section class="mt-4" id="tags">
+          <div class="flex items-center justify-between">
+            <label class="block font-medium text-gray-900">Tag(s)</label>
+          </div>
+        {% for each in project.tag_list.all %}
+          <div class="mt-2 item">
+            <div class="flex items-center">
+              <input type="text" name="tag_{{ each.id }}" value="{{ each }}" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white" />
+              <button type="button" class="remove cursor-pointer ml-2 focus:outline-none focus:ring-2 focus:ring-red-500 hover:text-red-600">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor">
+                  <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        {% endfor %}
+
+        <div class="mt-2">
+          <input type="text" name="tag" placeholder="Add a new tag" />
+        </div>
+        </section>
+      </section>
       <div>
         <button type="submit" class="flex w-full justify-center btn-blue px-3 py-1.5 font-semibold text-white shadow-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 cursor-pointer">Save</button>
       </div>
@@ -92,6 +125,14 @@
 <script type="text/javascript">
 $(function(){
   $("section#options").on("input", "input[name='option']", function() {
+    if ($(this).data("is-typed") !== true) {
+      var newDiv = $(this).closest("div").clone();
+      newDiv.find("input").val(""); // Clear the cloned input
+      $(this).closest("section").append(newDiv);
+      $(this).data("is-typed", true); // Mark this input as typed
+    }
+  }); 
+  $("section#tags").on("input", "input[name='tag']", function() {
     if ($(this).data("is-typed") !== true) {
       var newDiv = $(this).closest("div").clone();
       newDiv.find("input").val(""); // Clear the cloned input

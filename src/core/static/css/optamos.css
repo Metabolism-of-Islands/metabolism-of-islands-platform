@@ -1625,6 +1625,10 @@ a svg {
 div.overlay {
   background: linear-gradient(180deg, #00000088 30%, #ffffff44 100%);
 }
+.top-message-box {
+  position: relative;
+  top: 20px;
+}
 @property --tw-border-style {
   syntax: "*";
   inherits: false;

@@ -42,12 +42,35 @@
 
       <section>
         <div class="flex items-center justify-between">
-          <label class="block font-medium text-gray-900">Options</label>
+          <label class="block font-medium text-gray-900">Alternatives</label>
         </div>
         <div class="mt-2">
           <input type="text" name="option" />
         </div>
       </section>
+
+      <section class="bg-gray-100 p-4 rounded-lg">
+        <h3>Meta data (optional)</h3>
+        <div>
+          <div class="flex items-center justify-between">
+            <label for="goal" class="block font-medium text-gray-900">Description</label>
+          </div>
+          <div class="mt-2">
+            <textarea class="h-32" name="description" placeholder="Short description of your project"></textarea>
+          </div>
+        </div>
+
+        <section class="mt-4">
+          <div class="flex items-center justify-between">
+            <label class="block font-medium text-gray-900">Tag(s)</label>
+          </div>
+          <div class="mt-2">
+            <input type="text" name="tag" />
+          </div>
+        </section>
+      </section>
+
+
 
       <div>
         <button type="submit" class="flex w-full justify-center btn-blue px-3 py-1.5 font-semibold text-white shadow-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 font-medium cursor-pointer">Create project</button>
@@ -63,6 +86,14 @@
 <script type="text/javascript">
 $(function(){
   $("section").on("input", "input[name='option']", function() {
+    if ($(this).data("is-typed") !== true) {
+      var newDiv = $(this).closest("div").clone();
+      newDiv.find("input").val(""); // Clear the cloned input
+      $(this).closest("section").append(newDiv);
+      $(this).data("is-typed", true); // Mark this input as typed
+    }
+  }); 
+  $("section").on("input", "input[name='tag']", function() {
     if ($(this).data("is-typed") !== true) {
       var newDiv = $(this).closest("div").clone();
       newDiv.find("input").val(""); // Clear the cloned input

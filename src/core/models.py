@@ -3102,6 +3102,16 @@ class OptamosOption(models.Model):
     class Meta:
         ordering = ["id"]
 
+class OptamosTag(models.Model):
+    name = models.CharField(max_length=255)
+    project = models.ForeignKey(OptamosProject, on_delete=models.CASCADE, related_name="tag_list")
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ["id"]
+
 class OptamosCriteria(models.Model):
     name = models.CharField(max_length=255)
     project = models.ForeignKey(OptamosProject, on_delete=models.CASCADE, related_name="criteria")

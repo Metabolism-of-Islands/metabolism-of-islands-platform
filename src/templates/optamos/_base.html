@@ -9,7 +9,7 @@
     {% block title %}{% endblock %} - 
     OPTamos
   </title>
-  <link href="{% static "css/optamos.css" %}?id=09-1312" rel="stylesheet">
+  <link href="{% static "css/optamos.css" %}?id=12-0319" rel="stylesheet">
   <link class="favicon" rel="shortcut icon" sizes="126x126" href="/media/optamos/favicon.jpg">
   {% block css %}{% endblock %}
 </head>
@@ -48,9 +48,16 @@
       <div class="overlay pb-32">
         <header class="py-10">
           <hgroup class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <h1 class="text-3xl font-bold tracking-tight text-white text-shadow-md text-shadow-stone-700">
-              {{ project }}
-            </h1>
+              <div class="flex justify-between">
+              <h1 class="text-3xl font-bold tracking-tight text-white text-shadow-md text-shadow-stone-700">
+                {{ project }}
+              </h1>
+              <div>
+              {% for tag in project.tag_list.all %}
+                <span class="mt-2 badge">{{ tag }}</span>
+              {% endfor %}
+              </div>
+            </div>
             <h2 class="text-shadow-sm text-shadow-stone-700 text-white">
             {{ project.goal }}
             </h2>
@@ -67,7 +74,7 @@
             {% if messages %}
               <div class="top-message-box mt-5 mb-10">
                 {% for message in messages %}
-                  <div class="alert {{ message.tags }}" role="alert">
+                  <div class="mt-5 alert {{ message.tags }}" role="alert">
                     {{ message|safe }}
                   </div>
                 {% endfor %}

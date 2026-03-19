@@ -56,7 +56,7 @@
     </a>
 
     <section id="criteria" class="pr-5">
-      <h2>Rank options</h2>
+      <h2>Rank alternatives</h2>
       {% if criteria_list %}
         <ul>
         {% for each in criteria_list %}
@@ -168,10 +168,10 @@
       {% if criteria %}
         <h1>{{ criteria }}</h1>
         <p>
-          With respect to this criteria ({{ criteria }}), how would you compare the following options?
+          With respect to this criteria ({{ criteria }}), how would you compare the following alternatives?
           For each pair, how strongly do you prefer one over the other?</p>
         <p class="text-gray-700 text-sm">
-          Slide the blue circle in the direction of your preferred option in comparison
+          Slide the blue circle in the direction of your preferred alternative in comparison
           to the other. The number indicates how strong your preference is (1 = equally
           preferred; 3 = preferred three times over the other; 5 = preferred five times
           over the other, etc).
@@ -179,7 +179,7 @@
       {% else %}
         <h1 class="mb-0 text-xl">Rank all criteria</h1>
         <p>
-          Indicate how you different criteria compare across the following pairs. Indicate which criteria
+          Indicate how your different criteria compare across the following pairs. Indicate which criteria
           is more important. 
         </p>
         <p class="text-gray-700 text-sm">
@@ -193,7 +193,7 @@
       {% if not pairs %}
         <div class="alert alert-warning">
           You need to configure at least two 
-          {% if page == "rank_all_criteria" %}criteria{% else %}options{% endif %}
+          {% if page == "rank_all_criteria" %}criteria{% else %}alternatives{% endif %}
           in your project.
           <a href="{% url "optamos:project_settings" project.uid %}">Click here</a> to 
           edit your project.
@@ -244,7 +244,7 @@
             </div>
             <div class="max-w-xl text-sm text-gray-600">
               <p>
-                Select one of the options from the menu on the left-hand side to get started.
+                Select one of the alternatives from the menu on the left-hand side to get started.
                 You can also <a href="{% url "optamos:project_settings" project.uid %}">edit your project settings</a>, <a href="{% url "optamos:projects" %}">view all your projects</a>, or <a href="{% url "optamos:project_create" %}">create a new project</a>.
               </p>
             </div>
@@ -259,7 +259,7 @@
             <div class="alert alert-warning absolute">
               <svg xmlns="http://www.w3.org/2000/svg" class="inline mr-1" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="m40-120 440-760 440 760H40Zm138-80h604L480-720 178-200Zm302-40q17 0 28.5-11.5T520-280q0-17-11.5-28.5T480-320q-17 0-28.5 11.5T440-280q0 17 11.5 28.5T480-240Zm-40-120h80v-200h-80v200Zm40-100Z"/></svg>
               <strong class="mr-2">WARNING</strong>
-              The results are incomplete - not all information is entered yet.
+              The results are incomplete - not all information is entered yet or your preferences have not been saved.
             </div>
           {% endif %}
         {% endfor %}
@@ -268,7 +268,7 @@
           <div class="alert alert-warning absolute">
               <svg xmlns="http://www.w3.org/2000/svg" class="inline mr-1" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="m40-120 440-760 440 760H40Zm138-80h604L480-720 178-200Zm302-40q17 0 28.5-11.5T520-280q0-17-11.5-28.5T480-320q-17 0-28.5 11.5T440-280q0 17 11.5 28.5T480-240Zm-40-120h80v-200h-80v200Zm40-100Z"/></svg>
               <strong class="mr-2">WARNING</strong>
-            The results are incomplete - not all information is entered yet.
+              The results are incomplete - not all information is entered yet or your preferences have not been saved.
           </div>
         {% endif %}
       </div>
@@ -285,7 +285,7 @@
             {% for o in options %}
               <th>{{ o.name }}</th>
             {% endfor %}
-            <th>CR</th>
+            <th hidden>CR</th>
             <th>% Importance</th>
           </tr>
         </thead>
@@ -296,7 +296,7 @@
               {% for val in row.options %}
                 <td>{{ val|floatformat:1 }}%</td>
               {% endfor %}
-              <td>{{ row.cr|floatformat:2 }}</td>
+              <td hidden>{{ row.cr|floatformat:2 }}</td>
               <td>{{ row.importance|floatformat:1 }}%</td>
             </tr>
           {% endfor %}
@@ -318,7 +318,7 @@
         <thead>
           <tr>
             <th>Rank</th>
-            <th>Option</th>
+            <th>Alternative</th>
             <th>Percentage</th>
           </tr>
         </thead>
@@ -456,7 +456,7 @@
         </p>
 
         <hr class="mt-5">
-        <h1 class="mt-5">Options evaluation</h1>
+        <h1 class="mt-5">Alternatives evaluation</h1>
 
         {% for c in criteria %}
           <h3 class="mt-5">Criterion: {{ c.name }}</h3>
@@ -487,12 +487,12 @@
           </table>
 
         <p class="mt-2 mb-4 text-gray-700 text-sm">
-            This matrix compares the available options against each other with respect to the current criterion.
+            This matrix compares the available alternatives against each other with respect to the current criterion.
           </p>
 
           <h4 class="mt-5">Normalized Matrix</h4>
 
-          <p>
+          <p hidden>
             Consistency Ratio (CR) for this criterion:
             {{ option_crs|get_item:c.id|floatformat:2 }}
           </p>
@@ -521,16 +521,16 @@
           </table>
 
         <p class="mt-2 mb-4 text-gray-700 text-sm">
-            This table shows the relative performance of each option after normalizing the comparisons
+            This table shows the relative performance of each alternative after normalizing the comparisons
             so they can be meaningfully compared.
           </p>
 
-          <h4 class="mt-5">Option Weights (Row Averages)</h4>
+          <h4 class="mt-5">Alternatives Weights (Row Averages)</h4>
 
           <table class="table table-striped">
             <thead>
               <tr>
-                <th>Option</th>
+                <th>Alternative</th>
                 <th>Weight</th>
                 <th>Percentage</th>
               </tr>
@@ -549,7 +549,7 @@
           </table>
 
         <p class="mt-2 mb-4 text-gray-700 text-sm">
-            These weights represent how well each option satisfies this specific criterion,
+            These weights represent how well each alternative satisfies this specific criterion,
             and they are later combined with the criterion’s importance.
           </p>
 
@@ -569,9 +569,13 @@
         or decrease the importance of a specific criterion and immediately see
         how the overall rankings respond.  As one criterion becomes more
         important, the system automatically adjusts the importance of the
-        remaining criteria so that the total importance stays balanced.  This
+        remaining criteria so that the total importance stays balanced. This
         helps you explore “what-if” scenarios and understand which criteria
-        have the biggest influence on the final result.
+        have the biggest influence on the final result. 
+        <strong>
+          You can freely play around with these sliders - this will not change
+          your saved preferences and results.
+        </strong>
         <br>
         <a href="{% url "optamos:about" %}">More about the AHP methodology &raquo;</a>
       </p>
@@ -601,6 +605,10 @@
           </div>
         {% endfor %}
       </form>
+
+      <div class="flex justify-end">
+        <a href="./" class="btn-sm btn-white" id="revert">Revert to original weights</a>
+      </div>
 
       <h2 class="mt-10 text-lg font-bold">Adjusted Results</h2>
       <div id="chart_options" style="width:100%;height: 400px;"></div>
@@ -641,7 +649,10 @@
           text: 'Criteria importance'
         },
         xAxis: {
-          type: 'value'
+          type: 'value',
+          name: 'Importance (%)',
+          nameLocation: 'middle',
+          nameGap: 30
         },
         yAxis: {
           type: 'category',
@@ -674,10 +685,13 @@
     var chart_options = echarts.init(document.getElementById('chart_options'));
     var options_config = {
       title: {
-        text: 'Options'
+        text: 'Alternatives'
       },
       xAxis: {
-        type: 'value'
+        type: 'value',
+        name: 'Importance (%)',
+        nameLocation: 'middle',
+        nameGap: 30
       },
       yAxis: {
         type: 'category',
@@ -685,7 +699,7 @@
         inverse: true
       },
       series: [{
-        name: 'Option',
+        name: 'Alternatives',
         type: 'bar',
         data: [{% for each in summary_totals %}{{ each }}{% if not forloop.last %},{% endif %}{% endfor %}],
         showBackground: true,
@@ -794,6 +808,20 @@
         updateOpacity();
         $slider.on("input", updateOpacity);
       });
+
+      var unsavedChanges = false;
+      $('input[type="range"]').on("input change", function() {
+        unsavedChanges = true;
+      });
+      $("form").on("submit", function() {
+        unsavedChanges = false;
+      });
+      $(window).on("beforeunload", function() {
+        if (unsavedChanges) {
+          return "You have unsaved changes. Do you really want to leave?";
+        }
+      });
+
     });
   </script>
 {% endif %}

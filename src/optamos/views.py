@@ -158,6 +158,7 @@ def project_create(request):
         project.is_public = False
         project.name = request.POST.get("name")
         project.goal = request.POST.get("goal")
+        project.description = request.POST.get("description")
         project.save()
 
         project.user.add(request.user)
@@ -166,6 +167,11 @@ def project_create(request):
             for each in request.POST.getlist("option"):
                 if each:
                     OptamosOption.objects.create(project=project, name=each)
+
+        if request.POST.getlist("tag"):
+            for each in request.POST.getlist("tag"):
+                if each:
+                    OptamosTag.objects.create(project=project, name=each)
 
         if (criteria_list := request.POST.get("criteria")):
             for criteria in criteria_list.split("\n"):
@@ -192,10 +198,19 @@ def project_settings(request, id):
     if request.method == "POST":
         project.name = request.POST.get("name")
         project.goal = request.POST.get("goal")
+        project.description = request.POST.get("description")
         project.save()
 
         for each in project.options.all():
             label = f"option_{each.id}"
+            if request.POST.get(label):
+                each.name = request.POST[label]
+                each.save()
+            else:
+                each.delete()
+
+        for each in project.tag_list.all():
+            label = f"tag_{each.id}"
             if request.POST.get(label):
                 each.name = request.POST[label]
                 each.save()
@@ -214,6 +229,11 @@ def project_settings(request, id):
             for each in request.POST.getlist("option"):
                 if each:
                     OptamosOption.objects.create(project=project, name=each)
+
+        if request.POST.getlist("tag"):
+            for each in request.POST.getlist("tag"):
+                if each:
+                    OptamosTag.objects.create(project=project, name=each)
 
         if request.POST.getlist("criteria"):
             for each in request.POST.getlist("criteria"):
