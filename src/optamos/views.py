@@ -864,8 +864,10 @@ def project_results(request, id, page="results"):
 # ACCOUNT-RELATED FUNCTIONS
 
 def account_login(request):
+
     if request.method == "POST":
         email = request.POST.get("email").lower()
+
         password = request.POST.get("password")
         user = authenticate(request, username=email, password=password)
         redirect_url = request.GET.get("redirect", "optamos:projects")
@@ -893,6 +895,27 @@ def account_logout(request):
 def account(request):
     if not request.user.is_authenticated:
         return redirect("optamos:login")
+
+    if request.method == "POST":
+        user = request.user
+        people = user.people
+        name = request.POST.get("name")
+        email = request.POST.get("email")
+        if email != user.email and User.objects.filter(email = email).exists():
+            messages.error(request, "E-mail already in use; cannot change this e-mail address")
+            return redirect(request.path)
+        people.name = name
+        user.first_name = name
+        people.email = email
+        user.username = email
+        user.email = email
+        if "password" in request.POST and request.POST["password"]:
+            user.set_password(request.POST["password"])
+        user.save();
+        people.save();
+        login(request, user)
+        messages.success(request, "Changes have been saved.")
+        return redirect(request.path)
 
     context = {
         "bg": random.choice(OPTAMOS_BG),
