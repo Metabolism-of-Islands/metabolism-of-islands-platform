@@ -256,6 +256,9 @@ def project(request, id, page="home"):
     if not request.user.is_authenticated:
         return redirect("optamos:login")
 
+    if not request.GET:
+        return redirect(f"{request.path}?rank_all_criteria=true")
+
     project = OptamosProject.objects_include_private.filter(pk=id, user=request.user).first()
     if not project:
         messages.error(request, "Project is not found - either it does not exist or you do not have access. Below are your projects.")
@@ -302,12 +305,14 @@ def project(request, id, page="home"):
                 )
             if "back" in request.POST:
                 next_criteria = project.criteria.filter(pk__lt=criteria.pk).order_by("-id").first()
+                if not next_criteria:
+                    return redirect(reverse("optamos:project", args=[project.uid]) + f"?rank_all_criteria")
             else:
                 next_criteria = project.criteria.filter(pk__gt=criteria.pk).order_by("id").first()
             if next_criteria:
                 return redirect(reverse("optamos:project", args=[project.uid]) + f"?criteria={next_criteria.id}")
             else:
-                return redirect(reverse("optamos:project", args=[project.uid]) + "?rank_all_criteria=true")
+                return redirect(reverse("optamos:project_results", args=[project.uid]))
 
         elif page == "rank_all_criteria":
             OptamosCriteriaValue.objects.filter(criteria1__project=project).delete()
@@ -319,7 +324,11 @@ def project(request, id, page="home"):
                     criteria2 = criteria2,
                     value = request.POST[value],
                 )
-            return redirect(reverse("optamos:project_results", args=[project.uid]))
+            next_criteria = project.criteria.order_by("id").first()
+            if next_criteria:
+                return redirect(reverse("optamos:project", args=[project.uid]) + f"?criteria={next_criteria.id}")
+            else:
+                return redirect(reverse("optamos:project_results", args=[project.uid]))
 
     context = {
         "bg": random.choice(OPTAMOS_BG),
@@ -336,6 +345,7 @@ def project(request, id, page="home"):
         "total_required_criteria_values": len(list(combinations(project.criteria.all(), 2))), 
         "menu": "projects",
         "cr": calculate_consistency_ratio(list(project.criteria.all()), OptamosCriteriaValue.objects.filter(criteria1__project=project)).cr,
+        "next_criteria": project.criteria.filter(pk__gt=criteria.pk).order_by("id").first() if criteria else None,
     }
 
     return render(request, "optamos/project.html", context)
