@@ -163,23 +163,34 @@
 
     {% if request.GET.criteria or page == "rank_all_criteria" %}
       {% if criteria %}
-        <h1>{{ criteria }}</h1>
-        <p>
-          With respect to this criteria ({{ criteria }}), how would you compare the following alternatives?
-          For each pair, how strongly do you prefer one over the other?</p>
+        <h1 class="mb-1">{{ criteria }}</h1>
         <p class="text-gray-700 text-sm">
-          Slide the blue circle in the direction of your preferred alternative in comparison
-          to the other.
+          Rate how much you prefer each
+          alternative with respect to each single criterion using the slider below.
+          This page is about the selected criterion ({{ criteria }}). 
+          Move the slider for every
+          alternative to reflect relative desirability for this criterion only — higher
+          slider = stronger preference for that alternative related to <em>{{ criteria }}</em>. These
+          local preference scores convert qualitative judgments into numbers that,
+          together with the criterion weight, determine each alternative’s overall score:
+          AHP multiplies each alternative’s score under a criterion by that criterion’s
+          importance, then sums across all criteria. That linkage ensures an alternative
+          can win either by being strong on very important criteria or by being uniformly
+          good across many less-important ones, so make the slider settings reflect how
+          much each alternative truly meets that specific criterion, not an overall
+          judgment.
         </p>
       {% else %}
-        <h1 class="mb-0 text-2xl">Rank all criteria</h1>
-        <p>
-          Indicate how your different criteria compare across the following pairs. Indicate which criteria
-          is more important. 
-        </p>
+        <h1 class="mb-1">Rank all criteria</h1>
         <p class="text-gray-700 text-sm">
-          For each pair, slide the blue circle in the direction of your preferred
-          criterion to indicate the relative importance you give to each.
+          The relative-importance slider lets you express how much more (or
+          less) important one criterion is compared with the other. Move each
+          slider to scale a criterion’s weight. Behind the scenes these sliders
+          are normalized into a set of weights that sum to 1, so changing one
+          slider redistributes importance across all criteria. Those weights
+          are then used to scale the alternatives’ scores per criterion,
+          meaning a criterion with a larger slider has proportionally greater
+          influence on the final overall ranking.
         </p>
       {% endif %}
 
@@ -676,6 +687,23 @@
       chart_criteria.setOption(criteria_config);
     {% endif %}
 
+    // We want to show them in the order high>low so we resort
+    var names = [{% for each in options %}'{{ each.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+    var values = [{% for each in summary_totals %}{{ each }}{% if not forloop.last %},{% endif %}{% endfor %}];
+
+    // Combine into objects
+    var combined = names.map((name, i) => ({
+      name: name,
+      value: values[i]
+    }));
+
+    // Sort descending (highest first)
+    combined.sort((a, b) => b.value - a.value);
+
+    // Split back into arrays
+    var sortedNames = combined.map(item => item.name);
+    var sortedValues = combined.map(item => item.value);
+
     var chart_options = echarts.init(document.getElementById('chart_options'));
     var options_config = {
       title: {
@@ -689,13 +717,13 @@
       },
       yAxis: {
         type: 'category',
-        data: [{% for each in options %}'{{ each.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        data: sortedNames,
         inverse: true
       },
       series: [{
         name: 'Alternatives',
         type: 'bar',
-        data: [{% for each in summary_totals %}{{ each }}{% if not forloop.last %},{% endif %}{% endfor %}],
+        data: sortedValues,
         showBackground: true,
         backgroundStyle: {
           color: 'rgba(220, 220, 220, 0.3)'
