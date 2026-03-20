@@ -855,9 +855,15 @@
             const preference = preferences[preferenceIndex];
 
             {% if criteria %}
-              $output.text(`${preferredOption} is ${preference} preferred to ${otherOption}`);
+              $output.empty()
+                 .append(document.createTextNode(`${preferredOption} is `))
+                 .append($('<em>').text(preference))
+                 .append(document.createTextNode(` preferred to ${otherOption}`));
             {% else %}
-              $output.text(`${preferredOption} is ${preference} more important than ${otherOption}`);
+              $output.empty()
+                 .append(document.createTextNode(`${preferredOption} is `))
+                 .append($('<em>').text(preference))
+                 .append(document.createTextNode(` more important than ${otherOption}`));
             {% endif %}
           }
         }
