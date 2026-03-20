@@ -13,6 +13,7 @@ from itertools import combinations
 from openpyxl.styles import Font
 import openpyxl
 import random
+import csv
 
 OPTAMOS_BG = [
     "pexels-altaf-shah-3143825-7751849.jpg",
@@ -154,6 +155,7 @@ def project_create(request):
         return redirect("optamos:login")
 
     if request.method == "POST":
+
         project = OptamosProject()
         project.is_public = False
         project.name = request.POST.get("name")
@@ -177,6 +179,38 @@ def project_create(request):
             for criteria in criteria_list.split("\n"):
                 if criteria:
                     OptamosCriteria.objects.create(project=project, name=criteria.strip())
+
+        if request.FILES.get("csv_file"):
+            csv_file = request.FILES["csv_file"]
+
+            # Validate file type
+            if not csv_file.name.endswith(".csv"):
+                messages.error(request, "Your file was not a valid CSV file. Please enter criteria and alternatives manually. Next time, please use our template as a baseline.")
+            else:
+                try:
+                    # Decode file
+                    decoded_file = csv_file.read().decode("utf-8").splitlines()
+                    reader = csv.DictReader(decoded_file)
+
+                    # ✅ Validate headers
+                    required_headers = {"Criteria", "Alternatives"}
+                    if not reader.fieldnames or not required_headers.issubset(set(reader.fieldnames)):
+                        messages.error(request,"CSV must contain headers: Criteria, Alternatives. Your file was not valid and could not be loaded. Please enter criteria and alternatives manually instead. Next time, please use our template as a baseline.")
+                    else:
+                        for row in reader:
+                            criteria = row.get("Criteria")
+                            alternative = row.get("Alternatives")
+
+                            if criteria:
+                                OptamosCriteria.objects.create(project=project, name=criteria.strip())
+
+                            if alternative:
+                                OptamosOption.objects.create(project=project, name=alternative.strip())
+
+                except Exception as e:
+                    messages.error(request, f"Error processing file: {str(e)}")
+
+            return redirect(reverse("optamos:project_settings", args=[project.uid]))
 
         return redirect(reverse("optamos:project", args=[project.uid]))
 
