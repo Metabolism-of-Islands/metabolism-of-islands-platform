@@ -156,63 +156,73 @@ def project_create(request):
 
     if request.method == "POST":
 
-        project = OptamosProject()
-        project.is_public = False
-        project.name = request.POST.get("name")
-        project.goal = request.POST.get("goal")
-        project.description = request.POST.get("description")
-        project.save()
+        csv_error = None
 
-        project.user.add(request.user)
-
-        if request.POST.getlist("alternative"):
-            for each in request.POST.getlist("alternative"):
-                if each:
-                    OptamosAlternative.objects.create(project=project, name=each)
-
-        if request.POST.getlist("tag"):
-            for each in request.POST.getlist("tag"):
-                if each:
-                    OptamosTag.objects.create(project=project, name=each)
-
-        if (criteria_list := request.POST.get("criteria")):
-            for criteria in criteria_list.split("\n"):
-                if criteria:
-                    OptamosCriteria.objects.create(project=project, name=criteria.strip())
-
+        # If the user uploads a csv file, then we will try and load the criteria/alternatives from this file
+        # However, we must first check if it's a valid file. If it isn't, we remain on the same page and 
+        # prompt the user to correct. If it's correct, then we save the project and redirect.
         if request.FILES.get("csv_file"):
             csv_file = request.FILES["csv_file"]
-
-            # Validate file type
-            if not csv_file.name.endswith(".csv"):
-                messages.error(request, "Your file was not a valid CSV file. Please enter criteria and alternatives manually. Next time, please use our template as a baseline.")
+            if not csv_file.name.lower().endswith(".csv"):
+                csv_error = "Your file was not a valid CSV file."
             else:
                 try:
-                    # Decode file
                     decoded_file = csv_file.read().decode("utf-8").splitlines()
                     reader = csv.DictReader(decoded_file)
-
-                    # ✅ Validate headers
                     required_headers = {"Criteria", "Alternatives"}
                     if not reader.fieldnames or not required_headers.issubset(set(reader.fieldnames)):
-                        messages.error(request,"CSV must contain headers: Criteria, Alternatives. Your file was not valid and could not be loaded. Please enter criteria and alternatives manually instead. Next time, please use our template as a baseline.")
+                        csv_error = "CSV must contain headers: Criteria, Alternatives. Your file was not valid and could not be loaded."
                     else:
-                        for row in reader:
-                            criteria = row.get("Criteria")
-                            alternative = row.get("Alternatives")
-
-                            if criteria:
-                                OptamosCriteria.objects.create(project=project, name=criteria.strip())
-
-                            if alternative:
-                                OptamosAlternative.objects.create(project=project, name=alternative.strip())
-
+                        valid_csv = True
                 except Exception as e:
-                    messages.error(request, f"Error processing file: {str(e)}")
+                    csv_error = f"Error processing file: {str(e)}"
 
-            return redirect(reverse("optamos:project_settings", args=[project.uid]))
+        if csv_error:
+            messages.error(request, csv_error)
+            messages.warning(request,  "Please review the structure of <a href='/media/optamos/sample.csv'>our template</a> as a baseline.")
+        else:
+            project = OptamosProject()
+            project.is_public = False
+            project.name = request.POST.get("name")
+            project.goal = request.POST.get("goal")
+            project.description = request.POST.get("description")
+            project.save()
 
-        return redirect(reverse("optamos:project", args=[project.uid]))
+            project.user.add(request.user)
+
+            if request.POST.getlist("alternative"):
+                for each in request.POST.getlist("alternative"):
+                    if each:
+                        OptamosAlternative.objects.create(project=project, name=each)
+
+            if request.POST.getlist("tag"):
+                for each in request.POST.getlist("tag"):
+                    if each:
+                        OptamosTag.objects.create(project=project, name=each)
+
+            if (criteria_list := request.POST.get("criteria")):
+                for criteria in criteria_list.split("\n"):
+                    if criteria:
+                        OptamosCriteria.objects.create(project=project, name=criteria.strip())
+
+            if request.FILES.get("csv_file"):
+                messages.success(request, "Your csv file was loaded.")
+                for row in reader:
+                    criteria = row.get("Criteria")
+                    alternative = row.get("Alternatives")
+
+                    if criteria:
+                        OptamosCriteria.objects.create(project=project, name=criteria.strip())
+
+                    if alternative:
+                        OptamosAlternative.objects.create(project=project, name=alternative.strip())
+
+                # If the user clicked the CSV upload button, then we will redirect the user to the
+                # page where they can continue editing the project because they are not necessarily
+                # done with editing.
+                return redirect(reverse("optamos:project_settings", args=[project.uid]))
+            else:
+                return redirect(reverse("optamos:project", args=[project.uid]))
 
     context = {
         "bg": random.choice(OPTAMOS_BG),
