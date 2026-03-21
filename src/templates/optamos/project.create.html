@@ -58,7 +58,7 @@
           <label class="block font-medium text-gray-900">Alternatives</label>
         </div>
         <div class="mt-2">
-          <input type="text" name="option" />
+          <input type="text" name="alternative" />
         </div>
       </section>
 
@@ -133,7 +133,7 @@
 {% block js %}
 <script type="text/javascript">
 $(function(){
-  $("section").on("input", "input[name='option']", function() {
+  $("section").on("input", "input[name='alternative']", function() {
     if ($(this).data("is-typed") !== true) {
       var newDiv = $(this).closest("div").clone();
       newDiv.find("input").val(""); // Clear the cloned input

@@ -204,14 +204,14 @@
         </div>
       {% else %}
         <form method="post" class="mt-10">
-          {% for option1, option2 in pairs %}
+          {% for alternative1, alternative2 in pairs %}
             <section class="mb-10">
               <div class="flex justify-between">
-                <span class="left_option truncate w-2/5">{{ option1 }}</span>
-                <span class="right_option truncate w-2/5 text-right">{{ option2 }}</span>
+                <span class="left_alternative truncate w-2/5">{{ alternative1 }}</span>
+                <span class="right_alternative truncate w-2/5 text-right">{{ alternative2 }}</span>
               </div>
               <div class="slider">
-                {% with label="range-"|concat:option1.id|concat:"-"|concat:option2.id %}
+                {% with label="range-"|concat:alternative1.id|concat:"-"|concat:alternative2.id %}
                   <input name="{{ label }}" type="range" min="-8" max="8" step="1" value="{{ values|get_item:label|default_if_none:0 }}" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-sky-500 hover:accent-sky-600 range range-lg range-primary">
                 {% endwith %}
                 <output class="block mt-2 text-center text-gray-900"></output>
@@ -278,7 +278,7 @@
         {% endif %}
       </div>
 
-      <div id="chart_options" style="width:100%;height: 400px;"></div>
+      <div id="chart_alternatives" style="width:100%;height: 400px;"></div>
       <div id="chart_criteria" style="width:100%;height: 400px;"></div>
 
       <h1 class="mt-5">Summary table</h1>
@@ -287,7 +287,7 @@
         <thead>
           <tr>
             <th>Criterion</th>
-            {% for o in options %}
+            {% for o in alternatives %}
               <th>{{ o.name }}</th>
             {% endfor %}
             <th hidden>CR</th>
@@ -298,7 +298,7 @@
           {% for row in summary_table %}
             <tr>
               <th>{{ row.criterion }}</th>
-              {% for val in row.options %}
+              {% for val in row.alternatives %}
                 <td>{{ val|floatformat:1 }}%</td>
               {% endfor %}
               <td hidden>{{ row.cr|floatformat:2 }}</td>
@@ -331,7 +331,7 @@
           {% for item in global_ranking %}
             <tr>
               <td>{{ forloop.counter }}</td>
-              <td>{{ item.option.name }}</td>
+              <td>{{ item.alternative.name }}</td>
               <td>{{ item.score|multiply:100|floatformat:1 }}%</td>
             </tr>
           {% endfor %}
@@ -472,18 +472,18 @@
             <thead>
               <tr>
                 <th></th>
-                {% for o in options %}
+                {% for o in alternatives %}
                   <th>{{ o.name }}</th>
                 {% endfor %}
               </tr>
             </thead>
             <tbody>
-              {% for row in options %}
+              {% for row in alternatives %}
                 <tr>
                   <th>{{ row.name }}</th>
-                  {% for col in options %}
+                  {% for col in alternatives %}
                     <td>
-                      {{ option_matrices|get_item:c.id|get_item:row.id|get_item:col.id|floatformat:2 }}
+                      {{ alternative_matrices|get_item:c.id|get_item:row.id|get_item:col.id|floatformat:2 }}
                     </td>
                   {% endfor %}
                 </tr>
@@ -499,25 +499,25 @@
 
           <p hidden>
             Consistency Ratio (CR) for this criterion:
-            {{ option_crs|get_item:c.id|floatformat:2 }}
+            {{ alternative_crs|get_item:c.id|floatformat:2 }}
           </p>
 
           <table class="table table-striped">
             <thead>
               <tr>
                 <th></th>
-                {% for o in options %}
+                {% for o in alternatives %}
                   <th>{{ o.name }}</th>
                 {% endfor %}
               </tr>
             </thead>
             <tbody>
-              {% for row in options %}
+              {% for row in alternatives %}
                 <tr>
                   <th>{{ row.name }}</th>
-                  {% for col in options %}
+                  {% for col in alternatives %}
                     <td>
-                      {{ normalized_option_matrices|get_item:c.id|get_item:row.id|get_item:col.id|floatformat:2 }}
+                      {{ normalized_alternative_matrices|get_item:c.id|get_item:row.id|get_item:col.id|floatformat:2 }}
                     </td>
                   {% endfor %}
                 </tr>
@@ -541,12 +541,12 @@
               </tr>
             </thead>
             <tbody>
-              {% for o in options %}
+              {% for o in alternatives %}
                 <tr>
                   <td>{{ o.name }}</td>
-                  <td>{{ option_weights|get_item:c.id|get_item:o.id|floatformat:2 }}</td>
+                  <td>{{ alternative_weights|get_item:c.id|get_item:o.id|floatformat:2 }}</td>
                   <td>
-                    {{ option_weights|get_item:c.id|get_item:o.id|multiply:100|floatformat:1 }}%
+                    {{ alternative_weights|get_item:c.id|get_item:o.id|multiply:100|floatformat:1 }}%
                   </td>
                 </tr>
               {% endfor %}
@@ -616,7 +616,7 @@
       </div>
 
       <h2 class="mt-10 text-lg font-bold">Adjusted Results</h2>
-      <div id="chart_options" style="width:100%;height: 400px;"></div>
+      <div id="chart_alternatives" style="width:100%;height: 400px;"></div>
 
     {% endif %}
 
@@ -688,7 +688,7 @@
     {% endif %}
 
     // We want to show them in the order high>low so we resort
-    var names = [{% for each in options %}'{{ each.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+    var names = [{% for each in alternatives %}'{{ each.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}];
     var values = [{% for each in summary_totals %}{{ each }}{% if not forloop.last %},{% endif %}{% endfor %}];
 
     // Combine into objects
@@ -704,8 +704,8 @@
     var sortedNames = combined.map(item => item.name);
     var sortedValues = combined.map(item => item.value);
 
-    var chart_options = echarts.init(document.getElementById('chart_options'));
-    var options_config = {
+    var chart_alternatives = echarts.init(document.getElementById('chart_alternatives'));
+    var alternatives_config = {
       title: {
         text: 'Alternatives'
       },
@@ -740,7 +740,7 @@
         }
       }]
     };
-    chart_options.setOption(options_config);
+    chart_alternatives.setOption(alternatives_config);
 
   </script>
 
@@ -780,18 +780,18 @@
                 var names = [];
                 var scores = [];
                 $.each(data.sensitivity_ranking, function(i, item) {
-                    names.push(item.option_name);
+                    names.push(item.alternative_name);
                     scores.push(item.score);
                 });
 
-                chart_options.setOption({
+                chart_alternatives.setOption({
                     yAxis: { data: names },
                     series: [{ data: scores }]
                 });
             },
             error: function(xhr, status, error) {
                 $("input[type=range]").prop("disabled", true).fadeTo(150, 0.5);
-                $("#chart_options").fadeTo(150, 0.5);
+                $("#chart_alternatives").fadeTo(150, 0.5);
                 console.error("Sensitivity update failed:", error);
                 alert("Sorry, an error ocurred. Please reload the page");
             }
@@ -811,8 +811,8 @@
         const $container = $(this);
         const $slider = $container.find('input[type="range"]');
         const $output = $container.find("output");
-        const $option1 = $container.siblings(".flex").find("span").first();
-        const $option2 = $container.siblings(".flex").find("span").last();
+        const $alternative1 = $container.siblings(".flex").find("span").first();
+        const $alternative2 = $container.siblings(".flex").find("span").last();
 
         // Preference mapping
         const preferences = [
@@ -839,8 +839,8 @@
           const opacity2 = (value < 0) ? maxOpacity - (value / -8) * (1-minOpacity) : 1;
           const opacity1 = (value > 0) ? maxOpacity - (value / 8) * (1-minOpacity) : 1;
           
-          $option1.css("opacity", opacity1);
-          $option2.css("opacity", opacity2);
+          $alternative1.css("opacity", opacity1);
+          $alternative2.css("opacity", opacity2);
 
           if (value === 0) {
             {% if criteria %}
@@ -850,8 +850,8 @@
             {% endif %}
           } else {
             const preferenceIndex = Math.abs(value);
-            const preferredOption = value < 0 ? $option1.text() : $option2.text();
-            const otherOption = value < 0 ? $option2.text() : $option1.text();
+            const preferredOption = value < 0 ? $alternative1.text() : $alternative2.text();
+            const otherOption = value < 0 ? $alternative2.text() : $alternative1.text();
             const preference = preferences[preferenceIndex];
 
             {% if criteria %}

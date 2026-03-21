@@ -165,10 +165,10 @@ def project_create(request):
 
         project.user.add(request.user)
 
-        if request.POST.getlist("option"):
-            for each in request.POST.getlist("option"):
+        if request.POST.getlist("alternative"):
+            for each in request.POST.getlist("alternative"):
                 if each:
-                    OptamosOption.objects.create(project=project, name=each)
+                    OptamosAlternative.objects.create(project=project, name=each)
 
         if request.POST.getlist("tag"):
             for each in request.POST.getlist("tag"):
@@ -205,7 +205,7 @@ def project_create(request):
                                 OptamosCriteria.objects.create(project=project, name=criteria.strip())
 
                             if alternative:
-                                OptamosOption.objects.create(project=project, name=alternative.strip())
+                                OptamosAlternative.objects.create(project=project, name=alternative.strip())
 
                 except Exception as e:
                     messages.error(request, f"Error processing file: {str(e)}")
@@ -235,8 +235,8 @@ def project_settings(request, id):
         project.description = request.POST.get("description")
         project.save()
 
-        for each in project.options.all():
-            label = f"option_{each.id}"
+        for each in project.alternatives.all():
+            label = f"alternative_{each.id}"
             if request.POST.get(label):
                 each.name = request.POST[label]
                 each.save()
@@ -259,10 +259,10 @@ def project_settings(request, id):
             else:
                 each.delete()
 
-        if request.POST.getlist("option"):
-            for each in request.POST.getlist("option"):
+        if request.POST.getlist("alternative"):
+            for each in request.POST.getlist("alternative"):
                 if each:
-                    OptamosOption.objects.create(project=project, name=each)
+                    OptamosAlternative.objects.create(project=project, name=each)
 
         if request.POST.getlist("tag"):
             for each in request.POST.getlist("tag"):
@@ -307,12 +307,12 @@ def project(request, id, page="home"):
 
         # Let's create a dict with the names of the <input> fields and the value for them
         # so we can load them into the form
-        for each in OptamosOptionValue.objects.filter(criteria=criteria):
-            value = f"range-{each.option1_id}-{each.option2_id}"
+        for each in OptamosAlternativeValue.objects.filter(criteria=criteria):
+            value = f"range-{each.alternative1_id}-{each.alternative2_id}"
             values[value] = each.value
 
-        # This creates pairs of all possible combinations of options
-        pairs = list(combinations(project.options.all(), 2))
+        # This creates pairs of all possible combinations of alternatives
+        pairs = list(combinations(project.alternatives.all(), 2))
 
     elif "rank_all_criteria" in request.GET:
         page = "rank_all_criteria"
@@ -322,18 +322,18 @@ def project(request, id, page="home"):
             value = f"range-{each.criteria1_id}-{each.criteria2_id}"
             values[value] = each.value
 
-        # This creates pairs of all possible combinations of options
+        # This creates pairs of all possible combinations of alternatives
         pairs = list(combinations(project.criteria.all(), 2))
 
     if request.method == "POST":
         if page == "criteria":
-            OptamosOptionValue.objects.filter(criteria=criteria).delete()
-            for option1,option2 in pairs:
+            OptamosAlternativeValue.objects.filter(criteria=criteria).delete()
+            for alternative1,alternative2 in pairs:
                 # This creates the name of the relevant input field
-                value = f"range-{option1.id}-{option2.id}"
-                OptamosOptionValue.objects.create(
-                    option1 = option1,
-                    option2 = option2,
+                value = f"range-{alternative1.id}-{alternative2.id}"
+                OptamosAlternativeValue.objects.create(
+                    alternative1 = alternative1,
+                    alternative2 = alternative2,
                     criteria = criteria,
                     value = request.POST[value],
                 )
@@ -372,7 +372,7 @@ def project(request, id, page="home"):
         "pairs": pairs,
         "values": values,
         "page": page,
-        "criteria_list": project.criteria.all().order_by("id").annotate(is_done=Count("option_pairs")),
+        "criteria_list": project.criteria.all().order_by("id").annotate(is_done=Count("alternative_pairs")),
         "criteria_values": OptamosCriteriaValue.objects.filter(criteria1__project=project).count(), 
         # Count how many there theoretically are, so that we can verify that all are saved -- this is particularly 
         # relevant in case people edit the project and add criteria in which case we need to show an error
@@ -395,10 +395,10 @@ def project_results(request, id, page="results"):
         return redirect("optamos:projects")
 
     # START OF CRITERIA EVALUATION
-    points_options = {}
+    points_alternatives = {}
     points_criteria = {}
-    for each in project.options.all():
-        points_options[each] = 0
+    for each in project.alternatives.all():
+        points_alternatives[each] = 0
     for each in project.criteria.all():
         points_criteria[each] = 0
     for each in OptamosCriteriaValue.objects.filter(criteria1__project=project):
@@ -406,11 +406,11 @@ def project_results(request, id, page="results"):
             points_criteria[each.criteria2] += each.value
         elif each.value < 0:
             points_criteria[each.criteria1] += each.value*-1
-    for each in OptamosOptionValue.objects.filter(criteria__project=project):
+    for each in OptamosAlternativeValue.objects.filter(criteria__project=project):
         if each.value > 0:
-            points_options[each.option2] += each.value
+            points_alternatives[each.alternative2] += each.value
         elif each.value < 0:
-            points_options[each.option1] += each.value*-1
+            points_alternatives[each.alternative1] += each.value*-1
 
     matrix = create_matrix(project)
     matrix_criteria = list(project.criteria.all())
@@ -466,80 +466,80 @@ def project_results(request, id, page="results"):
 
     # END OF CRITERIA EVALUTION
 
-    # START OF OPTIONS EVALATION
+    # START OF ALTERNATIVES EVALATION
 
-    # Get all criteria and options
+    # Get all criteria and alternatives
     criteria = list(OptamosCriteria.objects.filter(project=project))
-    options = list(OptamosOption.objects.filter(project=project))
-    option_values = OptamosOptionValue.objects.filter(criteria__project=project)
+    alternatives = list(OptamosAlternative.objects.filter(project=project))
+    alternative_values = OptamosAlternativeValue.objects.filter(criteria__project=project)
 
     # Step 1: Initialize matrices per criterion
-    option_matrices = {}
+    alternative_matrices = {}
     for c in criteria:
-        option_matrices[c.id] = {
-            o1.id: {o2.id: 1 if o1.id == o2.id else 0 for o2 in options}
-            for o1 in options
+        alternative_matrices[c.id] = {
+            o1.id: {o2.id: 1 if o1.id == o2.id else 0 for o2 in alternatives}
+            for o1 in alternatives
         }
 
-    # Step 2: Fill matrices with OptionValue data
-    for ov in option_values:
+    # Step 2: Fill matrices with AlternativeValue data
+    for ov in alternative_values:
         c_id = ov.criteria.id
-        o1_id = ov.option1.id
-        o2_id = ov.option2.id
+        o1_id = ov.alternative1.id
+        o2_id = ov.alternative2.id
 
         # Fill reciprocal matrix
-        option_matrices[c_id][o1_id][o2_id] = ov.value1
-        option_matrices[c_id][o2_id][o1_id] = ov.value2
+        alternative_matrices[c_id][o1_id][o2_id] = ov.value1
+        alternative_matrices[c_id][o2_id][o1_id] = ov.value2
 
-    # Step 3: Normalize matrices and compute option weights
-    normalized_option_matrices = {}
-    option_weights = {}  # row averages per criterion
+    # Step 3: Normalize matrices and compute alternative weights
+    normalized_alternative_matrices = {}
+    alternative_weights = {}  # row averages per criterion
 
     for c in criteria:
-        matrix = option_matrices[c.id]
+        matrix = alternative_matrices[c.id]
 
         # Compute column totals
-        col_totals = {o.id: 0 for o in options}
-        for col in options:
-            for row in options:
+        col_totals = {o.id: 0 for o in alternatives}
+        for col in alternatives:
+            for row in alternatives:
                 col_totals[col.id] += matrix[row.id][col.id]
 
         # Normalize matrix
         normalized_matrix = {}
-        for row in options:
+        for row in alternatives:
             normalized_matrix[row.id] = {}
-            for col in options:
+            for col in alternatives:
                 total = col_totals[col.id]
                 normalized_matrix[row.id][col.id] = (
                     matrix[row.id][col.id] / total if total != 0 else 0
                 )
 
-        normalized_option_matrices[c.id] = normalized_matrix
+        normalized_alternative_matrices[c.id] = normalized_matrix
 
-        # Compute row averages → option weights for this criterion
+        # Compute row averages → alternative weights for this criterion
         row_avg = {}
-        for row in options:
-            total = sum(normalized_matrix[row.id][col.id] for col in options)
-            row_avg[row.id] = total / len(options)
-        option_weights[c.id] = row_avg
+        for row in alternatives:
+            total = sum(normalized_matrix[row.id][col.id] for col in alternatives)
+            row_avg[row.id] = total / len(alternatives)
+        alternative_weights[c.id] = row_avg
 
-    # END OF OPTIONS EVALUATION
+    # END OF ALTERNATIVES EVALUATION
 
 
     # Calculate global scores
 
-    global_scores = {o.id: 0 for o in options}
+    global_scores = {o.id: 0 for o in alternatives}
 
-    for o in options:
+    for o in alternatives:
         total_score = 0
         for c in criteria:
             weight_c = row_averages[c.id]  # criteria weight
-            weight_o = option_weights[c.id][o.id]  # option weight under this criterion
+            weight_o = alternative_weights[c.id][o.id]  # alternative weight under this criterion
             total_score += weight_c * weight_o
         global_scores[o.id] = total_score
 
     global_ranking = sorted(
-        [{'option': o, 'score': global_scores[o.id]} for o in options],
+        [{'alternative': o, 'score': global_scores[o.id]} for o in alternatives],
         key=lambda x: x['score'],
         reverse=True  # highest score first
     )
@@ -548,9 +548,9 @@ def project_results(request, id, page="results"):
     consistency = calculate_consistency_ratio(list(project.criteria.all()), OptamosCriteriaValue.objects.filter(criteria1__project=project))
 
     # Compute CR per criterion
-    option_crs = {}
+    alternative_crs = {}
     for c in criteria:
-        option_crs[c.id] = calculate_consistency_ratio(options, option_values.filter(criteria=c)).cr
+        alternative_crs[c.id] = calculate_consistency_ratio(alternatives, alternative_values.filter(criteria=c)).cr
 
     # Build a summary taable
     summary_table = []
@@ -559,11 +559,11 @@ def project_results(request, id, page="results"):
     for c in criteria:
         row = {
             "criterion": c.name,
-            "options": [
-                option_weights[c.id][o.id] * row_averages[c.id] * 100
-                for o in options
+            "alternatives": [
+                alternative_weights[c.id][o.id] * row_averages[c.id] * 100
+                for o in alternatives
             ],
-            "cr": option_crs[c.id],
+            "cr": alternative_crs[c.id],
             "importance": row_averages[c.id] * 100
         }
         importance.append({
@@ -573,11 +573,11 @@ def project_results(request, id, page="results"):
         })
         summary_table.append(row)
 
-    # Compute totals for each option column
+    # Compute totals for each alternative column
     totals = []
-    n_options = len(options)
-    for idx in range(n_options):
-        total = sum(row["options"][idx] for row in summary_table)
+    n_alternatives = len(alternatives)
+    for idx in range(n_alternatives):
+        total = sum(row["alternatives"][idx] for row in summary_table)
         totals.append(total)
 
     if "export" in request.GET:
@@ -585,13 +585,13 @@ def project_results(request, id, page="results"):
         worksheet = workbook.active
         worksheet.title = "Summary Table"
 
-        header = ["Criterion"] + [o.name for o in options] + ["CR", "% Importance"]
+        header = ["Criterion"] + [o.name for o in alternatives] + ["CR", "% Importance"]
         worksheet.append(header)
 
         for row in summary_table:
             data_row = (
                 [row["criterion"]]
-                + [val / 100 for val in row["options"]]
+                + [val / 100 for val in row["alternatives"]]
                 + [row["cr"], row["importance"] / 100]
             )
             worksheet.append(data_row)
@@ -602,8 +602,8 @@ def project_results(request, id, page="results"):
         for row in worksheet.iter_rows(min_row=2, min_col=2):
             for i, cell in enumerate(row):
                 if isinstance(cell.value, (int, float)):
-                    # options and importance columns are percentages
-                    if i < len(options) or i == len(options) + 1:  
+                    # alternatives and importance columns are percentages
+                    if i < len(alternatives) or i == len(alternatives) + 1:  
                         cell.number_format = "0.0%"
                     else:  # CR column
                         cell.number_format = "0.00"
@@ -647,14 +647,14 @@ def project_results(request, id, page="results"):
         ws = workbook.active
         ws.title = "Summary"
 
-        ws.append(["Criterion"] + [o.name for o in options] + ["CR", "Importance (%)"])
+        ws.append(["Criterion"] + [o.name for o in alternatives] + ["CR", "Importance (%)"])
         for cell in ws[1]:
             cell.font = bold
 
         for row in summary_table:
             ws.append(
                 [row["criterion"]]
-                + row["options"]
+                + row["alternatives"]
                 + [row["cr"], row["importance"]]
             )
 
@@ -666,12 +666,12 @@ def project_results(request, id, page="results"):
         # 2. GLOBAL RANKING
         # --------------------------------------------------
         ws = workbook.create_sheet("Global Ranking")
-        ws.append(["Rank", "Option", "Score (%)"])
+        ws.append(["Rank", "Alternative", "Score (%)"])
         for cell in ws[1]:
             cell.font = bold
 
         for idx, item in enumerate(global_ranking, start=1):
-            ws.append([idx, item["option"].name, item["score"] * 100])
+            ws.append([idx, item["alternative"].name, item["score"] * 100])
 
         # --------------------------------------------------
         # 3. CRITERIA – RAW MATRIX
@@ -719,44 +719,44 @@ def project_results(request, id, page="results"):
         ws.append(["Consistency Ratio (CR)", consistency.cr])
 
         # --------------------------------------------------
-        # 6–8. OPTIONS EVALUATION (PER CRITERION)
+        # 6–8. ALTERNATIVES EVALUATION (PER CRITERION)
         # --------------------------------------------------
         for c in criteria:
             # Raw matrix
             ws = workbook.create_sheet(f"{c.name} – Raw")
-            ws.append([""] + [o.name for o in options])
+            ws.append([""] + [o.name for o in alternatives])
             for cell in ws[1]:
                 cell.font = bold
 
-            for row in options:
+            for row in alternatives:
                 ws.append(
                     [row.name]
-                    + [option_matrices[c.id][row.id][col.id] for col in options]
+                    + [alternative_matrices[c.id][row.id][col.id] for col in alternatives]
                 )
 
             # Normalized matrix
             ws = workbook.create_sheet(f"{c.name} – Normalized")
-            ws.append([""] + [o.name for o in options])
+            ws.append([""] + [o.name for o in alternatives])
             for cell in ws[1]:
                 cell.font = bold
 
-            for row in options:
+            for row in alternatives:
                 ws.append(
                     [row.name]
                     + [
-                        normalized_option_matrices[c.id][row.id][col.id]
-                        for col in options
+                        normalized_alternative_matrices[c.id][row.id][col.id]
+                        for col in alternatives
                     ]
                 )
 
-            # Option weights
+            # Alternative weights
             ws = workbook.create_sheet(f"{c.name} – Weights")
-            ws.append(["Option", "Weight", "Percentage"])
+            ws.append(["Alternative", "Weight", "Percentage"])
             for cell in ws[1]:
                 cell.font = bold
 
-            for o in options:
-                weight = option_weights[c.id][o.id]
+            for o in alternatives:
+                weight = alternative_weights[c.id][o.id]
                 ws.append([o.name, weight, weight * 100])
 
         # --------------------------------------------------
@@ -793,23 +793,23 @@ def project_results(request, id, page="results"):
                     if old_remaining_weight > 0 else 0
                 )
 
-        sensitivity_global_scores = {o.id: 0 for o in options}
-        for o in options:
+        sensitivity_global_scores = {o.id: 0 for o in alternatives}
+        for o in alternatives:
             total_score = 0
             for c in criteria:
                 weight_c = adjusted_weights[c.id]
-                weight_o = option_weights[c.id][o.id]
+                weight_o = alternative_weights[c.id][o.id]
                 total_score += weight_c * weight_o
             sensitivity_global_scores[o.id] = total_score
 
         sensitivity_ranking = sorted(
             [
                 {
-                    "option_id": o.id,
-                    "option_name": o.name,
+                    "alternative_id": o.id,
+                    "alternative_name": o.name,
                     "score": sensitivity_global_scores[o.id] * 100
                 }
-                for o in options
+                for o in alternatives
             ],
             key=lambda x: x["score"],
             reverse=True
@@ -826,7 +826,7 @@ def project_results(request, id, page="results"):
         "remove_padding_main_container": True,
         "criteria": criteria,
         "page": page,
-        "criteria_list": project.criteria.all().order_by("id").annotate(is_done=Count("option_pairs")),
+        "criteria_list": project.criteria.all().order_by("id").annotate(is_done=Count("alternative_pairs")),
         "criteria_values": OptamosCriteriaValue.objects.filter(criteria1__project=project).count(), 
         # Count how many there theoretically are, so that we can verify that all are saved -- this is particularly 
         # relevant in case people edit the project and add criteria in which case we need to show an error
@@ -834,19 +834,19 @@ def project_results(request, id, page="results"):
         "menu": "projects",
 
         "criteria": criteria,
-        "options": options,
-        "option_matrices": option_matrices,
-        "normalized_option_matrices": normalized_option_matrices,
-        "option_weights": option_weights,
+        "alternatives": alternatives,
+        "alternative_matrices": alternative_matrices,
+        "normalized_alternative_matrices": normalized_alternative_matrices,
+        "alternative_weights": alternative_weights,
 
         "global_scores": global_scores,
         "global_ranking": global_ranking,
-        "option_crs": option_crs,
+        "alternative_crs": alternative_crs,
         "summary_table": summary_table,
         "summary_totals": totals,
 
         "points_criteria": points_criteria,
-        "points_options": points_options,
+        "points_alternatives": points_alternatives,
         "matrix": named_matrix,
         "matrix_criteria": matrix_criteria,
         "column_totals": column_totals,

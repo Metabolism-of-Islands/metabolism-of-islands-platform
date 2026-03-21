@@ -3092,9 +3092,9 @@ class OptamosProject(Record):
     def get_absolute_url(self):
         return reverse("optamos:project", args=[self.uid])
 
-class OptamosOption(models.Model):
+class OptamosAlternative(models.Model):
     name = models.CharField(max_length=255)
-    project = models.ForeignKey(OptamosProject, on_delete=models.CASCADE, related_name="options")
+    project = models.ForeignKey(OptamosProject, on_delete=models.CASCADE, related_name="alternatives")
 
     def __str__(self):
         return self.name
@@ -3122,10 +3122,10 @@ class OptamosCriteria(models.Model):
     class Meta:
         ordering = ["id"]
 
-class OptamosOptionValue(models.Model):
-    criteria = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="option_pairs")
-    option1 = models.ForeignKey(OptamosOption, on_delete=models.CASCADE, related_name="setting1")
-    option2 = models.ForeignKey(OptamosOption, on_delete=models.CASCADE, related_name="setting2")
+class OptamosAlternativeValue(models.Model):
+    criteria = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="alternative_pairs")
+    alternative1 = models.ForeignKey(OptamosAlternative, on_delete=models.CASCADE, related_name="setting1")
+    alternative2 = models.ForeignKey(OptamosAlternative, on_delete=models.CASCADE, related_name="setting2")
     value = models.SmallIntegerField()
 
     #### SCORE CALCULATION ####
@@ -3137,7 +3137,7 @@ class OptamosOptionValue(models.Model):
 
     @property
     def value1(self):
-        if self.value < 0: # This score is "in favor" of option 1
+        if self.value < 0: # This score is "in favor" of alternative 1
             return -(self.value-1)
         else:
             return 1/(self.value+1) # If the score is 0, it will be 1/(1) = 1, which is what we want
@@ -3146,24 +3146,24 @@ class OptamosOptionValue(models.Model):
     def value2(self):
         return 1/self.value1 # This is always the inverse of the other score
 
-    # We create id1 and id2 so that we can use the same fields for criteria and option loops
+    # We create id1 and id2 so that we can use the same fields for criteria and alternative loops
     @property
     def id1(self):
-        return self.option1.id
+        return self.alternative1.id
 
     @property
     def id2(self):
-        return self.option2.id
+        return self.alternative2.id
 
 class OptamosCriteriaValue(models.Model):
     criteria1 = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="setting1")
     criteria2 = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="setting2")
     value = models.SmallIntegerField()
 
-    # See OptamosOptionValue for an explanation on this procedure
+    # See OptamosAlternativeValue for an explanation on this procedure
     @property
     def value1(self):
-        if self.value < 0: # This score is "in favor" of option 1
+        if self.value < 0: # This score is "in favor" of alternative 1
             return -(self.value-1)
         else:
             return 1/(self.value+1) # If the score is 0, it will be 1/(1) = 1, which is what we want
@@ -3172,7 +3172,7 @@ class OptamosCriteriaValue(models.Model):
     def value2(self):
         return 1/self.value1 # This is always the inverse of the other score
 
-    # We create id1 and id2 so that we can use the same fields for criteria and option loops
+    # We create id1 and id2 so that we can use the same fields for criteria and alternative loops
     @property
     def id1(self):
         return self.criteria1.id
