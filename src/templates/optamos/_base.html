@@ -11,6 +11,16 @@
   </title>
   <link href="{% static "css/optamos.css" %}?id=12-0706" rel="stylesheet">
   <link class="favicon" rel="shortcut icon" sizes="126x126" href="/media/optamos/favicon.jpg">
+
+  <meta property="og:title" content="Options for Participatory Transformation and Sustainability Management" />
+  <meta property="og:description" content="OPTamos is an open access web-based software tool designed to support multi-criteria decision making in complex socio-ecological contexts." />
+  <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}/media/optamos/favicon.jpg" />
+  <meta property="og:image:alt" content="OPTamos logo" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}" />
+  <meta property="og:site_name" content="OPTamos" />
+
+
   {% block css %}{% endblock %}
 </head>
 
