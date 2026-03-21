@@ -76,7 +76,6 @@ from django.dispatch import receiver
 import math
 
 from django.core.cache import cache
-from django.utils.functional import cached_property
 
 # For the translations
 from django.utils.translation import gettext_lazy as _
@@ -287,56 +286,56 @@ class Record(models.Model):
     # that are defined in the RecordRelationship table but that can be queried using
     # more natural language ("authors", "uploader", etc) using these properties below.
 
-    @cached_property
+    @property
     def authors(self):
         return People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=4)
 
     # Return a single author -- only use if you know the record has a single author, otherwise use 'authors'
-    @cached_property
+    @property
     def author(self):
         try:
             return People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=4)[0]
         except:
             return None
 
-    @cached_property
+    @property
     def funders(self):
         return Record.objects.filter(parent_list__record_child=self, parent_list__relationship__id=5)
 
-    @cached_property
+    @property
     def curators(self):
         return Record.objects.filter(parent_list__record_child=self, parent_list__relationship__id=20)
 
-    @cached_property
+    @property
     def voters(self):
         return People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=36)
 
-    @cached_property
+    @property
     def publisher(self):
         list = Organization.objects.filter(parent_list__record_child=self, parent_list__relationship__id=2)
         return list[0] if list else None
 
-    @cached_property
+    @property
     def producer(self):
         list = Organization.objects.filter(parent_list__record_child=self, parent_list__relationship__id=3)
         return list[0] if list else None
 
-    @cached_property
+    @property
     def uploader(self):
         list = People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=11)
         return list[0] if list else None
 
-    @cached_property
+    @property
     def organizer(self):
         list = People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=14)
         return list[0] if list else None
 
-    @cached_property
+    @property
     def processor(self):
         list = People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=34)
         return list[0] if list else None
 
-    @cached_property
+    @property
     def attachments(self):
         return Document.objects_include_private.filter(attached_to=self)
 
@@ -1281,15 +1280,15 @@ class LibraryItem(Record):
         else:
             return ""
 
-    @cached_property
+    @property
     def get_doi_url(self):
         return None if not self.doi else f"https://doi.org/{self.doi}"
 
-    @cached_property
+    @property
     def get_full_citation(self):
         return mark_safe("<em>" + self.name + "</em>, " + self.get_author_citation() + ", " + str(self.year))
 
-    @cached_property
+    @property
     def get_citation_apa(self):
         citation = bleach.clean(f"{self.get_author_citation()} ({self.year}). {self.name}. ")
         if self.publisher:
@@ -1303,7 +1302,7 @@ class LibraryItem(Record):
             
         return mark_safe(citation)
 
-    @cached_property
+    @property
     def get_citation_bibtex(self):
         author_string = ""
         journal_string = ""
@@ -1463,7 +1462,7 @@ class LibraryItem(Record):
         except:
             return None
 
-    @cached_property
+    @property
     def get_dataviz_properties(self):
         try:
             viz = self.dataviz.get(is_secondary=False)
@@ -1482,17 +1481,17 @@ class LibraryItem(Record):
     # Validation needs to take place at the level of the Library Item
     # In other words, if someone has access to this LibraryItem, they also have access
     # to the associated reference spaces.
-    @cached_property
+    @property
     def imported_spaces(self):
         return ReferenceSpace.objects_include_private.filter(source=self)
 
     # Same applies to associated data
-    @cached_property
+    @property
     def data(self):
         return Data.objects_include_private.filter(source=self)
 
     # Returns all the associated reference spaces, based on the data
-    @cached_property
+    @property
     def data_spaces(self):
         return ReferenceSpace.objects_include_private.filter(Q(data_from_space__source=self)|Q(data_to_space__source=self)).distinct()
 
@@ -1500,7 +1499,7 @@ class LibraryItem(Record):
     # This can be used to decide for instance whether to show markers on a map or draw polygons
     # Note that we use the FIRST associated reference space, even though there may be many, and take that type, so we assume
     # that the entire map has the same type (a pretty safe assumption, would be weird if different)
-    @cached_property
+    @property
     def get_map_type(self):
         try:
             one_space = self.imported_spaces.all()[0]
@@ -2499,17 +2498,17 @@ class ReferenceSpace(Record):
     # Let's bring back slug as a field, but make it nullable and only set when activating a space
     # TODO
 
-    @cached_property
+    @property
     def slug(self):
         return slugify(unidecode(self.name))
 
-    @cached_property
+    @property
     def is_city(self):
         #check = self.geocodes.filter(id=123)
         check = self.geocodes.filter(name="Urban").exists()
         return True if check else False
 
-    @cached_property
+    @property
     def is_island(self):
         #check = self.geocodes.filter(id=123)
         if ActivatedSpace.objects.filter(space=self).exists():
@@ -2517,7 +2516,7 @@ class ReferenceSpace(Record):
         #check = self.geocodes.filter(name="Island").exists()
         #return True if check else False
 
-    @cached_property
+    @property
     def get_centroids(self):
         try:
             lat = self.geometry.centroid[1]
@@ -2526,14 +2525,14 @@ class ReferenceSpace(Record):
         except:
             return None
 
-    @cached_property
+    @property
     def get_lat(self):
         try:
             return self.geometry.centroid[1]
         except:
             return None
 
-    @cached_property
+    @property
     def get_lng(self):
         try:
             return self.geometry.centroid[0]
