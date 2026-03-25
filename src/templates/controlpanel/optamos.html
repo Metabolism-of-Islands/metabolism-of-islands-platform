@@ -1,0 +1,56 @@
+{% extends "_base.html" %}
+
+{% block title %}
+  OPTamos 
+{% endblock %}
+
+{% block content %}
+
+  <h1 class="mb-0">OPTamos</h1>
+  <a href="../" class="btn btn-primary-basic mb-4">
+    <i class="fal fa-angle-left"></i>
+    Back to control panel
+  </a>
+
+  <h2>Users</h2>
+  <p>
+    These users were created within the OPTamos website. Note that these are not 
+    necessarily all OPTamos users, because you can also use an existing MOI account
+    to use OPTamos.
+  </p>
+  <table class="table table-striped datatable table-card">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Institution</th>
+        <th>Location</th>
+        <th>Use</th>
+        <th>Registration date</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for each in users %}
+      <tr>
+        <td>{{ each }}</td>
+        <td>{{ each.meta_data.institution }}</td>
+        <td>{{ each.meta_data.location }}</td>
+        <td>{{ each.meta_data.how }}</td>
+        <td data-sort="each.date_created|date:"YmdHis" }}">{{ each.date_created }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <a class="btn btn-default-basic float-right mt-4" href="create/?next={{ request.get_full_path }}"><i class="fal fa-plus"></i> Add page</a>
+  <a href="../" class="btn btn-primary-basic mt-4">
+    <i class="fal fa-angle-left"></i>
+    Back to control panel
+  </a>
+
+{% endblock %}
+
+{% block footer %}
+<script>
+  datatable.column("1:visible").order("desc").draw();
+</script>
+{% endblock %}

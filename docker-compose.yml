@@ -23,11 +23,11 @@ services:
 
   web:
     build: .
-    command: python3 manage.py runserver 0.0.0.0:8000
+    command: python3 manage.py runserver 0.0.0.0:8888
     volumes:
       - ./src:/src
     ports:
-      - 8000:8000
+      - 8888:8888
     depends_on:
       - db
     container_name: moi_web

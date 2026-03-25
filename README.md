@@ -64,7 +64,7 @@ Replace "db.sql" for the name of your database file (which should be uncompresse
 
     $ sudo docker-compose up
 
-And the website should be up and running at [http://0.0.0.0:8000](http://0.0.0.0:8000) and adminer to manage the database is available at [http://0.0.0.0:8080](http://0.0.0.0:8080).
+And the website should be up and running at [http://0.0.0.0:8888](http://0.0.0.0:8888) and adminer to manage the database is available at [http://0.0.0.0:8080](http://0.0.0.0:8080).
 
 NOTE: there may be additional database migrations that are not yet applied to this database. You can run the migrations by running:
 
@@ -74,25 +74,7 @@ From the root directory of the project. This is a shortcut to migrate any unappl
 
 # Database
 
-A copy of our database is available for development purposes. These are copies of our live database, taken on June 1, 2023. However, user data, user posts, and other personal data has been removed. There are three versions available, depending on your interests:
-
-### [db.sql.gz](http://metabolismofcities.org/media/files/db.sql.gz)
-
-518 Mb (1.4 Gb uncompressed)
-
-This file contains the entire Metabolism of Islands database, including all geometry and reference spaces. If you want to work with the data platform and you need mapping functionality, this is your file.
-
-### [db-without-geometry.sql.gz](http://metabolismofcities.org/media/files/db-without-geometry.sql.gz)
-
-35 Mb (203 Mb uncompressed)
-
-In this file we have removed ALL the geometry data. That means that none of the mapping functionality will work. However, other than that everything is left the same as the full database above. This database is useful if you would like to work with the data portal but don't need mapping functionality.
-
-### [db-without-spaces.sql.gz](http://metabolismofcities.org/media/files/db-without-spaces.sql.gz)
-
-30 Mb (177 Mb uncompressed)
-
-In this file we removed ALL reference spaces (and therefore also any geometry). This means that there is no infrastructure, boundaries, etc. but also no material stocks and flows data (which is linked to reference spaces). Use this file if you don't care about the data part of the website.
+A copy of our database is available for development purposes. Please contact us to obtain a recent version of the database.
 
 # Tutorials
 
@@ -111,5 +93,9 @@ Also see the [Programming contributor support videos](https://multimedia.metabol
 # What to work on?
 
 Please get in touch with us to discuss contributions. 
+
+# OPTamos
+
+Please see [this OPTamos readme](OPTAMOS.md) to learn more about the OPTamos decision tool and how this is integrated in the Metabolism of Islands website.
 
 **Thanks for your contribution!**

@@ -33,3 +33,4 @@ odfpy
 plotly==5.3.1
 openpyxl
 django-cleanup
+pytz

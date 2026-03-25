@@ -265,6 +265,9 @@ def project_settings(request, id):
             label = f"criteria_{each.id}"
             if request.POST.get(label):
                 each.name = request.POST[label]
+                each.description = request.POST.get(f"desc_criteria_{each.id}")
+                if each.description == "":
+                    each.description = None
                 each.save()
             else:
                 each.delete()
@@ -280,9 +283,13 @@ def project_settings(request, id):
                     OptamosTag.objects.create(project=project, name=each)
 
         if request.POST.getlist("criteria"):
-            for each in request.POST.getlist("criteria"):
-                if each:
-                    OptamosCriteria.objects.create(project=project, name=each)
+            criteria = request.POST.getlist("criteria")
+            descriptions = request.POST.getlist("desc_criteria")
+            for criterion, description in zip(criteria, descriptions):
+                if criterion:
+                    if description == "":
+                        description = None
+                    OptamosCriteria.objects.create(project=project, name=criterion, description=description)
 
         messages.success(request, "Changes have been saved.")
         return redirect(reverse("optamos:project", args=[project.uid]))
@@ -292,6 +299,7 @@ def project_settings(request, id):
         "projects": project,
         "menu": "projects",
         "project": project,
+        "has_descriptions": OptamosCriteria.objects.filter(project=project, description__isnull=False).exists(),
     }
     return render(request, "optamos/project.settings.html", context)
 
@@ -390,6 +398,7 @@ def project(request, id, page="home"):
         "menu": "projects",
         "cr": calculate_consistency_ratio(list(project.criteria.all()), OptamosCriteriaValue.objects.filter(criteria1__project=project)).cr,
         "next_criteria": project.criteria.filter(pk__gt=criteria.pk).order_by("id").first() if criteria else None,
+        "criteria_descriptions": OptamosCriteria.objects.filter(project=project, description__isnull=False),
     }
 
     return render(request, "optamos/project.html", context)
@@ -968,7 +977,15 @@ def account_create(request):
 
             people = People.objects.create(name=name, email=user.email)
             people.user = user
-            people.meta_data = {}
+
+            meta_data = {"optamos": True}
+            if "institution" in request.POST:
+                meta_data["institution"] = request.POST.get("institution")
+            if "location" in request.POST:
+                meta_data["location"] = request.POST.get("location")
+            if "how" in request.POST:
+                meta_data["how"] = request.POST.get("how")
+            people.meta_data = meta_data
             people.save()
 
             messages.success(request, "You are successfully registered.")

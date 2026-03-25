@@ -1071,6 +1071,18 @@ def controlpanel_users(request, id=None):
 
     return render(request, "controlpanel/users.html", context)
 
+@login_required
+def controlpanel_optamos(request):
+    if not has_permission(request, request.project, ["curator", "admin", "publisher"]):
+        unauthorized_access(request)
+
+    context = {
+        "users": People.objects.filter(meta_data__has_key="optamos"),
+        "load_datatables": True,
+    }
+
+    return render(request, "controlpanel/optamos.html", context)
+
 # This is a page that can be used to exclusively manage admin users. It is simpler and best to use for 
 # sites that don't need finegrained user types etc.
 @login_required

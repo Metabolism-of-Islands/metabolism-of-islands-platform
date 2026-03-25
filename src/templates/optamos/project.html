@@ -164,6 +164,11 @@
     {% if request.GET.criteria or page == "rank_all_criteria" %}
       {% if criteria %}
         <h1 class="mb-1">{{ criteria }}</h1>
+        {% if criteria.description %}
+          <div class="mb-5">
+            {{ criteria.description|linebreaksbr }}
+          </div>
+        {% endif %}
         <p class="text-gray-700 text-sm">
           Rate how much you prefer each
           alternative with respect to each single criterion using the slider below.
@@ -192,6 +197,15 @@
           meaning a criterion with a larger slider has proportionally greater
           influence on the final overall ranking.
         </p>
+
+        {% if criteria_descriptions %}
+          <h2 class="mt-5">Criteria descriptions</h2>
+          {% for each in criteria_descriptions %}
+            <h3>{{ each }}</h3>
+            <p>{{ each.description|linebreaksbr }}</p>
+          {% endfor %}
+        {% endif %}
+
       {% endif %}
 
       {% if not pairs %}

@@ -7,7 +7,26 @@
 {% block content %}
 
 <hgroup>
-  <h1 class="mb-0">OPTamos</h1>
+  <div class="flex justify-between">
+    <h1 class="mb-0">OPTamos</h1>
+    <div>
+      {% if request.user.is_authenticated %}
+        <a href="{% url "optamos:project_create" %}" class="btn-blue btn-sm">
+          New project
+        </a>
+        <a href="{% url "optamos:projects" %}" class="btn-blue btn-sm">
+          View my projects
+        </a>
+      {% else %}
+        <a href="{% url "optamos:account_create" %}" class="btn-blue btn-sm">
+          Create account
+        </a>
+        <a href="{% url "optamos:login" %}" class="btn-blue btn-sm">
+          Log in
+        </a>
+      {% endif %}
+    </div>
+  </div>
   <h2 class="font-normal text-gray-700 mt-0 tracking-tighter">
     Options for Participatory Transformation and Management of Sustainable land use
   </h2>

@@ -140,6 +140,7 @@ baseline_urlpatterns = [
     path("controlpanel/events/<int:id>/", core.controlpanel_event_form, name="controlpanel_event_form"),
     path("controlpanel/cache/", core.controlpanel_cache, name="controlpanel_cache"),
     path("controlpanel/spaces/", core.controlpanel_spaces, name="controlpanel_spaces"),
+    path("controlpanel/optamos/", core.controlpanel_optamos, name="controlpanel_optamos"),
     path("controlpanel/permissions/create/", core.controlpanel_permissions_create, name="controlpanel_permissions_create"),
 
     # News links

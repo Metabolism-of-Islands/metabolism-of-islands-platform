@@ -31,6 +31,33 @@
       </div>
 
       <div>
+        <label for="institution" class="block text-sm/6 font-medium text-gray-900">Institution</label>
+        <div class="mt-2">
+          <input id="institution" type="text" value="{{ request.POST.institution }}" name="institution" class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-cyan-600 sm:text-sm/6" />
+        </div>
+      </div>
+
+      <div>
+        <label for="location" class="block text-sm/6 font-medium text-gray-900">Location</label>
+        <div class="mt-2">
+          <input id="location" type="text" value="{{ request.POST.location }}" name="location" class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-cyan-600 sm:text-sm/6" />
+        </div>
+      </div>
+
+      <div>
+        <label for="how" class="block text-sm/6 font-medium text-gray-900">How do you plan to use OPTamos?</label>
+        <div class="mt-2">
+          <select name="how" class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-cyan-600 sm:text-sm/6">
+            <option value=""></option>
+            <option value="academic">Academic use</option>
+            <option value="personal">Personal use</option>
+            <option value="work">For work</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
         <label for="password" class="block text-sm/6 font-medium text-gray-900">Password</label>
         <div class="mt-2">
           <input id="password" value="{{ request.POST.password }}" type="password" name="password" required autocomplete="current-password" class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-cyan-600 sm:text-sm/6" />

@@ -35,22 +35,25 @@
       <section id="criteria">
         <div class="flex items-center justify-between">
           <label for="goal" class="block font-medium text-gray-900">Criteria</label>
+          <span class="btn-sm btn-white" id="desc_criteria">+ Add descriptions</a>
         </div>
 
         {% for each in project.criteria.all %}
           <div class="mt-2 item">
             <div class="flex items-center">
               <input type="text" name="criteria_{{ each.id }}" value="{{ each }}" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white" />
-              <button type="button" class="remove cursor-pointer ml-2 focus:outline-none focus:ring-2 focus:ring-red-500 hover:text-red-600">
+              <button type="button" class="remove cursor-pointer ml-2">
                 <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor">
                   <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/>
                 </svg>
               </button>
             </div>
+            <textarea class="mb-3 desc_criteria hidden" name="desc_criteria_{{ each.id }}" placeholder="Description">{{ each.description|default_if_none:"" }}</textarea>
           </div>
         {% endfor %}
         <div class="mt-2">
           <input type="text" name="criteria" placeholder="Add a new criteria" />
+          <textarea class="mb-3 desc_criteria hidden" name="desc_criteria" placeholder="Description"></textarea>
         </div>
       </section>
 
@@ -144,6 +147,7 @@ $(function(){
     if ($(this).data("is-typed") !== true) {
       var newDiv = $(this).closest("div").clone();
       newDiv.find("input").val(""); // Clear the cloned input
+      newDiv.find("textarea").val(""); // Clear the cloned textarea
       $(this).closest("section").append(newDiv);
       $(this).data("is-typed", true); // Mark this input as typed
     }
@@ -153,6 +157,20 @@ $(function(){
       $(this).remove();
     });
   });
+
+  $("#desc_criteria").click(function(){
+    var $btn = $(this);
+    if ($btn.hasClass("btn-green")) {
+      $btn.removeClass("btn-green").addClass("btn-white");
+      $(".desc_criteria").hide();
+    } else {
+      $btn.removeClass("btn-white").addClass("btn-green");
+      $(".desc_criteria").show();
+    }
+  });
+  {% if has_descriptions %}
+    $("#desc_criteria").click();
+  {% endif %}
 });
 </script>
   

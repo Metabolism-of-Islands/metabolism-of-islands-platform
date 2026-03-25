@@ -3113,6 +3113,7 @@ class OptamosTag(models.Model):
 
 class OptamosCriteria(models.Model):
     name = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
     project = models.ForeignKey(OptamosProject, on_delete=models.CASCADE, related_name="criteria")
 
     def __str__(self):
