@@ -19,7 +19,9 @@
       <div>
         <label for="name" class="block text-sm/6 font-medium text-gray-900">Name</label>
         <div class="mt-2">
-          <input id="name" value="{{ request.user.first_name }}" type="text" name="name" required autocomplete="name" class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-cyan-600 sm:text-sm/6" />
+          <input id="name" value="{% if request.user.first_name != request.user.email %}{{ request.user.first_name }}{% endif %}" 
+            type="text" name="name" required autocomplete="name" 
+            class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-cyan-600 sm:text-sm/6" />
         </div>
       </div>
 
@@ -27,6 +29,33 @@
         <label for="email" class="block text-sm/6 font-medium text-gray-900">Email address</label>
         <div class="mt-2">
           <input id="email" type="email" value="{{ request.user.email }}" name="email" required autocomplete="email" class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-cyan-600 sm:text-sm/6" />
+        </div>
+      </div>
+
+      <div>
+        <label for="institution" class="block text-sm/6 font-medium text-gray-900">Institution</label>
+        <div class="mt-2">
+          <input id="institution" type="text" value="{{ request.user.people.meta_data.institution }}" name="institution" class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-cyan-600 sm:text-sm/6" />
+        </div>
+      </div>
+
+      <div>
+        <label for="location" class="block text-sm/6 font-medium text-gray-900">Location</label>
+        <div class="mt-2">
+          <input id="location" type="text" value="{{ request.user.people.meta_data.location }}" name="location" class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-cyan-600 sm:text-sm/6" />
+        </div>
+      </div>
+
+      <div>
+        <label for="how" class="block text-sm/6 font-medium text-gray-900">How do you plan to use OPTamos?</label>
+        <div class="mt-2">
+          <select name="how" class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-cyan-600 sm:text-sm/6">
+            <option value=""></option>
+            <option value="academic" {% if request.user.people.meta_data.how == "academic" %}selected{% endif %}>Academic use</option>
+            <option value="personal" {% if request.user.people.meta_data.how == "personal" %}selected{% endif %}>Personal use</option>
+            <option value="work" {% if request.user.people.meta_data.how == "work" %}selected{% endif %}>For work</option>
+            <option value="other" {% if request.user.people.meta_data.how == "other" %}selected{% endif %}>Other</option>
+          </select>
         </div>
       </div>
 

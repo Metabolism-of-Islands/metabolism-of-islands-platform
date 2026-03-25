@@ -37,6 +37,7 @@
         <div>
           <a class="btn-blue btn-sm" href="{{ each.get_absolute_url }}">Open project</a>
           <a class="btn-blue btn-sm" href="{% url "optamos:project_settings" each.uid %}">Edit project</a>
+          <a class="btn-blue btn-sm" href="{% url "optamos:project_team" each.uid %}">Team</a>
         </div>
         <a href="?delete={{ each.uid }}" onclick="javascript:return confirm('Are you sure you want to delete this project?')" class="remove cursor-pointer ml-2 focus:outline-none focus:ring-2 focus:ring-red-500 hover:text-red-600">
           <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor">

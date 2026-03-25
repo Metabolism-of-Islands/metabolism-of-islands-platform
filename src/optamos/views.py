@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.db.models import Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
@@ -11,9 +13,11 @@ from django.urls import reverse
 from io import BytesIO
 from itertools import combinations
 from openpyxl.styles import Font
+import csv
 import openpyxl
 import random
-import csv
+import string
+import re
 
 OPTAMOS_BG = [
     "pexels-altaf-shah-3143825-7751849.jpg",
@@ -302,6 +306,85 @@ def project_settings(request, id):
         "has_descriptions": OptamosCriteria.objects.filter(project=project, description__isnull=False).exists(),
     }
     return render(request, "optamos/project.settings.html", context)
+
+def project_team(request, id):
+
+    if not request.user.is_authenticated:
+        return redirect("optamos:login")
+
+    project = OptamosProject.objects_include_private.filter(pk=id, user=request.user).first()
+    if not project:
+        return redirect("optamos:login")
+
+    if "delete" in request.GET:
+        try:
+            user = User.objects.get(pk=request.GET["delete"])
+            people = user.people
+            if people.meta_data and "pending_activation" in people.meta_data:
+                # This user was never activated so let's delete this account entirely
+                people.delete()
+                user.delete()
+            else:
+                project.user.remove(user)
+            messages.success(request, f"The following user was removed from the team: <strong>{user}</strong>")
+        except:
+            messages.warning(request, f"User was not found within the team and could therefore not be removed.")
+        return redirect(request.path)
+
+    if request.method == "POST":
+
+        emails_raw = request.POST.get("users", "")
+        # split on any newline
+        raw_lines = re.split(r"\r\n|\r|\n", emails_raw)
+        # strip each substring and remove empty lines
+        lines = [line.strip() for line in raw_lines]
+        lines = [line for line in lines if line]
+
+        # upfront error if too many lines — do not process further
+        # We use 26 as the total number of users because it's 1 admin + 25 people max
+        remaining = 26 - project.user.count()
+        if len(lines) > remaining:
+            messages.error(request, f"You can not have more than 25 people in your team. Make sure there is one e-mail per line; no more than {remaining} remaining spots.")
+        else:
+            invalid = []
+            valid = []
+            for i, email in enumerate(lines, start=1):
+                try:
+                    validate_email(email)
+                    valid.append(email)
+                except ValidationError:
+                    messages.error(request, f"The following address is not valid and was skipped: <strong>{email}</strong>")
+
+            for email in valid:
+                if (user := User.objects.filter(email=email).first()):
+                    # User already has an active account. Check if already part of the project...
+                    # And if not, we add them...
+                    if project.user.filter(pk=user.pk).exists():
+                        messages.warning(request, f"The following user was already part of the team: <strong>{email}</strong>")
+                    else:
+                        messages.success(request, f"The following user has an existing account and was added successfully: <strong>{email}</strong>")
+                        project.user.add(user)
+                else:
+                    password = "".join(random.choices(string.ascii_letters + string.digits, k=20))
+                    user = User.objects.create_user(email, email, password)
+                    user.first_name = email
+                    user.is_superuser = False
+                    user.is_staff = False
+                    user.save()
+                    people = People.objects.create(name=email, email=user.email, user=user, meta_data={"optamos": True, "auto_created": True, "pending_activation": True})
+                    project.user.add(user)
+                    messages.success(request, f"The following user was invited successfully: <strong>{email}</strong>")
+
+            return redirect(request.path)
+
+    context = {
+        "bg": random.choice(OPTAMOS_BG),
+        "projects": project,
+        "menu": "projects",
+        "project": project,
+        "team": project.user.exclude(pk=request.user.id),
+    }
+    return render(request, "optamos/project.team.html", context)
 
 def project(request, id, page="home"):
 
@@ -896,6 +979,8 @@ def account_login(request):
             people = People.objects.get(user=user)
             if people.meta_data and "temporary_password" in people.meta_data:
                 messages.success(request, "Please change your temporary pin. You can set your own password here:" + "<br><a href='/hub/profile/edit/?shortened=true'>" + "Edit my profile" + "</a>")
+            elif people.meta_data and "pending_activation" in people.meta_data:
+                messages.success(request, "Welcome to OPTamos! Please finish setting up your account here:" + "<br><a href='/account/?activation=true'>" + "Edit my account" + "</a>")
             return redirect(redirect_url)
         else:
             messages.error(request, "We could not authenticate you, please try again.")
@@ -920,18 +1005,35 @@ def account(request):
         people = user.people
         name = request.POST.get("name")
         email = request.POST.get("email")
+
         if email != user.email and User.objects.filter(email = email).exists():
             messages.error(request, "E-mail already in use; cannot change this e-mail address")
             return redirect(request.path)
+
         people.name = name
         user.first_name = name
         people.email = email
         user.username = email
         user.email = email
+
         if "password" in request.POST and request.POST["password"]:
             user.set_password(request.POST["password"])
         user.save();
-        people.save();
+
+        if people.meta_data and "pending_activation" in people.meta_data:
+            del(people.meta_data["pending_activation"])
+
+        if not people.meta_data:
+            people.meta_data = {}
+
+        if "institution" in request.POST:
+            people.meta_data["institution"] = request.POST.get("institution")
+        if "location" in request.POST:
+            people.meta_data["location"] = request.POST.get("location")
+        if "how" in request.POST:
+            people.meta_data["how"] = request.POST.get("how")
+        people.save()
+
         login(request, user)
         messages.success(request, "Changes have been saved.")
         return redirect(request.path)
