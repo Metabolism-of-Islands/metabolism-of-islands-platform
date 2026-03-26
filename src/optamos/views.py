@@ -94,7 +94,7 @@ def calculate_consistency_ratio(items_to_review, score_list):
     cr = ci / ri
     return ConsistencyResult(cr=cr, ci=ci, lambda_max=lambda_max)
 
-def create_matrix(project):
+def create_matrix(project, request):
     # Create a matrix with all criteria (values are 0 for each item)
     matrix_criteria = list(project.criteria.all())
 
@@ -105,7 +105,7 @@ def create_matrix(project):
     }
 
     # Load the actual scores into the matrix
-    for score in OptamosCriteriaValue.objects.filter(criteria1__project=project):
+    for score in OptamosCriteriaValue.objects.filter(criteria1__project=project, user=request.user):
         c1 = score.criteria1.id
         c2 = score.criteria2.id
         matrix[c1][c2] = score.value1
@@ -114,6 +114,13 @@ def create_matrix(project):
     return matrix
 
 def index(request):
+    # TEMP
+    if "load" in request.GET:
+        for each in OptamosProject.objects_include_private.all():
+            user = each.users.all()[0].user
+            OptamosCriteriaValue.objects.filter(criteria1__project=each).update(user=user)
+            OptamosAlternativeValue.objects.filter(criteria__project=each).update(user=user)
+    # END TEMP
     context = {
         "bg": random.choice(OPTAMOS_BG),
         "menu": "index",
@@ -413,7 +420,7 @@ def project(request, id, page="home"):
 
         # Let's create a dict with the names of the <input> fields and the value for them
         # so we can load them into the form
-        for each in OptamosAlternativeValue.objects.filter(criteria=criteria):
+        for each in OptamosAlternativeValue.objects.filter(criteria=criteria, user=request.user):
             value = f"range-{each.alternative1_id}-{each.alternative2_id}"
             values[value] = each.value
 
@@ -424,7 +431,7 @@ def project(request, id, page="home"):
         page = "rank_all_criteria"
         # Let's create a dict with the names of the <input> fields and the value for them
         # so we can load them into the form
-        for each in OptamosCriteriaValue.objects.filter(criteria1__project=project):
+        for each in OptamosCriteriaValue.objects.filter(criteria1__project=project, user=request.user):
             value = f"range-{each.criteria1_id}-{each.criteria2_id}"
             values[value] = each.value
 
@@ -433,7 +440,7 @@ def project(request, id, page="home"):
 
     if request.method == "POST":
         if page == "criteria":
-            OptamosAlternativeValue.objects.filter(criteria=criteria).delete()
+            OptamosAlternativeValue.objects.filter(criteria=criteria, user=request.user).delete()
             for alternative1,alternative2 in pairs:
                 # This creates the name of the relevant input field
                 value = f"range-{alternative1.id}-{alternative2.id}"
@@ -442,6 +449,7 @@ def project(request, id, page="home"):
                     alternative2 = alternative2,
                     criteria = criteria,
                     value = request.POST[value],
+                    user = request.user,
                 )
             if "back" in request.POST:
                 next_criteria = project.criteria.filter(pk__lt=criteria.pk).order_by("-id").first()
@@ -455,7 +463,7 @@ def project(request, id, page="home"):
                 return redirect(reverse("optamos:project_results", args=[project.uid]))
 
         elif page == "rank_all_criteria":
-            OptamosCriteriaValue.objects.filter(criteria1__project=project).delete()
+            OptamosCriteriaValue.objects.filter(criteria1__project=project, user=request.user).delete()
             for criteria1,criteria2 in pairs:
                 # This creates the name of the relevant input field
                 value = f"range-{criteria1.id}-{criteria2.id}"
@@ -463,6 +471,7 @@ def project(request, id, page="home"):
                     criteria1 = criteria1,
                     criteria2 = criteria2,
                     value = request.POST[value],
+                    user = request.user,
                 )
             next_criteria = project.criteria.order_by("id").first()
             if next_criteria:
@@ -479,14 +488,15 @@ def project(request, id, page="home"):
         "values": values,
         "page": page,
         "criteria_list": project.criteria.all().order_by("id").annotate(is_done=Count("alternative_pairs")),
-        "criteria_values": OptamosCriteriaValue.objects.filter(criteria1__project=project).count(), 
+        "criteria_values": OptamosCriteriaValue.objects.filter(criteria1__project=project, user=request.user).count(), 
         # Count how many there theoretically are, so that we can verify that all are saved -- this is particularly 
         # relevant in case people edit the project and add criteria in which case we need to show an error
         "total_required_criteria_values": len(list(combinations(project.criteria.all(), 2))), 
         "menu": "projects",
-        "cr": calculate_consistency_ratio(list(project.criteria.all()), OptamosCriteriaValue.objects.filter(criteria1__project=project)).cr,
+        "cr": calculate_consistency_ratio(list(project.criteria.all()), OptamosCriteriaValue.objects.filter(criteria1__project=project, user=request.user)).cr,
         "next_criteria": project.criteria.filter(pk__gt=criteria.pk).order_by("id").first() if criteria else None,
         "criteria_descriptions": OptamosCriteria.objects.filter(project=project, description__isnull=False),
+        "access_level": OptamosUser.objects.get(user=request.user, project=project).level,
     }
 
     return render(request, "optamos/project.html", context)
@@ -508,18 +518,18 @@ def project_results(request, id, page="results"):
         points_alternatives[each] = 0
     for each in project.criteria.all():
         points_criteria[each] = 0
-    for each in OptamosCriteriaValue.objects.filter(criteria1__project=project):
+    for each in OptamosCriteriaValue.objects.filter(criteria1__project=project, user=request.user):
         if each.value > 0:
             points_criteria[each.criteria2] += each.value
         elif each.value < 0:
             points_criteria[each.criteria1] += each.value*-1
-    for each in OptamosAlternativeValue.objects.filter(criteria__project=project):
+    for each in OptamosAlternativeValue.objects.filter(criteria__project=project, user=request.user):
         if each.value > 0:
             points_alternatives[each.alternative2] += each.value
         elif each.value < 0:
             points_alternatives[each.alternative1] += each.value*-1
 
-    matrix = create_matrix(project)
+    matrix = create_matrix(project, request)
     matrix_criteria = list(project.criteria.all())
 
     # Give the proper labels to the matrix columns and rows
@@ -578,7 +588,7 @@ def project_results(request, id, page="results"):
     # Get all criteria and alternatives
     criteria = list(OptamosCriteria.objects.filter(project=project))
     alternatives = list(OptamosAlternative.objects.filter(project=project))
-    alternative_values = OptamosAlternativeValue.objects.filter(criteria__project=project)
+    alternative_values = OptamosAlternativeValue.objects.filter(criteria__project=project, user=request.user)
 
     # Step 1: Initialize matrices per criterion
     alternative_matrices = {}
@@ -652,7 +662,7 @@ def project_results(request, id, page="results"):
     )
 
     # CONSISTENCY RATIO CALCULATION
-    consistency = calculate_consistency_ratio(list(project.criteria.all()), OptamosCriteriaValue.objects.filter(criteria1__project=project))
+    consistency = calculate_consistency_ratio(list(project.criteria.all()), OptamosCriteriaValue.objects.filter(criteria1__project=project, user=request.user))
 
     # Compute CR per criterion
     alternative_crs = {}
@@ -934,7 +944,7 @@ def project_results(request, id, page="results"):
         "criteria": criteria,
         "page": page,
         "criteria_list": project.criteria.all().order_by("id").annotate(is_done=Count("alternative_pairs")),
-        "criteria_values": OptamosCriteriaValue.objects.filter(criteria1__project=project).count(), 
+        "criteria_values": OptamosCriteriaValue.objects.filter(criteria1__project=project, user=request.user).count(), 
         # Count how many there theoretically are, so that we can verify that all are saved -- this is particularly 
         # relevant in case people edit the project and add criteria in which case we need to show an error
         "total_required_criteria_values": len(list(combinations(project.criteria.all(), 2))), 
