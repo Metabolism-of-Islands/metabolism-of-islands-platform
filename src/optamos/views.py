@@ -114,26 +114,6 @@ def create_matrix(project, request):
     return matrix
 
 def index(request):
-    # TEMP CODE
-    if "load" in request.GET:
-        labels = []
-        for each in OptamosAlternativeValue.objects.all():
-            label = f"{each.alternative1_id}-{each.alternative2_id}-{each.user.email}"
-            if label in labels:
-                print("PROBLEMO!!", label)
-                each.delete()
-            else:
-                labels.append(label)
-        labels = []
-        for each in OptamosCriteriaValue.objects.all():
-            label = f"{each.criteria1_id}-{each.criteria2_id}-{each.user.email}"
-            if label in labels:
-                print("PROBLEMO!!", label)
-                each.delete()
-            else:
-                print("GOOD", label)
-                labels.append(label)
-    # END TEMP
     context = {
         "bg": random.choice(OPTAMOS_BG),
         "menu": "index",
