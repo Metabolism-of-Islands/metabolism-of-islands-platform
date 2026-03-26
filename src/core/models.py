@@ -3143,7 +3143,10 @@ class OptamosAlternativeValue(models.Model):
     alternative1 = models.ForeignKey(OptamosAlternative, on_delete=models.CASCADE, related_name="setting1")
     alternative2 = models.ForeignKey(OptamosAlternative, on_delete=models.CASCADE, related_name="setting2")
     value = models.SmallIntegerField()
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ["alternative1", "alternative2", "user"]
 
     #### SCORE CALCULATION ####
     # We need to calibrate the scores. 
@@ -3176,7 +3179,10 @@ class OptamosCriteriaValue(models.Model):
     criteria1 = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="setting1")
     criteria2 = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="setting2")
     value = models.SmallIntegerField()
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ["criteria1", "criteria2", "user"]
 
     # See OptamosAlternativeValue for an explanation on this procedure
     @property

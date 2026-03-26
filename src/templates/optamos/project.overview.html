@@ -1,0 +1,20 @@
+{% extends "optamos/_base.html" %}
+
+{% block title %}
+  {{ project }}
+{% endblock %}
+
+{% block content %}
+
+  <h1>
+    Project overview
+  </h1>
+
+  <ul>
+    <li><a href="{% url "optamos:project" project.uid %}">Open project</a></li>
+    <li><a href="{% url "optamos:project_settings" project.uid %}">Edit project</a></li>
+    <li><a href="{% url "optamos:project_team" project.uid %}">Team</a></li>
+    <li><a href="{% url "optamos:project_team_results" project.uid %}">Group results</a></li>
+  </ul>
+
+{% endblock %}

@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Subquery, OuterRef, CharField, Avg
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template.loader import render_to_string
@@ -114,12 +114,25 @@ def create_matrix(project, request):
     return matrix
 
 def index(request):
-    # TEMP
+    # TEMP CODE
     if "load" in request.GET:
-        for each in OptamosProject.objects_include_private.all():
-            user = each.users.all()[0].user
-            OptamosCriteriaValue.objects.filter(criteria1__project=each).update(user=user)
-            OptamosAlternativeValue.objects.filter(criteria__project=each).update(user=user)
+        labels = []
+        for each in OptamosAlternativeValue.objects.all():
+            label = f"{each.alternative1_id}-{each.alternative2_id}-{each.user.email}"
+            if label in labels:
+                print("PROBLEMO!!", label)
+                each.delete()
+            else:
+                labels.append(label)
+        labels = []
+        for each in OptamosCriteriaValue.objects.all():
+            label = f"{each.criteria1_id}-{each.criteria2_id}-{each.user.email}"
+            if label in labels:
+                print("PROBLEMO!!", label)
+                each.delete()
+            else:
+                print("GOOD", label)
+                labels.append(label)
     # END TEMP
     context = {
         "bg": random.choice(OPTAMOS_BG),
@@ -145,10 +158,13 @@ def projects(request):
     if not request.user.is_authenticated:
         return redirect("optamos:login")
 
-    projects = OptamosProject.objects_include_private.filter(users__user=request.user)
+    access_qs = OptamosUser.objects.filter(project=OuterRef("pk"), user=request.user).values("level")[:1]
+    projects = OptamosProject.objects_include_private.filter(users__user=request.user).annotate(
+        level=Subquery(access_qs, output_field=CharField())
+    )
 
     if "delete" in request.GET:
-        project = projects.get(uid=request.GET["delete"])
+        project = projects.get(uid=request.GET["delete"], level="admin")
         project.delete()
         messages.success(request, f"Project {project.name} has been deleted.")
         return redirect(request.path)
@@ -249,8 +265,7 @@ def project_settings(request, id):
     project = OptamosProject.objects_include_private.get(pk=id)
     user_access = OptamosUser.objects.filter(project=project, user=request.user, level="admin")
     if not user_access.exists():
-        messages.error(request, f"You do not have administrator access to this project.")
-        return redirect("optamos:login")
+        return redirect(reverse("optamos:access_denied") + "?role=admin&url=" + request.get_full_path())
 
     if request.method == "POST":
         project.name = request.POST.get("name")
@@ -316,6 +331,79 @@ def project_settings(request, id):
     }
     return render(request, "optamos/project.settings.html", context)
 
+def project_overview(request, id):
+
+    if not request.user.is_authenticated:
+        return redirect("optamos:login")
+
+    project = OptamosProject.objects_include_private.get(pk=id)
+    user_access = OptamosUser.objects.filter(project=project, user=request.user, level="admin")
+    if not user_access.exists():
+        return redirect(reverse("optamos:access_denied") + "?role=admin&url=" + request.get_full_path())
+
+    context = {
+        "bg": random.choice(OPTAMOS_BG),
+        "projects": project,
+        "menu": "projects",
+        "project": project,
+    }
+    return render(request, "optamos/project.overview.html", context)
+
+def project_team_results(request, id):
+
+    if not request.user.is_authenticated:
+        return redirect("optamos:login")
+
+    project = OptamosProject.objects_include_private.get(pk=id)
+    user_access = OptamosUser.objects.filter(project=project, user=request.user, level="admin")
+    if not user_access.exists():
+        return redirect(reverse("optamos:access_denied") + "?role=admin&url=" + request.get_full_path())
+
+    pairs = None
+    page = None
+    users = []
+    criteria_avg = {}
+
+    values = {}
+    for each in OptamosUser.objects.filter(project=project).order_by("user__first_name"):
+        values[each.user.first_name] = {}
+        users.append(each.user.first_name)
+    # Also add a new entry for the average
+    values["AVERAGE"] = {} 
+    users.append("AVERAGE")
+
+    if "rank_all_criteria" in request.GET:
+
+        page = "rank_all_criteria"
+        scores = OptamosCriteriaValue.objects.filter(criteria1__project=project)
+
+        for each in scores:
+            label = f"range-{each.criteria1_id}-{each.criteria2_id}"
+            values[each.user.first_name][label] = each.value
+            print(each.criteria1_id, each.criteria2_id, each.value, each.user)
+
+        for each in scores.values("criteria1", "criteria2").annotate(avg_score=Avg("value")):
+            print(each)
+            label = f"range-{each["criteria1"]}-{each["criteria2"]}"
+            values["AVERAGE"][label] = each["avg_score"]
+
+        # This creates pairs of all possible combinations of alternatives
+        pairs = list(combinations(project.criteria.all(), 2))
+
+    print(values)
+    context = {
+        "bg": random.choice(OPTAMOS_BG),
+        "menu": "projects",
+        "project": project,
+        "criteria_list": project.criteria.all().order_by("id"),
+        "remove_padding_main_container": True,
+        "page": page,
+        "pairs": pairs,
+        "values": values,
+        "users": users,
+    }
+    return render(request, "optamos/team.results.html", context)
+
 def project_team(request, id):
 
     if not request.user.is_authenticated:
@@ -324,8 +412,7 @@ def project_team(request, id):
     project = OptamosProject.objects_include_private.get(pk=id)
     user_access = OptamosUser.objects.filter(project=project, user=request.user, level="admin")
     if not user_access.exists():
-        messages.error(request, f"You do not have administrator access to this project.")
-        return redirect("optamos:login")
+        return redirect(reverse("optamos:access_denied") + "?role=admin&url=" + request.get_full_path())
 
     if "delete" in request.GET:
         user = User.objects.get(pk=request.GET["delete"])
@@ -378,6 +465,7 @@ def project_team(request, id):
                         OptamosUser.objects.create(project=project, user=user, level="regular")
                 else:
                     password = "".join(random.choices(string.ascii_letters + string.digits, k=20))
+                    #print(email, password)
                     user = User.objects.create_user(email, email, password)
                     user.first_name = email
                     user.is_superuser = False
@@ -1112,3 +1200,10 @@ def account_create(request):
         "bg": random.choice(OPTAMOS_BG),
     }
     return render(request, "optamos/account.html", context)
+
+def access_denied(request):
+
+    context = {
+        "bg": random.choice(OPTAMOS_BG),
+    }
+    return render(request, "optamos/accessdenied.html", context)

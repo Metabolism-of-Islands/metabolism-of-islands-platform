@@ -1,0 +1,523 @@
+{% extends "optamos/_base.html" %}
+{% load moc_extras %}
+
+{% block title %}
+  {{ project }}
+{% endblock %}
+
+{% block css %}
+  <style>
+  .slider input {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 9999px;
+    outline: none;
+  }
+  .slider input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    background: #333;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  }
+  .slider input::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    background: #333;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  }
+  .slider input::-webkit-slider-runnable-track {
+    height: 8px;
+    background: #333;
+    border-radius: 9999px;
+  }
+  .btn svg {
+    width:20px;
+  }
+  </style> 
+{% endblock %}
+
+{% block content %}
+
+<div class="flex">
+  <div class="flex-1 border-r border-gray-200 py-10 relative">
+
+    <section id="criteria" class="pr-5 mt-4">
+      <h2>Team rankings</h2>
+      <ul>
+        <li>
+          <a href="{% url "optamos:project_team_results" project.uid %}?rank_all_criteria=true" 
+            class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold no-underline
+            {% if page == "rank_all_criteria" %}
+              text-white bg-sky-600 
+            {% else %}
+              text-gray-700 hover:bg-gray-50 hover:text-sky-600 
+            {% endif %}
+           ">
+            <span class="flex size-6 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-[0.625rem] font-medium {% if page == "rank_all_criteria" %}text-sky-600 border-sky-600{% else %}text-gray-400{% endif %} group-hover:border-sky-600 group-hover:text-sky-600">C</span>
+            <span class="truncate">Criteria rankings</span>
+          </a>
+        </li>
+      {% if criteria_list %}
+        {% for each in criteria_list %}
+          <li>
+            <a href="{% url "optamos:project_team_results" project.uid %}?criteria={{ each.id }}" 
+              class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold no-underline
+              {% if each == criteria %}
+                text-white bg-sky-600 
+              {% else %}
+                text-gray-700 hover:bg-gray-50 hover:text-sky-600 
+              {% endif %}
+             ">
+              <span class="flex size-6 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-[0.625rem] font-medium {% if each == criteria %}text-sky-600 border-sky-600{% else %}text-gray-400{% endif %} group-hover:border-sky-600 group-hover:text-sky-600">{{ each.name|first }}</span>
+              <span class="truncate">{{ each }}</span>
+            </a>
+          </li>
+        {% endfor %}
+
+      {% endif %}
+      </ul>
+
+    </section>
+
+    <section class="mt-10" id="inconsistency">
+      <h2>Results</h2>
+        <ul class="pr-5">
+          <li>
+            <a href="{% url "optamos:project_results" project.uid %}" 
+              class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold no-underline
+              {% if page == "results" %}
+                text-white bg-sky-600 
+              {% else %}
+                text-gray-700 hover:bg-gray-50 hover:text-sky-600 
+              {% endif %}
+             ">
+              <span class="truncate">Results</span>
+            </a>
+          </li>
+          <li>
+            <a href="{% url "optamos:project_sensitivity" project.uid %}" 
+              class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold no-underline
+              {% if page == "sensitivity" %}
+                text-white bg-sky-600 
+              {% else %}
+                text-gray-700 hover:bg-gray-50 hover:text-sky-600 
+              {% endif %}
+             ">
+              <span class="truncate">Sensitity analysis</span>
+            </a>
+          </li>
+        </ul>
+    </section>
+
+  </div>
+  <div class="flex-2 py-10 px-10">
+
+    {% if request.GET.criteria or page == "rank_all_criteria" %}
+
+      {% if criteria %}
+        <h1 class="mb-4">{{ criteria }}</h1>
+      {% else %}
+        <h1 class="mb-4">Criteria rankings</h1>
+      {% endif %}
+
+      {% for alternative1, alternative2 in pairs %}
+        <div class="mb-30 bg-gray-50 p-2 rounded">
+          {% for each in users %}
+            <section class="mb-5">
+              {% if forloop.first %}
+                <div class="flex justify-between mb-4">
+                  <span class="left_alternative truncate w-2/5">{{ alternative1 }}</span>
+                  <span class="right_alternative truncate w-2/5 text-right">{{ alternative2 }}</span>
+                </div>
+              {% endif %}
+              {% with label="range-"|concat:alternative1.id|concat:"-"|concat:alternative2.id %}
+                <div class="slider {% if not label in values|get_item:each %}opacity-10{% endif %}">
+                  <input disabled name="{{ label }}" type="range" min="-8" max="8" step="1" value="{{ values|get_item:each|get_item:label|default_if_none:0 }}" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range range-lg range-primary">
+                {% endwith %}
+                <output class="block text-center text-gray-900">{{ each }}</output>
+              </div>
+            </section>
+          {% endfor %}
+        </div>
+      {% endfor %}
+
+    {% elif page == "home" %}
+
+      <div class="bg-gray-100 shadow-sm sm:rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+          <div class="mt-2 sm:flex sm:items-start sm:justify-between">
+            <div class="mt-5 sm:mt-0 sm:mr-6 sm:flex sm:shrink-0 sm:items-center">
+              <div class="group relative inline-flex w-11 shrink-0 rounded-full bg-gray-200 p-0.5 inset-ring inset-ring-gray-900/5 outline-offset-2 outline-sky-600 transition-colors duration-200 ease-in-out has-checked:bg-sky-600 has-focus-visible:outline-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" stroke="currentColor" aria-hidden="true" class="mx-auto size-12 text-gray-700"><path d="M400-240 160-480l240-240 56 58-142 142h486v80H314l142 142-56 58Z"/></svg>
+              </div>
+            </div>
+            <div class="max-w-xl text-sm text-gray-600">
+              <p>
+                Select one of the alternatives from the menu on the left-hand side to get started.
+                You can also <a href="{% url "optamos:project_settings" project.uid %}">edit your project settings</a>, <a href="{% url "optamos:projects" %}">view all your projects</a>, or <a href="{% url "optamos:project_create" %}">create a new project</a>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    {% elif page == "results" %}
+      <div class="relative h-20">
+        {% for each in criteria_list %}
+          {% if not each.is_done %}
+            <div class="alert alert-warning absolute">
+              <svg xmlns="http://www.w3.org/2000/svg" class="inline mr-1" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="m40-120 440-760 440 760H40Zm138-80h604L480-720 178-200Zm302-40q17 0 28.5-11.5T520-280q0-17-11.5-28.5T480-320q-17 0-28.5 11.5T440-280q0 17 11.5 28.5T480-240Zm-40-120h80v-200h-80v200Zm40-100Z"/></svg>
+              <strong class="mr-2">WARNING</strong>
+              The results are incomplete - not all information is entered yet or your preferences have not been saved.
+            </div>
+          {% endif %}
+        {% endfor %}
+
+        {% if criteria_values != total_required_criteria_values %}
+          <div class="alert alert-warning absolute">
+              <svg xmlns="http://www.w3.org/2000/svg" class="inline mr-1" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="m40-120 440-760 440 760H40Zm138-80h604L480-720 178-200Zm302-40q17 0 28.5-11.5T520-280q0-17-11.5-28.5T480-320q-17 0-28.5 11.5T440-280q0 17 11.5 28.5T480-240Zm-40-120h80v-200h-80v200Zm40-100Z"/></svg>
+              <strong class="mr-2">WARNING</strong>
+              The results are incomplete - not all information is entered yet or your preferences have not been saved.
+          </div>
+        {% endif %}
+      </div>
+
+      <div id="chart_alternatives" style="width:100%;height: 400px;"></div>
+      <div id="chart_criteria" style="width:100%;height: 400px;"></div>
+
+      <h1 class="mt-5">Summary table</h1>
+
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            {% for o in alternatives %}
+              <th>{{ o.name }}</th>
+            {% endfor %}
+            <th hidden>CR</th>
+            <th>% Importance</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in summary_table %}
+            <tr>
+              <th>{{ row.criterion }}</th>
+              {% for val in row.alternatives %}
+                <td>{{ val|floatformat:1 }}%</td>
+              {% endfor %}
+              <td hidden>{{ row.cr|floatformat:2 }}</td>
+              <td>{{ row.importance|floatformat:1 }}%</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Totals</th>
+            {% for total in summary_totals %}
+              <th>{{ total|floatformat:1 }}%</th>
+            {% endfor %}
+            <th colspan="2"></th>
+          </tr>
+        </tfoot>
+      </table>
+
+      <h3 class="mt-8">Global Scores & Ranking</h3>
+
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Alternative</th>
+            <th>Percentage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in global_ranking %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ item.alternative.name }}</td>
+              <td>{{ item.score|multiply:100|floatformat:1 }}%</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    {% elif page == "sensitivity" %}
+
+      <h1>Sensitivity analysis</h1>
+
+      <form id="sensitivity-form">
+        {% for each in importance %}
+          <div class="mb-10">
+            <label for="weight_{{ each.id }}" class="block text-sm font-medium text-gray-700">{{ each.name }}</label>
+
+            <input
+              type="range"
+              id="weight_{{ each.id }}"
+              name="weight_{{ each.id }}"
+              data-id="{{ each.id }}"
+              min="0"
+              max="100"
+              value="{{ each.value|floatformat:0 }}"
+              class="mt-1 w-full h-2 bg-gray-200 rounded-lg cursor-pointer range"
+            />
+
+            <span
+              id="weight_value_{{ each.id }}"
+              class="mt-2 text-lg font-semibold"
+            >
+              {{ each.value|floatformat:0 }}%
+            </span>
+          </div>
+        {% endfor %}
+      </form>
+
+      <div class="flex justify-end">
+        <a href="./" class="btn-sm btn-white" id="revert">Revert to original weights</a>
+      </div>
+
+      <h2 class="mt-10 text-lg font-bold">Adjusted Results</h2>
+      <div id="chart_alternatives" style="width:100%;height: 400px;"></div>
+
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block js %}
+
+{% if page == "results" or page == "sensitivity" %}
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@6.0.0/dist/echarts.min.js"></script>
+  <script type="text/javascript">
+
+    $("#hide-details").hide();
+
+    $("#view-details").click(function(e){
+      $(this).hide();
+      $("#hide-details").show();
+      $("#detailed").hide();
+      $("#full-details").show();
+    });
+
+    $("#hide-details").click(function(e){
+      $(this).hide();
+      $("#view-details").show();
+      $("#detailed").show();
+      $("#full-details").hide();
+    });
+
+    {% if page == "results" %}
+      var chart_criteria = echarts.init(document.getElementById('chart_criteria'));
+      var criteria_config = {
+        title: {
+          text: 'Criteria importance'
+        },
+        xAxis: {
+          type: 'value',
+          name: 'Importance (%)',
+          nameLocation: 'middle',
+          nameGap: 30
+        },
+        yAxis: {
+          type: 'category',
+          data: [{% for each in importance %}'{{ each.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+          inverse: true
+        },
+        series: [{
+          name: 'Criteria',
+          type: 'bar',
+          data: [{% for each in importance %}{{ each.value }}{% if not forloop.last %},{% endif %}{% endfor %}],
+          showBackground: true,
+          backgroundStyle: {
+            color: 'rgba(220, 220, 220, 0.3)'
+          },
+          itemStyle: {
+            color: function(params) {
+              return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: '#0084d1' },
+                { offset: 0.5, color: '#0678ba' },
+                { offset: 1, color: '#0c6fa9' }
+              ]);
+            },
+            borderRadius: [0, 5, 5, 0]
+          }
+        }]
+      };
+      chart_criteria.setOption(criteria_config);
+    {% endif %}
+
+    // We want to show them in the order high>low so we resort
+    var names = [{% for each in alternatives %}'{{ each.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+    var values = [{% for each in summary_totals %}{{ each }}{% if not forloop.last %},{% endif %}{% endfor %}];
+
+    // Combine into objects
+    var combined = names.map((name, i) => ({
+      name: name,
+      value: values[i]
+    }));
+
+    // Sort descending (highest first)
+    combined.sort((a, b) => b.value - a.value);
+
+    // Split back into arrays
+    var sortedNames = combined.map(item => item.name);
+    var sortedValues = combined.map(item => item.value);
+
+    var chart_alternatives = echarts.init(document.getElementById('chart_alternatives'));
+    var alternatives_config = {
+      title: {
+        text: 'Alternatives'
+      },
+      xAxis: {
+        type: 'value',
+        name: 'Importance (%)',
+        nameLocation: 'middle',
+        nameGap: 30
+      },
+      yAxis: {
+        type: 'category',
+        data: sortedNames,
+        inverse: true
+      },
+      series: [{
+        name: 'Alternatives',
+        type: 'bar',
+        data: sortedValues,
+        showBackground: true,
+        backgroundStyle: {
+          color: 'rgba(220, 220, 220, 0.3)'
+        },
+        itemStyle: {
+          color: function(params) {
+            return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: '#ff6900' },
+              { offset: 0.5, color: '#e66810' },
+              { offset: 1, color: '#c8580a' }
+            ]);
+          },
+          borderRadius: [0, 5, 5, 0]
+        }
+      }]
+    };
+    chart_alternatives.setOption(alternatives_config);
+
+  </script>
+
+  {% if page == "sensitivity" %}
+
+    <script type="text/javascript">
+    $(function(){
+      let debounceTimer;
+      $("input[type=range]").on("input", function() {
+        clearTimeout(debounceTimer);
+        var slider = $(this);
+        var critId = slider.data("id");
+        var value = slider.val();
+
+        $("#weight_value_" + critId).text(value + "%");
+
+        debounceTimer = setTimeout(function() {
+
+          $.ajax({
+            url: "{% url 'optamos:project_sensitivity' project.uid %}",
+            type: "POST",
+            data: {
+              "criterion_id": critId,
+              "new_weight": value,
+              "csrfmiddlewaretoken": "{{ csrf_token }}"
+            },
+            success: function(data) {
+
+                // Update sliders with new weights
+                $.each(data.adjusted_weights, function(id, weight) {
+                    var sliderElem = $("#weight_" + id);
+                    sliderElem.val(weight.toFixed(0));
+                    $("#weight_value_" + id).text(weight.toFixed(0) + "%");
+                });
+
+                // Update the chart
+                var names = [];
+                var scores = [];
+                $.each(data.sensitivity_ranking, function(i, item) {
+                    names.push(item.alternative_name);
+                    scores.push(item.score);
+                });
+
+                chart_alternatives.setOption({
+                    yAxis: { data: names },
+                    series: [{ data: scores }]
+                });
+            },
+            error: function(xhr, status, error) {
+                $("input[type=range]").prop("disabled", true).fadeTo(150, 0.5);
+                $("#chart_alternatives").fadeTo(150, 0.5);
+                console.error("Sensitivity update failed:", error);
+                alert("Sorry, an error ocurred. Please reload the page");
+            }
+          });
+
+        }, 150); // wait 150ms after last input
+      });
+    });
+    </script>
+
+  {% endif %}
+
+{% else %}
+  <script type="text/javascript">
+    $(function() {
+      $(".slider").each(function() {
+        const $container = $(this);
+        const $slider = $container.find('input[type="range"]');
+        const $alternative1 = $container.siblings(".flex").find("span").first();
+        const $alternative2 = $container.siblings(".flex").find("span").last();
+
+        // Preference mapping
+        const preferences = [
+          "", // Index 0 - no preference
+          "equally to moderately", // Index 1
+          "moderately", // Index 2
+          "moderately to strongly", // Index 3
+          "strongly", // Index 4
+          "strongly to very strongly", // Index 5
+          "very strongly", // Index 6
+          "very strongly to extremely", // Index 7
+          "extremely" // Index 8
+        ];
+
+        function updateOpacity() {
+          const value = parseInt($slider.val(), 10);
+          const ahpValue = Math.abs(value) + 1; // Remember we are actually saving values from -8 to 8, with 0 being neutral, but we must show 1-9 to the user
+
+          // This is the score:
+          // console.log(ahpValue);
+
+          const maxOpacity = 1;
+          const minOpacity = 0.3;
+          const opacity2 = (value < 0) ? maxOpacity - (value / -8) * (1-minOpacity) : 1;
+          const opacity1 = (value > 0) ? maxOpacity - (value / 8) * (1-minOpacity) : 1;
+          
+          //$alternative1.css("opacity", opacity1);
+          //$alternative2.css("opacity", opacity2);
+        }
+        
+        updateOpacity();
+        $slider.on("input", updateOpacity);
+      });
+
+    });
+  </script>
+{% endif %}
+
+{% endblock %}
