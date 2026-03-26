@@ -3091,6 +3091,22 @@ class OptamosProject(Record):
     def get_absolute_url(self):
         return reverse("optamos:project", args=[self.uid])
 
+class OptamosUser(models.Model):
+    project = models.ForeignKey(OptamosProject, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    LEVEL = (
+        ("admin", "Administrator"),
+        ("regular", "Regular user"),
+    )
+    level = models.CharField(max_length=20, choices=LEVEL, default="regular")
+    date_created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.user)
+
+    class Meta:
+        ordering = ["id"]
+
 class OptamosAlternative(models.Model):
     name = models.CharField(max_length=255)
     project = models.ForeignKey(OptamosProject, on_delete=models.CASCADE, related_name="alternatives")

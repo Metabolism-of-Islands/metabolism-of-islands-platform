@@ -114,6 +114,13 @@ def create_matrix(project):
     return matrix
 
 def index(request):
+    # TEMP CODE
+    if "load" in request.GET:
+        for each in OptamosProject.objects_include_private.all():
+            user = each.user.all()[0]
+            OptamosUser.objects.create(project=each, user=user, level="admin")
+            messages.success(request, f"Project {each.name} has been done.")
+    # END TEMP
     context = {
         "bg": random.choice(OPTAMOS_BG),
         "menu": "index",
@@ -239,8 +246,10 @@ def project_settings(request, id):
     if not request.user.is_authenticated:
         return redirect("optamos:login")
 
-    project = OptamosProject.objects_include_private.filter(pk=id, user=request.user).first()
-    if not project:
+    project = OptamosProject.objects_include_private.get(pk=id)
+    user_access = OptamosUser.objects.filter(project=project, user=request.user, level="admin")
+    if not user_access.exists():
+        messages.error(request, f"You do not have administrator access to this project.")
         return redirect("optamos:login")
 
     if request.method == "POST":
@@ -312,8 +321,10 @@ def project_team(request, id):
     if not request.user.is_authenticated:
         return redirect("optamos:login")
 
-    project = OptamosProject.objects_include_private.filter(pk=id, user=request.user).first()
-    if not project:
+    project = OptamosProject.objects_include_private.get(pk=id)
+    user_access = OptamosUser.objects.filter(project=project, user=request.user, level="admin")
+    if not user_access.exists():
+        messages.error(request, f"You do not have administrator access to this project.")
         return redirect("optamos:login")
 
     if "delete" in request.GET:
