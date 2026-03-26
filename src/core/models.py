@@ -3146,7 +3146,7 @@ class OptamosAlternativeValue(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = ["alternative1", "alternative2", "user"]
+        unique_together = ["criteria", "alternative1", "alternative2", "user"]
 
     #### SCORE CALCULATION ####
     # We need to calibrate the scores. 
