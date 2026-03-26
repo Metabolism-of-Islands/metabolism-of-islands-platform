@@ -114,13 +114,6 @@ def create_matrix(project):
     return matrix
 
 def index(request):
-    # TEMP CODE
-    if "load" in request.GET:
-        for each in OptamosProject.objects_include_private.all():
-            user = each.user.all()[0]
-            OptamosUser.objects.create(project=each, user=user, level="admin")
-            messages.success(request, f"Project {each.name} has been done.")
-    # END TEMP
     context = {
         "bg": random.choice(OPTAMOS_BG),
         "menu": "index",
@@ -145,7 +138,7 @@ def projects(request):
     if not request.user.is_authenticated:
         return redirect("optamos:login")
 
-    projects = OptamosProject.objects_include_private.filter(user=request.user)
+    projects = OptamosProject.objects_include_private.filter(users__user=request.user)
 
     if "delete" in request.GET:
         project = projects.get(uid=request.GET["delete"])
@@ -199,7 +192,7 @@ def project_create(request):
             project.description = request.POST.get("description")
             project.save()
 
-            project.user.add(request.user)
+            OptamosUser.objects.create(project=project, user=request.user, level="admin")
 
             if request.POST.getlist("alternative"):
                 for each in request.POST.getlist("alternative"):
@@ -328,18 +321,19 @@ def project_team(request, id):
         return redirect("optamos:login")
 
     if "delete" in request.GET:
-        try:
-            user = User.objects.get(pk=request.GET["delete"])
-            people = user.people
+        user = User.objects.get(pk=request.GET["delete"])
+        people = user.people
+        optamos_user = OptamosUser.objects.filter(project=project, user=user)
+        if not optamos_user:
+            messages.warning(request, f"User was not found within the team and could therefore not be removed.")
+        else:
             if people.meta_data and "pending_activation" in people.meta_data:
                 # This user was never activated so let's delete this account entirely
                 people.delete()
                 user.delete()
             else:
-                project.user.remove(user)
+                optamos_user.delete()
             messages.success(request, f"The following user was removed from the team: <strong>{user}</strong>")
-        except:
-            messages.warning(request, f"User was not found within the team and could therefore not be removed.")
         return redirect(request.path)
 
     if request.method == "POST":
@@ -353,7 +347,7 @@ def project_team(request, id):
 
         # upfront error if too many lines — do not process further
         # We use 26 as the total number of users because it's 1 admin + 25 people max
-        remaining = 26 - project.user.count()
+        remaining = 26 - project.users.count()
         if len(lines) > remaining:
             messages.error(request, f"You can not have more than 25 people in your team. Make sure there is one e-mail per line; no more than {remaining} remaining spots.")
         else:
@@ -370,11 +364,11 @@ def project_team(request, id):
                 if (user := User.objects.filter(email=email).first()):
                     # User already has an active account. Check if already part of the project...
                     # And if not, we add them...
-                    if project.user.filter(pk=user.pk).exists():
+                    if project.users.filter(user__pk=user.pk).exists():
                         messages.warning(request, f"The following user was already part of the team: <strong>{email}</strong>")
                     else:
                         messages.success(request, f"The following user has an existing account and was added successfully: <strong>{email}</strong>")
-                        project.user.add(user)
+                        OptamosUser.objects.create(project=project, user=user, level="regular")
                 else:
                     password = "".join(random.choices(string.ascii_letters + string.digits, k=20))
                     user = User.objects.create_user(email, email, password)
@@ -383,7 +377,7 @@ def project_team(request, id):
                     user.is_staff = False
                     user.save()
                     people = People.objects.create(name=email, email=user.email, user=user, meta_data={"optamos": True, "auto_created": True, "pending_activation": True})
-                    project.user.add(user)
+                    OptamosUser.objects.create(project=project, user=user, level="regular")
                     messages.success(request, f"The following user was invited successfully: <strong>{email}</strong>")
 
             return redirect(request.path)
@@ -393,7 +387,7 @@ def project_team(request, id):
         "projects": project,
         "menu": "projects",
         "project": project,
-        "team": project.user.exclude(pk=request.user.id),
+        "team": OptamosUser.objects.filter(project=project, level="regular"),
     }
     return render(request, "optamos/project.team.html", context)
 
@@ -405,7 +399,7 @@ def project(request, id, page="home"):
     if not request.GET:
         return redirect(f"{request.path}?rank_all_criteria=true")
 
-    project = OptamosProject.objects_include_private.filter(pk=id, user=request.user).first()
+    project = OptamosProject.objects_include_private.filter(pk=id, users__user=request.user).first()
     if not project:
         messages.error(request, "Project is not found - either it does not exist or you do not have access. Below are your projects.")
         return redirect("optamos:projects")
@@ -502,7 +496,7 @@ def project_results(request, id, page="results"):
     if not request.user.is_authenticated:
         return redirect("optamos:login")
 
-    project = OptamosProject.objects_include_private.filter(pk=id, user=request.user).first()
+    project = OptamosProject.objects_include_private.filter(pk=id, users__user=request.user).first()
     if not project:
         messages.error(request, "Project is not found - either it does not exist or you do not have access. Below are your projects.")
         return redirect("optamos:projects")
@@ -1051,7 +1045,6 @@ def account(request):
 
     context = {
         "bg": random.choice(OPTAMOS_BG),
-        "projects": OptamosProject.objects_include_private.filter(user=request.user),
         "menu": "account",
     }
     return render(request, "optamos/account.settings.html", context)

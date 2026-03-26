@@ -3084,7 +3084,6 @@ class OptamosProject(Record):
         parent_link=True,
         primary_key=False,
     )
-    user = models.ManyToManyField(User, related_name="optamos")
     date_updated = models.DateTimeField(auto_now=True)
     goal = models.CharField(max_length=255, blank=True)
 
@@ -3092,7 +3091,7 @@ class OptamosProject(Record):
         return reverse("optamos:project", args=[self.uid])
 
 class OptamosUser(models.Model):
-    project = models.ForeignKey(OptamosProject, on_delete=models.CASCADE)
+    project = models.ForeignKey(OptamosProject, on_delete=models.CASCADE, related_name="users")
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     LEVEL = (
         ("admin", "Administrator"),
