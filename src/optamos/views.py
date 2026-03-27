@@ -339,37 +339,53 @@ def project_team_results(request, id):
     if not user_access.exists():
         return redirect(reverse("optamos:access_denied") + "?role=admin&url=" + request.get_full_path())
 
+    page = None
     if not request.GET or "rank_all_criteria" in request.GET:
         page = "rank_all_criteria"
 
     pairs = None
     users = []
-    criteria_avg = {}
     values = {}
+    criteria = None
+
+    for each in OptamosUser.objects.filter(project=project).order_by("user__first_name"):
+        values[each.user.first_name] = {}
+        users.append(each.user.first_name)
+    # Also add a new entry for the average
+    values["AVERAGE"] = {} 
+    users.append("AVERAGE")
 
     if page == "rank_all_criteria":
-
-        for each in OptamosUser.objects.filter(project=project).order_by("user__first_name"):
-            values[each.user.first_name] = {}
-            users.append(each.user.first_name)
-        # Also add a new entry for the average
-        values["AVERAGE"] = {} 
-        users.append("AVERAGE")
 
         scores = OptamosCriteriaValue.objects.filter(criteria1__project=project)
 
         for each in scores:
             label = f"range-{each.criteria1_id}-{each.criteria2_id}"
             values[each.user.first_name][label] = each.value
-            print(each.criteria1_id, each.criteria2_id, each.value, each.user)
 
         for each in scores.values("criteria1", "criteria2").annotate(avg_score=Avg("value")):
-            print(each)
             label = f"range-{each["criteria1"]}-{each["criteria2"]}"
             values["AVERAGE"][label] = each["avg_score"]
 
         # This creates pairs of all possible combinations of alternatives
         pairs = list(combinations(project.criteria.all(), 2))
+
+    elif (criteria := request.GET.get("criteria")):
+        page = "criteria"
+        criteria = OptamosCriteria.objects.get(project=project, pk=criteria)
+
+        scores = OptamosAlternativeValue.objects.filter(criteria=criteria)
+
+        for each in scores:
+            label = f"range-{each.alternative1_id}-{each.alternative2_id}"
+            values[each.user.first_name][label] = each.value
+
+        for each in scores.values("alternative1", "alternative2").annotate(avg_score=Avg("value")):
+            label = f"range-{each["alternative1"]}-{each["alternative2"]}"
+            values["AVERAGE"][label] = each["avg_score"]
+
+        # This creates pairs of all possible combinations of alternatives
+        pairs = list(combinations(project.alternatives.all(), 2))
 
     context = {
         "bg": random.choice(OPTAMOS_BG),
@@ -381,6 +397,7 @@ def project_team_results(request, id):
         "pairs": pairs,
         "values": values,
         "users": users,
+        "criteria": criteria,
     }
     return render(request, "optamos/team.results.html", context)
 
