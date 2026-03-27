@@ -339,22 +339,23 @@ def project_team_results(request, id):
     if not user_access.exists():
         return redirect(reverse("optamos:access_denied") + "?role=admin&url=" + request.get_full_path())
 
+    if not request.GET or "rank_all_criteria" in request.GET:
+        page = "rank_all_criteria"
+
     pairs = None
-    page = None
     users = []
     criteria_avg = {}
-
     values = {}
-    for each in OptamosUser.objects.filter(project=project).order_by("user__first_name"):
-        values[each.user.first_name] = {}
-        users.append(each.user.first_name)
-    # Also add a new entry for the average
-    values["AVERAGE"] = {} 
-    users.append("AVERAGE")
 
-    if "rank_all_criteria" in request.GET:
+    if page == "rank_all_criteria":
 
-        page = "rank_all_criteria"
+        for each in OptamosUser.objects.filter(project=project).order_by("user__first_name"):
+            values[each.user.first_name] = {}
+            users.append(each.user.first_name)
+        # Also add a new entry for the average
+        values["AVERAGE"] = {} 
+        users.append("AVERAGE")
+
         scores = OptamosCriteriaValue.objects.filter(criteria1__project=project)
 
         for each in scores:
@@ -370,7 +371,6 @@ def project_team_results(request, id):
         # This creates pairs of all possible combinations of alternatives
         pairs = list(combinations(project.criteria.all(), 2))
 
-    print(values)
     context = {
         "bg": random.choice(OPTAMOS_BG),
         "menu": "projects",

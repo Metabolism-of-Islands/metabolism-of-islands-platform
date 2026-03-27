@@ -9,7 +9,7 @@
     {% block title %}{% endblock %} - 
     OPTamos
   </title>
-  <link href="{% static "css/optamos.css" %}?id=26-1428" rel="stylesheet">
+  <link href="{% static "css/optamos.css" %}?id=27-0841" rel="stylesheet">
   <link class="favicon" rel="shortcut icon" sizes="126x126" href="/media/optamos/favicon.jpg">
 
   <meta property="og:title" content="Options for Participatory Transformation and Sustainability Management" />
@@ -57,19 +57,21 @@
       <div class="overlay pb-32">
         <header class="py-10">
           <hgroup class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            {% if project %}
               <div class="flex justify-between">
-              <h1 class="text-3xl font-bold tracking-tight text-white text-shadow-md text-shadow-stone-700">
-                {{ project }}
-              </h1>
-              <div>
-              {% for tag in project.tag_list.all %}
-                <span class="mt-2 badge">{{ tag }}</span>
-              {% endfor %}
+                <a href="{% url "optamos:project" project.uid %}" class="hover:underline text-3xl font-bold tracking-tight text-white text-shadow-md text-shadow-stone-700">
+                  {{ project }}
+                </a>
+                <div>
+                {% for tag in project.tag_list.all %}
+                  <span class="mt-2 badge">{{ tag }}</span>
+                {% endfor %}
+                </div>
               </div>
-            </div>
-            <h2 class="text-shadow-sm text-shadow-stone-700 text-white">
-            {{ project.goal }}
-            </h2>
+              <h2 class="text-shadow-sm text-shadow-stone-700 text-white">
+                {{ project.goal }}
+              </h2>
+            {% endif %}
           </hgroup>
         </header>
       </div>

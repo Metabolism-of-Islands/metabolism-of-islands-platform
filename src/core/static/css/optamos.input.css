@@ -39,6 +39,10 @@
   @apply text-sm bg-yellow-500 text-white px-3.5 py-2.5 rounded-sm hover:bg-yellow-600 focus:outline-hidden font-semibold focus:ring-yellow-300 no-underline hover:text-white inline-block cursor-pointer;
 }
 
+@utility btn-dark {
+  @apply text-sm bg-gray-600 text-white px-3.5 py-2.5 rounded-sm hover:bg-neutral-900 focus:outline-hidden font-semibold focus:ring-neutral-300 no-underline hover:text-white inline-block cursor-pointer;
+}
+
 @utility btn-edit {
   @apply text-sm bg-amber-300 text-white px-3.5 py-2.5 rounded-sm hover:bg-amber-400 focus:outline-hidden font-semibold focus:ring-orange-300 no-underline hover:text-white inline-block cursor-pointer;
 }

@@ -23,12 +23,16 @@
   {% for each in projects %}
     <tr>
       <td>
-        <a href="{{ each.get_absolute_url }}">{{ each }}</a>
-          <div>
-            {% for tag in each.tag_list.all %}
-              <span class="mt-2 badge">{{ tag }}</span>
-            {% endfor %}
-          </div>
+        {% if each.level == "admin" %}
+          <a href="{% url "optamos:project_overview" each.uid %}">{{ each }}</a>
+        {% else %}
+          {{ each }}
+        {% endif %}
+        <div>
+          {% for tag in each.tag_list.all %}
+            <span class="mt-2 badge">{{ tag }}</span>
+          {% endfor %}
+        </div>
       </td>
       <td class="text-sm">{{ each.date_created|date:"M d, Y" }}</td>
       <td class="text-sm">{{ each.date_updated|date:"M d, Y" }}</td>
