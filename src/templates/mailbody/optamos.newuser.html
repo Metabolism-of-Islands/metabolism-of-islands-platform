@@ -1,0 +1,29 @@
+{% extends "mailbody/_mailbase.html" %}
+
+{% block content %}
+
+<p>
+  You have been invited to participate in a decision-making process
+  for a project named <strong>{{ project }}</strong>. You have been 
+  invited by <strong>{{ request.user.first_name }}</strong>.
+  In order to participate, please use the following details to 
+  log in:
+</p>
+
+<p>
+  Link: <br>
+  <a href="https://metabolismofislands.org{{ project.get_absolute_url }}">https://metabolismofislands.org{{ project.get_absolute_url }}</a>
+  <br>
+  <br>
+  Temporary password: <br>{{ password }}
+  <br>
+  <br>
+  E-mail: <br>
+  {{ email }}
+</p>
+
+<p>
+  For more information about this project, please get in touch 
+  with {{ request.user.first_name }}.
+</p>
+{% endblock %}

@@ -80,6 +80,9 @@ from django.core.cache import cache
 # For the translations
 from django.utils.translation import gettext_lazy as _
 
+# For calculating geometric mean in OPTamos
+import statistics
+
 def get_date_range(start, end, months_only=False):
 
     if start and not end and months_only:
@@ -3143,28 +3146,32 @@ class OptamosAlternativeValue(models.Model):
     alternative1 = models.ForeignKey(OptamosAlternative, on_delete=models.CASCADE, related_name="setting1")
     alternative2 = models.ForeignKey(OptamosAlternative, on_delete=models.CASCADE, related_name="setting2")
     value = models.SmallIntegerField()
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True) # If the user is null, that means this is the "average" user
 
     class Meta:
         unique_together = ["criteria", "alternative1", "alternative2", "user"]
 
-    #### SCORE CALCULATION ####
-    # We need to calibrate the scores. 
-    # Firstly, the default scale is 1-9, but we use -8 - 8. That is done so we can use a slider more easily.
-    # But it means that a score of 0 in our system represents a score of 1 for both criteria in the AHP system
-    # And any other score (e.g. 6) represents a n+1 (e.g. 7 in the example) in our system
-    # A negative score simply means it's "in favor" of the other criteria, so we do the same procedure in reverse
-
     @property
     def value1(self):
         if self.value < 0: # This score is "in favor" of alternative 1
-            return -(self.value-1)
+            return -self.value
         else:
-            return 1/(self.value+1) # If the score is 0, it will be 1/(1) = 1, which is what we want
+            return 1/(self.value) # Inverse fraction to indicate preference of alternative 2
 
     @property
     def value2(self):
         return 1/self.value1 # This is always the inverse of the other score
+
+    # For the slider we manage values from -8 to 8, with 0 being the neutral value
+    # We must therefore reduce the value with 1 if negative (so -9 becomes -8)
+    # and even when it's up to 1 (because 1 is actually neutral which is 0 in slider values)
+    # If the value is 2 and up, we reduce 1 to make the range 1-8 for positive values
+    @property
+    def js_value(self):
+        if self.value > 0:
+            return self.value-1
+        else:
+            return self.value+1
 
     # We create id1 and id2 so that we can use the same fields for criteria and alternative loops
     @property
@@ -3174,6 +3181,24 @@ class OptamosAlternativeValue(models.Model):
     @property
     def id2(self):
         return self.alternative2.id
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if False:
+            values = []
+            for each in OptamosAlternativeValue.objects.filter(alternative1=self.alternative1, alternative2=self.alternative2):
+                values.append(each.value1)
+            
+            info, created = OptamosAlternativeValue.objects.update_or_create(
+                defaults={
+                    "value": statistics.geometric_mean(values),
+                },
+                criteria = self.criteria,
+                alternative1 = self.alternative1,
+                alternative2 = self.alternative2,
+                user = None,
+            )
 
 class OptamosCriteriaValue(models.Model):
     criteria1 = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="setting1")
@@ -3187,14 +3212,25 @@ class OptamosCriteriaValue(models.Model):
     # See OptamosAlternativeValue for an explanation on this procedure
     @property
     def value1(self):
-        if self.value < 0: # This score is "in favor" of alternative 1
-            return -(self.value-1)
+        if self.value < 0: # This score is "in favor" of criteria 1
+            return -self.value
         else:
-            return 1/(self.value+1) # If the score is 0, it will be 1/(1) = 1, which is what we want
+            return 1/(self.value) # Inverse fraction to indicate preference of criteria 2
 
     @property
     def value2(self):
         return 1/self.value1 # This is always the inverse of the other score
+
+    # For the slider we manage values from -8 to 8, with 0 being the neutral value
+    # We must therefore reduce the value with 1 if negative (so -9 becomes -8)
+    # and even when it's up to 1 (because 1 is actually neutral which is 0 in slider values)
+    # If the value is 2 and up, we reduce 1 to make the range 1-8 for positive values
+    @property
+    def js_value(self):
+        if self.value > 0:
+            return self.value-1
+        else:
+            return self.value+1
 
     # We create id1 and id2 so that we can use the same fields for criteria and alternative loops
     @property

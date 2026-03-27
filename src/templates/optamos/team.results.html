@@ -61,7 +61,7 @@
       <h2>Team rankings</h2>
       <ul>
         <li>
-          <a href="{% url "optamos:project_team_results" project.uid %}?rank_all_criteria=true" 
+          <a href="{% url "optamos:project_team_ranking" project.uid %}?rank_all_criteria=true" 
             class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold no-underline
             {% if page == "rank_all_criteria" %}
               text-white bg-sky-600 
@@ -75,7 +75,7 @@
       {% if criteria_list %}
         {% for each in criteria_list %}
           <li>
-            <a href="{% url "optamos:project_team_results" project.uid %}?criteria={{ each.id }}" 
+            <a href="{% url "optamos:project_team_ranking" project.uid %}?criteria={{ each.id }}" 
               class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold no-underline
               {% if each == criteria %}
                 text-white bg-sky-600 
@@ -97,7 +97,7 @@
       <h2>Results</h2>
         <ul class="pr-5">
           <li>
-            <a href="{% url "optamos:project_results" project.uid %}" 
+            <a href="{% url "optamos:project_team_results" project.uid %}" 
               class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold no-underline
               {% if page == "results" %}
                 text-white bg-sky-600 

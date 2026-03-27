@@ -1,9 +1,11 @@
 from core.models import *
 from dataclasses import dataclass
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
 from django.core.validators import validate_email
 from django.db.models import Count, Q, Subquery, OuterRef, CharField, Avg
 from django.http import HttpResponse, JsonResponse
@@ -16,8 +18,8 @@ from openpyxl.styles import Font
 import csv
 import openpyxl
 import random
-import string
 import re
+import string
 
 OPTAMOS_BG = [
     "pexels-altaf-shah-3143825-7751849.jpg",
@@ -62,6 +64,25 @@ class ConsistencyResult:
     cr: float
     ci: float
     lambda_max: float
+
+#### RANKING VALUE CONVERTER ####
+# We need to calibrate the scores. 
+# In AHP the default scale is 1-9, but we use -8 to 8 in our slider. That is done so we can use a native slider 
+# where the 0 is the neutral value in between them both.
+# But it means that a score of 0 in our system represents a score of 1 for both criteria in the AHP system
+# And any other score (e.g. 6) represents a n+1 (e.g. 7 in the example) in our system
+# A negative score simply means it's "in favor" of the other criteria, so we do the same procedure in reverse
+# In the database we always store a single value (of alt1 vs alt2) which is 1-9 in regular AHP scoring (if alt2 
+# is preferred, or -2 to -9 which simply means that alt1 is preferred. There will never a value of 0 being stored
+# (or -1 for that matter) because the 1 is the score that means that neither is preferred.
+def ranking_value_converter(value):
+    if value < 0: 
+        # This score is "in favor" of alternative 1, and we must subtract 1 to change the -1 to -8 range to 
+        # -2 to -9
+        return value-1
+    else:
+        # If the score is 0 or higher, we simply add 1, which means that the 0-8 range becomes 1-9
+        return value+1 
 
 def calculate_consistency_ratio(items_to_review, score_list):
     # Step 1: Load all items and scores
@@ -329,7 +350,7 @@ def project_overview(request, id):
     }
     return render(request, "optamos/project.overview.html", context)
 
-def project_team_results(request, id):
+def project_team_results(request, id, page="rank_all_criteria"):
 
     if not request.user.is_authenticated:
         return redirect("optamos:login")
@@ -339,9 +360,9 @@ def project_team_results(request, id):
     if not user_access.exists():
         return redirect(reverse("optamos:access_denied") + "?role=admin&url=" + request.get_full_path())
 
-    page = None
-    if not request.GET or "rank_all_criteria" in request.GET:
-        page = "rank_all_criteria"
+    page = request.GET.get("page", page)
+    if "criteria" in request.GET:
+        page = "criteria"
 
     pairs = None
     users = []
@@ -429,6 +450,9 @@ def project_team(request, id):
 
     if request.method == "POST":
 
+        subject = f"Invitation to join project '{project}'"
+        sender = '"OPTamos" <' + settings.DEFAULT_FROM_EMAIL + '>'
+
         emails_raw = request.POST.get("users", "")
         # split on any newline
         raw_lines = re.split(r"\r\n|\r|\n", emails_raw)
@@ -460,9 +484,16 @@ def project_team(request, id):
                     else:
                         messages.success(request, f"The following user has an existing account and was added successfully: <strong>{email}</strong>")
                         OptamosUser.objects.create(project=project, user=user, level="regular")
+
+                        mailcontext = {
+                            "project": project,
+                            "request": request,
+                        }
+                        msg_html = render_to_string("mailbody/optamos.existinguser.html", mailcontext)
+                        msg_plain = render_to_string("mailbody/optamos.existinguser.txt", mailcontext)
+                        send_mail(subject, msg_plain, sender, [email], html_message=msg_html)
                 else:
                     password = "".join(random.choices(string.ascii_letters + string.digits, k=20))
-                    #print(email, password)
                     user = User.objects.create_user(email, email, password)
                     user.first_name = email
                     user.is_superuser = False
@@ -471,6 +502,16 @@ def project_team(request, id):
                     people = People.objects.create(name=email, email=user.email, user=user, meta_data={"optamos": True, "auto_created": True, "pending_activation": True})
                     OptamosUser.objects.create(project=project, user=user, level="regular")
                     messages.success(request, f"The following user was invited successfully: <strong>{email}</strong>")
+
+                    mailcontext = {
+                        "project": project,
+                        "request": request,
+                        "password": password,
+                        "email": email,
+                    }
+                    msg_html = render_to_string("mailbody/optamos.newuser.html", mailcontext)
+                    msg_plain = render_to_string("mailbody/optamos.newuser.txt", mailcontext)
+                    send_mail(subject, msg_plain, sender, [email], html_message=msg_html)
 
             return redirect(request.path)
 
@@ -507,7 +548,7 @@ def project(request, id, page="home"):
         # so we can load them into the form
         for each in OptamosAlternativeValue.objects.filter(criteria=criteria, user=request.user):
             value = f"range-{each.alternative1_id}-{each.alternative2_id}"
-            values[value] = each.value
+            values[value] = each.js_value
 
         # This creates pairs of all possible combinations of alternatives
         pairs = list(combinations(project.alternatives.all(), 2))
@@ -518,7 +559,7 @@ def project(request, id, page="home"):
         # so we can load them into the form
         for each in OptamosCriteriaValue.objects.filter(criteria1__project=project, user=request.user):
             value = f"range-{each.criteria1_id}-{each.criteria2_id}"
-            values[value] = each.value
+            values[value] = each.js_value
 
         # This creates pairs of all possible combinations of alternatives
         pairs = list(combinations(project.criteria.all(), 2))
@@ -533,7 +574,7 @@ def project(request, id, page="home"):
                     alternative1 = alternative1,
                     alternative2 = alternative2,
                     criteria = criteria,
-                    value = request.POST[value],
+                    value = ranking_value_converter(int(request.POST[value])),
                     user = request.user,
                 )
             if "back" in request.POST:
@@ -555,7 +596,7 @@ def project(request, id, page="home"):
                 OptamosCriteriaValue.objects.create(
                     criteria1 = criteria1,
                     criteria2 = criteria2,
-                    value = request.POST[value],
+                    value = ranking_value_converter(int(request.POST[value])),
                     user = request.user,
                 )
             next_criteria = project.criteria.order_by("id").first()
@@ -586,7 +627,7 @@ def project(request, id, page="home"):
 
     return render(request, "optamos/project.html", context)
 
-def project_results(request, id, page="results"):
+def project_results(request, id, page="results", team=False):
 
     if not request.user.is_authenticated:
         return redirect("optamos:login")
@@ -1071,7 +1112,7 @@ def account_login(request):
         email = request.POST.get("email").lower()
 
         password = request.POST.get("password")
-        user = authenticate(request, username=email, password=password)
+        user = authenticate(request, username=email.strip(), password=password.strip())
         redirect_url = request.GET.get("redirect", "optamos:projects")
 
         if user is not None:
