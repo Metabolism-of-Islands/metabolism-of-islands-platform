@@ -3145,7 +3145,7 @@ class OptamosAlternativeValue(models.Model):
     criteria = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="alternative_pairs")
     alternative1 = models.ForeignKey(OptamosAlternative, on_delete=models.CASCADE, related_name="setting1")
     alternative2 = models.ForeignKey(OptamosAlternative, on_delete=models.CASCADE, related_name="setting2")
-    value = models.SmallIntegerField()
+    value = models.DecimalField(max_digits=3, decimal_places=1)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True) # If the user is null, that means this is the "average" user
 
     class Meta:
@@ -3185,14 +3185,25 @@ class OptamosAlternativeValue(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
-        if False:
+        if self.user:
             values = []
             for each in OptamosAlternativeValue.objects.filter(alternative1=self.alternative1, alternative2=self.alternative2):
                 values.append(each.value1)
             
+            # This is the geometric mean which we use to calculate the average value
+            geometric_mean = statistics.geometric_mean(values)
+
+            # However, this means that we have a "traditional" value which needs to be converted
+            # back to the scale that we use here (-8 to 8)
+            if geometric_mean > 0:
+                geometric_mean += 1
+            else:
+                geometric_mean -= 1
+
+            print(geometric_mean)
             info, created = OptamosAlternativeValue.objects.update_or_create(
                 defaults={
-                    "value": statistics.geometric_mean(values),
+                    "value": geometric_mean,
                 },
                 criteria = self.criteria,
                 alternative1 = self.alternative1,
@@ -3203,8 +3214,8 @@ class OptamosAlternativeValue(models.Model):
 class OptamosCriteriaValue(models.Model):
     criteria1 = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="setting1")
     criteria2 = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="setting2")
-    value = models.SmallIntegerField()
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    value = models.DecimalField(max_digits=3, decimal_places=1)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
 
     class Meta:
         unique_together = ["criteria1", "criteria2", "user"]

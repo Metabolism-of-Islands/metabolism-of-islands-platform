@@ -574,7 +574,7 @@ def project(request, id, page="home"):
                     alternative1 = alternative1,
                     alternative2 = alternative2,
                     criteria = criteria,
-                    value = ranking_value_converter(int(request.POST[value])),
+                    value = ranking_value_converter(int(float(request.POST[value]))),
                     user = request.user,
                 )
             if "back" in request.POST:
@@ -596,7 +596,7 @@ def project(request, id, page="home"):
                 OptamosCriteriaValue.objects.create(
                     criteria1 = criteria1,
                     criteria2 = criteria2,
-                    value = ranking_value_converter(int(request.POST[value])),
+                    value = ranking_value_converter(int(float(request.POST[value]))),
                     user = request.user,
                 )
             next_criteria = project.criteria.order_by("id").first()
@@ -613,7 +613,7 @@ def project(request, id, page="home"):
         "pairs": pairs,
         "values": values,
         "page": page,
-        "criteria_list": project.criteria.all().order_by("id").annotate(is_done=Count("alternative_pairs")),
+        "criteria_list": project.criteria.all().order_by("id").annotate(is_done=Count("alternative_pairs", filter=Q(alternative_pairs__user=request.user))),
         "criteria_values": OptamosCriteriaValue.objects.filter(criteria1__project=project, user=request.user).count(), 
         # Count how many there theoretically are, so that we can verify that all are saved -- this is particularly 
         # relevant in case people edit the project and add criteria in which case we need to show an error
@@ -624,7 +624,6 @@ def project(request, id, page="home"):
         "criteria_descriptions": OptamosCriteria.objects.filter(project=project, description__isnull=False),
         "access_level": OptamosUser.objects.get(user=request.user, project=project).level,
     }
-
     return render(request, "optamos/project.html", context)
 
 def project_results(request, id, page="results", team=False):
@@ -1069,7 +1068,7 @@ def project_results(request, id, page="results", team=False):
         "remove_padding_main_container": True,
         "criteria": criteria,
         "page": page,
-        "criteria_list": project.criteria.all().order_by("id").annotate(is_done=Count("alternative_pairs")),
+        "criteria_list": project.criteria.all().order_by("id").annotate(is_done=Count("alternative_pairs", filter=Q(alternative_pairs__user=request.user))),
         "criteria_values": OptamosCriteriaValue.objects.filter(criteria1__project=project, user=request.user).count(), 
         # Count how many there theoretically are, so that we can verify that all are saved -- this is particularly 
         # relevant in case people edit the project and add criteria in which case we need to show an error
