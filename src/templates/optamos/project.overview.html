@@ -39,7 +39,7 @@
         <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/>
       </svg>
       <div>
-        <a href="{% url "optamos:project_settings" project.uid %}" class="btn-dark">
+        <a href="{% url "optamos:project_settings" project.uid %}" class="btn-blue mt-1">
           Edit project
         </a>
       </div>
@@ -50,18 +50,18 @@
         <path d="M96 192C96 130.1 146.1 80 208 80C269.9 80 320 130.1 320 192C320 253.9 269.9 304 208 304C146.1 304 96 253.9 96 192zM32 528C32 430.8 110.8 352 208 352C305.2 352 384 430.8 384 528L384 534C384 557.2 365.2 576 342 576L74 576C50.8 576 32 557.2 32 534L32 528zM464 128C517 128 560 171 560 224C560 277 517 320 464 320C411 320 368 277 368 224C368 171 411 128 464 128zM464 368C543.5 368 608 432.5 608 512L608 534.4C608 557.4 589.4 576 566.4 576L421.6 576C428.2 563.5 432 549.2 432 534L432 528C432 476.5 414.6 429.1 385.5 391.3C408.1 376.6 435.1 368 464 368z"/>
       </svg>
       <div>
-        <a href="{% url "optamos:project_team" project.uid %}" class="btn-dark">
+        <a href="{% url "optamos:project_team" project.uid %}" class="btn-blue mt-1">
           Team
         </a>
       </div>
     </div>
     
-    <div class="flex items-start space-x-4 group hover:text-gray-700">
+    <div class="flex items-start space-x-4 group hover:text-gray-700 {% if project.users.count == 1 %}opacity-25{% endif %}">
       <svg xmlns="http://www.w3.org/2000/svg" class="text-gray-400 size-10 flex-shrink-0 mt-1 group-hover:text-gray-500" viewBox="0 0 640 640" fill="currentColor">
         <path d="M256 144C256 117.5 277.5 96 304 96L336 96C362.5 96 384 117.5 384 144L384 496C384 522.5 362.5 544 336 544L304 544C277.5 544 256 522.5 256 496L256 144zM64 336C64 309.5 85.5 288 112 288L144 288C170.5 288 192 309.5 192 336L192 496C192 522.5 170.5 544 144 544L112 544C85.5 544 64 522.5 64 496L64 336zM496 160L528 160C554.5 160 576 181.5 576 208L576 496C576 522.5 554.5 544 528 544L496 544C469.5 544 448 522.5 448 496L448 208C448 181.5 469.5 160 496 160z"/>
       </svg>
       <div>
-        <a href="{% url "optamos:project_team_ranking" project.uid %}" class="btn-dark">
+        <a href="{% url "optamos:project_team_ranking" project.uid %}" class="btn-blue mt-1">
           Group results
         </a>
       </div>

@@ -250,6 +250,7 @@ def project_create(request):
                 # done with editing.
                 return redirect(reverse("optamos:project_settings", args=[project.uid]))
             else:
+                messages.success(request, "Your project was created. Is this a group project? <a href='team/'>Invite your team</a>")
                 return redirect(reverse("optamos:project", args=[project.uid]))
 
     context = {
