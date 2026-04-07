@@ -229,18 +229,22 @@ def project_create(request):
                         OptamosTag.objects.create(project=project, name=each)
 
             if (criteria_list := request.POST.get("criteria")):
+                position = 0
                 for criteria in criteria_list.split("\n"):
                     if criteria:
-                        OptamosCriteria.objects.create(project=project, name=criteria.strip())
+                        position += 1
+                        OptamosCriteria.objects.create(project=project, name=criteria.strip(), position=position)
 
             if request.FILES.get("csv_file"):
                 messages.success(request, "Your csv file was loaded.")
+                position = 0
                 for row in reader:
                     criteria = row.get("Criteria")
                     alternative = row.get("Alternatives")
 
                     if criteria:
-                        OptamosCriteria.objects.create(project=project, name=criteria.strip())
+                        position += 1
+                        OptamosCriteria.objects.create(project=project, name=criteria.strip(), position=position)
 
                     if alternative:
                         OptamosAlternative.objects.create(project=project, name=alternative.strip())
@@ -534,6 +538,7 @@ def project(request, id, page="home"):
 
     values = {}
     pairs = None
+    sub_pairs = {}
 
     if (criteria := request.GET.get("criteria")):
         page = "criteria"
@@ -556,8 +561,12 @@ def project(request, id, page="home"):
             value = f"range-{each.criteria1_id}-{each.criteria2_id}"
             values[value] = each.js_value
 
-        # This creates pairs of all possible combinations of alternatives
-        pairs = list(combinations(project.criteria.all(), 2))
+        # This creates pairs of all possible combinations of criteria
+        pairs = list(combinations(project.criteria.filter(parent__isnull=True), 2))
+
+        # This creates a list of pairs grouped by criteria, for all the sub-criteria that are entered
+        for each in project.criteria.annotate(child_count=Count("children")).filter(child_count__gt=0):
+            sub_pairs[each.name] = list(combinations(project.criteria.filter(parent=each), 2))
 
     if request.method == "POST":
         if page == "criteria":
@@ -606,9 +615,11 @@ def project(request, id, page="home"):
         "remove_padding_main_container": True,
         "criteria": criteria,
         "pairs": pairs,
+        "sub_pairs": sub_pairs,
         "values": values,
         "page": page,
-        "criteria_list": project.criteria.all().order_by("id").annotate(is_done=Count("alternative_pairs", filter=Q(alternative_pairs__user=request.user))),
+        "criteria_list": project.criteria.all().annotate(is_done=Count("alternative_pairs", filter=Q(alternative_pairs__user=request.user))).annotate(has_children=Count("children")),
+        "criteria_sub_list": criteria_sub_list,
         "criteria_values": OptamosCriteriaValue.objects.filter(criteria1__project=project, user=request.user).count(), 
         # Count how many there theoretically are, so that we can verify that all are saved -- this is particularly 
         # relevant in case people edit the project and add criteria in which case we need to show an error

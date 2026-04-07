@@ -3134,12 +3134,14 @@ class OptamosCriteria(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
     project = models.ForeignKey(OptamosProject, on_delete=models.CASCADE, related_name="criteria")
+    parent = models.ForeignKey("self", on_delete=models.CASCADE, null=True, blank=True, related_name="children")
+    position = models.PositiveSmallIntegerField(db_index=True)
 
     def __str__(self):
         return self.name
 
     class Meta:
-        ordering = ["id"]
+        ordering = ["position"]
 
 class OptamosAlternativeValue(models.Model):
     criteria = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="alternative_pairs")
