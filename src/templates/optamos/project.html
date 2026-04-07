@@ -58,6 +58,11 @@
 
 <div class="flex">
   <div class="flex-1 border-r border-gray-200 py-10 relative">
+
+    {% if team %}
+      {% include "optamos/_team.menu.html" %}
+    {% else %}
+
     <section id="criteria" class="pr-5 mt-4">
       <h2>Ranking</h2>
       <ul>
@@ -160,6 +165,8 @@
         <span class="text-red-600 font-bold">✗ Inconsistent</span>
       {% endif %}
     </section>
+
+    {% endif %}
 
   </div>
   <div class="flex-2 py-10 px-10 mt-4">

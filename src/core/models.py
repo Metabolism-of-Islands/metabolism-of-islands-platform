@@ -3145,7 +3145,7 @@ class OptamosAlternativeValue(models.Model):
     criteria = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="alternative_pairs")
     alternative1 = models.ForeignKey(OptamosAlternative, on_delete=models.CASCADE, related_name="setting1")
     alternative2 = models.ForeignKey(OptamosAlternative, on_delete=models.CASCADE, related_name="setting2")
-    value = models.DecimalField(max_digits=3, decimal_places=1)
+    value = models.FloatField()
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True) # If the user is null, that means this is the "average" user
 
     class Meta:
@@ -3168,7 +3168,7 @@ class OptamosAlternativeValue(models.Model):
     # If the value is 2 and up, we reduce 1 to make the range 1-8 for positive values
     @property
     def js_value(self):
-        if self.value > 0:
+        if self.value >= 1:
             return self.value-1
         else:
             return self.value+1
@@ -3182,25 +3182,24 @@ class OptamosAlternativeValue(models.Model):
     def id2(self):
         return self.alternative2.id
 
+    # We keep an 'average' row in the database, based on all entered values by users. This row is updated
+    # every time someone saves new values.
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-
         if self.user:
             values = []
-            for each in OptamosAlternativeValue.objects.filter(alternative1=self.alternative1, alternative2=self.alternative2):
-                values.append(each.value1)
+            for each in OptamosAlternativeValue.objects.filter(criteria=self.criteria, alternative1=self.alternative1, alternative2=self.alternative2, user__isnull=False):
+                values.append(each.value2)
             
             # This is the geometric mean which we use to calculate the average value
             geometric_mean = statistics.geometric_mean(values)
 
-            # However, this means that we have a "traditional" value which needs to be converted
-            # back to the scale that we use here (-8 to 8)
-            if geometric_mean > 0:
-                geometric_mean += 1
-            else:
-                geometric_mean -= 1
+            # Any value between 0 and 1 means that it favors option A, and the fraction indicates 
+            # how much (e.g. 1/7 means a 'score' of 7 for option A), which we represent as a negative
+            # number
+            if geometric_mean < 1:
+                geometric_mean = -1/geometric_mean
 
-            print(geometric_mean)
             info, created = OptamosAlternativeValue.objects.update_or_create(
                 defaults={
                     "value": geometric_mean,
@@ -3214,7 +3213,7 @@ class OptamosAlternativeValue(models.Model):
 class OptamosCriteriaValue(models.Model):
     criteria1 = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="setting1")
     criteria2 = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="setting2")
-    value = models.DecimalField(max_digits=3, decimal_places=1)
+    value = models.FloatField()
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
 
     class Meta:
@@ -3238,7 +3237,7 @@ class OptamosCriteriaValue(models.Model):
     # If the value is 2 and up, we reduce 1 to make the range 1-8 for positive values
     @property
     def js_value(self):
-        if self.value > 0:
+        if self.value >= 1:
             return self.value-1
         else:
             return self.value+1
@@ -3251,6 +3250,35 @@ class OptamosCriteriaValue(models.Model):
     @property
     def id2(self):
         return self.criteria2.id
+
+    # We keep an 'average' row in the database, based on all entered values by users. This row is updated
+    # every time someone saves new values.
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if self.user:
+            values = []
+            for each in OptamosCriteriaValue.objects.filter(criteria1=self.criteria1, criteria2=self.criteria2, user__isnull=False):
+                values.append(each.value2)
+            
+            # This is the geometric mean which we use to calculate the average value
+            geometric_mean = statistics.geometric_mean(values)
+
+            # Any value between 0 and 1 means that it favors option A, and the fraction indicates 
+            # how much (e.g. 1/7 means a 'score' of 7 for option A), which we represent as a negative
+            # number
+            if geometric_mean < 1:
+                geometric_mean = -1/geometric_mean
+
+            info, created = OptamosCriteriaValue.objects.update_or_create(
+                defaults={
+                    "value": geometric_mean,
+                },
+                criteria1 = self.criteria1,
+                criteria2 = self.criteria2,
+                user = None,
+            )
+
 
 ###
 ### DUMMY FORMAT

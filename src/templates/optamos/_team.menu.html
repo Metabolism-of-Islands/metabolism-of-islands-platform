@@ -1,0 +1,66 @@
+
+    <section id="criteria" class="pr-5 mt-4">
+      <h2>Team rankings</h2>
+      <ul>
+        <li>
+          <a href="{% url "optamos:project_team_ranking" project.uid %}?rank_all_criteria=true" 
+            class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold no-underline
+            {% if page == "rank_all_criteria" %}
+              text-white bg-sky-600 
+            {% else %}
+              text-gray-700 hover:bg-gray-50 hover:text-sky-600 
+            {% endif %}
+           ">
+            <span class="truncate">Criteria rankings</span>
+          </a>
+        </li>
+      {% if criteria_list %}
+        {% for each in criteria_list %}
+          <li>
+            <a href="{% url "optamos:project_team_ranking" project.uid %}?criteria={{ each.id }}" 
+              class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold no-underline
+              {% if each == criteria %}
+                text-white bg-sky-600 
+              {% else %}
+                text-gray-700 hover:bg-gray-50 hover:text-sky-600 
+              {% endif %}
+             ">
+              <span class="truncate">{{ each }}</span>
+            </a>
+          </li>
+        {% endfor %}
+
+      {% endif %}
+      </ul>
+
+    </section>
+
+    <section class="mt-10" id="inconsistency">
+      <h2>Results</h2>
+        <ul class="pr-5">
+          <li>
+            <a href="{% url "optamos:project_team_results" project.uid %}" 
+              class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold no-underline
+              {% if page == "results" %}
+                text-white bg-sky-600 
+              {% else %}
+                text-gray-700 hover:bg-gray-50 hover:text-sky-600 
+              {% endif %}
+             ">
+              <span class="truncate">Results</span>
+            </a>
+          </li>
+          <li>
+            <a href="{% url "optamos:project_team_sensitivity" project.uid %}" 
+              class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold no-underline
+              {% if page == "sensitivity" %}
+                text-white bg-sky-600 
+              {% else %}
+                text-gray-700 hover:bg-gray-50 hover:text-sky-600 
+              {% endif %}
+             ">
+              <span class="truncate">Sensitity analysis</span>
+            </a>
+          </li>
+        </ul>
+    </section>

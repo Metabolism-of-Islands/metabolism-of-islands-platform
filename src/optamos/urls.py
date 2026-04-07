@@ -16,6 +16,7 @@ urlpatterns = baseline_urlpatterns + [
     path("projects/<int:id>/results/", views.project_results, name="project_results"),
     path("projects/<int:id>/overview/", views.project_overview, name="project_overview"),
     path("projects/<int:id>/sensitivity/", views.project_results, {"page": "sensitivity"}, name="project_sensitivity"),
+    path("projects/<int:id>/team/sensitivity/", views.project_results, {"page": "sensitivity", "team": True}, name="project_team_sensitivity"),
     path("projects/<int:id>/settings/", views.project_settings, name="project_settings"),
     path("projects/<int:id>/team/", views.project_team, name="project_team"),
     path("projects/<int:id>/team/ranking/", views.project_team_results, name="project_team_ranking"),

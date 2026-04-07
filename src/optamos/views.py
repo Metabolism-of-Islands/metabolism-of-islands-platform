@@ -381,12 +381,9 @@ def project_team_results(request, id, page="rank_all_criteria"):
         scores = OptamosCriteriaValue.objects.filter(criteria1__project=project)
 
         for each in scores:
+            user = "AVERAGE" if not each.user else each.user.first_name
             label = f"range-{each.criteria1_id}-{each.criteria2_id}"
-            values[each.user.first_name][label] = each.value
-
-        for each in scores.values("criteria1", "criteria2").annotate(avg_score=Avg("value")):
-            label = f"range-{each["criteria1"]}-{each["criteria2"]}"
-            values["AVERAGE"][label] = each["avg_score"]
+            values[user][label] = each.value
 
         # This creates pairs of all possible combinations of alternatives
         pairs = list(combinations(project.criteria.all(), 2))
@@ -398,12 +395,9 @@ def project_team_results(request, id, page="rank_all_criteria"):
         scores = OptamosAlternativeValue.objects.filter(criteria=criteria)
 
         for each in scores:
+            user = "AVERAGE" if not each.user else each.user.first_name
             label = f"range-{each.alternative1_id}-{each.alternative2_id}"
-            values[each.user.first_name][label] = each.value
-
-        for each in scores.values("alternative1", "alternative2").annotate(avg_score=Avg("value")):
-            label = f"range-{each["alternative1"]}-{each["alternative2"]}"
-            values["AVERAGE"][label] = each["avg_score"]
+            values[user][label] = each.value
 
         # This creates pairs of all possible combinations of alternatives
         pairs = list(combinations(project.alternatives.all(), 2))
@@ -636,6 +630,7 @@ def project_results(request, id, page="results", team=False):
         messages.error(request, "Project is not found - either it does not exist or you do not have access. Below are your projects.")
         return redirect("optamos:projects")
 
+    user = None if team else request.user
     # START OF CRITERIA EVALUATION
     points_alternatives = {}
     points_criteria = {}
@@ -643,12 +638,12 @@ def project_results(request, id, page="results", team=False):
         points_alternatives[each] = 0
     for each in project.criteria.all():
         points_criteria[each] = 0
-    for each in OptamosCriteriaValue.objects.filter(criteria1__project=project, user=request.user):
+    for each in OptamosCriteriaValue.objects.filter(criteria1__project=project, user=user):
         if each.value > 0:
             points_criteria[each.criteria2] += each.value
         elif each.value < 0:
             points_criteria[each.criteria1] += each.value*-1
-    for each in OptamosAlternativeValue.objects.filter(criteria__project=project, user=request.user):
+    for each in OptamosAlternativeValue.objects.filter(criteria__project=project, user=user):
         if each.value > 0:
             points_alternatives[each.alternative2] += each.value
         elif each.value < 0:
@@ -713,7 +708,7 @@ def project_results(request, id, page="results", team=False):
     # Get all criteria and alternatives
     criteria = list(OptamosCriteria.objects.filter(project=project))
     alternatives = list(OptamosAlternative.objects.filter(project=project))
-    alternative_values = OptamosAlternativeValue.objects.filter(criteria__project=project, user=request.user)
+    alternative_values = OptamosAlternativeValue.objects.filter(criteria__project=project, user=user)
 
     # Step 1: Initialize matrices per criterion
     alternative_matrices = {}
@@ -787,7 +782,7 @@ def project_results(request, id, page="results", team=False):
     )
 
     # CONSISTENCY RATIO CALCULATION
-    consistency = calculate_consistency_ratio(list(project.criteria.all()), OptamosCriteriaValue.objects.filter(criteria1__project=project, user=request.user))
+    consistency = calculate_consistency_ratio(list(project.criteria.all()), OptamosCriteriaValue.objects.filter(criteria1__project=project, user=user))
 
     # Compute CR per criterion
     alternative_crs = {}
@@ -1099,6 +1094,8 @@ def project_results(request, id, page="results", team=False):
         "ci": consistency.ci,
         "cr": consistency.cr,
         "importance": importance,
+        "team": team,
+        "access_level": OptamosUser.objects.get(user=request.user, project=project).level,
     }
 
     return render(request, "optamos/project.html", context)

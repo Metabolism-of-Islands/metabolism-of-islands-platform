@@ -44,7 +44,7 @@
             <a class="btn-blue btn-sm" href="{% url "optamos:project_settings" each.uid %}">Edit project</a>
             <a class="btn-blue btn-sm" href="{% url "optamos:project_team" each.uid %}">Team</a>
             {% if each.users.count > 1 %}
-              <a class="btn-blue btn-sm" href="{% url "optamos:project_team_results" each.uid %}">Group results</a>
+              <a class="btn-blue btn-sm" href="{% url "optamos:project_team_ranking" each.uid %}">Group results</a>
             {% endif %}
           {% endif %}
         </div>
