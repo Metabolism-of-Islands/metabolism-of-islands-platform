@@ -145,7 +145,12 @@
     @apply border-sky-600 border-b-3;
   }
 
+  .item.child {
+    @apply pl-4 border-l-2 border-sky-200;
+  }
+
 }
+
 
 nav svg {
   width:1.1em;

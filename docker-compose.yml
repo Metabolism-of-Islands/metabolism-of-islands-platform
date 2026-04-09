@@ -9,6 +9,8 @@ services:
       POSTGRES_DB: moi
     networks:
       - moi_network
+    volumes:
+      - db_data:/var/lib/postgresql/data
 
   adminer:
     command: php -S 0.0.0.0:8080 -t /var/www/html
@@ -37,3 +39,6 @@ services:
 networks:
   moi_network:
     driver: bridge
+
+volumes:
+  db_data:

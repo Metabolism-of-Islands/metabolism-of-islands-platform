@@ -295,11 +295,18 @@ def project_settings(request, id):
             else:
                 each.delete()
 
+        position = 0
         for each in project.criteria.all():
             label = f"criteria_{each.id}"
             if request.POST.get(label):
                 each.name = request.POST[label]
                 each.description = request.POST.get(f"desc_criteria_{each.id}")
+                if request.POST.get(f"child_{each.id}") == "true":
+                    each.parent = previous
+                else:
+                    previous = each
+                position += 1
+                each.position = position
                 if each.description == "":
                     each.description = None
                 each.save()
@@ -323,7 +330,8 @@ def project_settings(request, id):
                 if criterion:
                     if description == "":
                         description = None
-                    OptamosCriteria.objects.create(project=project, name=criterion, description=description)
+                    position += 1
+                    OptamosCriteria.objects.create(project=project, name=criterion, description=description, position=position)
 
         messages.success(request, "Changes have been saved.")
         return redirect(reverse("optamos:project", args=[project.uid]))
@@ -619,7 +627,6 @@ def project(request, id, page="home"):
         "values": values,
         "page": page,
         "criteria_list": project.criteria.all().annotate(is_done=Count("alternative_pairs", filter=Q(alternative_pairs__user=request.user))).annotate(has_children=Count("children")),
-        "criteria_sub_list": criteria_sub_list,
         "criteria_values": OptamosCriteriaValue.objects.filter(criteria1__project=project, user=request.user).count(), 
         # Count how many there theoretically are, so that we can verify that all are saved -- this is particularly 
         # relevant in case people edit the project and add criteria in which case we need to show an error
