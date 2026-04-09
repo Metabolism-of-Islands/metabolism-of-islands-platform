@@ -89,7 +89,7 @@
         </li>
       {% if criteria_list %}
         {% for each in criteria_list %}
-          <li class="{% if each.parent %}ml-10{% elif each.has_children %}mt-4 mb-2 font-bold uppercase text-xl{% endif %}">
+          <li class="{% if each.has_children %}mt-4 mb-2 font-bold uppercase{% endif %}">
             {% if each.has_children %}
               <span class="truncate">{{ each }}</span>
             {% else %}
@@ -248,8 +248,8 @@
             </section>
           {% endfor %}
 
-          {% if sub_pairs %}
-            {% for name, pair in sub_pairs %}
+          {% if sub_pairs and page == "rank_all_criteria" %}
+            {% for name, pair in sub_pairs.items %}
               <h2>Criteria: {{ name }}</h2>
 
               {% for alternative1, alternative2 in pair %}
@@ -311,7 +311,7 @@
     {% elif page == "results" %}
       <div class="relative h-20">
         {% for each in criteria_list %}
-          {% if not each.is_done %}
+          {% if not each.is_done and not each.has_children %}
             <div class="alert alert-warning absolute">
               <svg xmlns="http://www.w3.org/2000/svg" class="inline mr-1" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="m40-120 440-760 440 760H40Zm138-80h604L480-720 178-200Zm302-40q17 0 28.5-11.5T520-280q0-17-11.5-28.5T480-320q-17 0-28.5 11.5T440-280q0 17 11.5 28.5T480-240Zm-40-120h80v-200h-80v200Zm40-100Z"/></svg>
               <strong class="mr-2">WARNING</strong>

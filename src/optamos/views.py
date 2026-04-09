@@ -228,12 +228,23 @@ def project_create(request):
                     if each:
                         OptamosTag.objects.create(project=project, name=each)
 
-            if (criteria_list := request.POST.get("criteria")):
-                position = 0
-                for criteria in criteria_list.split("\n"):
-                    if criteria:
+            previous_main_criteria = None
+            position = 0
+            if request.POST.getlist("criteria"):
+                criteria = request.POST.getlist("criteria")
+                descriptions = request.POST.getlist("desc_criteria")
+                child = request.POST.getlist("child")
+                for criterion, description, child in zip(criteria, descriptions, child):
+                    if criterion:
+                        if description == "":
+                            description = None
                         position += 1
-                        OptamosCriteria.objects.create(project=project, name=criteria.strip(), position=position)
+                        parent = None
+                        if child == "true" and previous_main_criteria:
+                            parent = previous_main_criteria
+                        info = OptamosCriteria.objects.create(project=project, name=criterion, description=description, position=position, parent=parent)
+                        if not info.parent:
+                            previous_main_criteria = info
 
             if request.FILES.get("csv_file"):
                 messages.success(request, "Your csv file was loaded.")
@@ -302,9 +313,10 @@ def project_settings(request, id):
                 each.name = request.POST[label]
                 each.description = request.POST.get(f"desc_criteria_{each.id}")
                 if request.POST.get(f"child_{each.id}") == "true":
-                    each.parent = previous
+                    each.parent = previous_main_criteria
                 else:
-                    previous = each
+                    each.parent = None
+                    previous_main_criteria = each
                 position += 1
                 each.position = position
                 if each.description == "":
@@ -326,12 +338,18 @@ def project_settings(request, id):
         if request.POST.getlist("criteria"):
             criteria = request.POST.getlist("criteria")
             descriptions = request.POST.getlist("desc_criteria")
-            for criterion, description in zip(criteria, descriptions):
+            child = request.POST.getlist("child")
+            for criterion, description, child in zip(criteria, descriptions, child):
                 if criterion:
                     if description == "":
                         description = None
                     position += 1
-                    OptamosCriteria.objects.create(project=project, name=criterion, description=description, position=position)
+                    parent = None
+                    if child == "true" and previous_main_criteria:
+                        parent = previous_main_criteria
+                    info = OptamosCriteria.objects.create(project=project, name=criterion, description=description, position=position, parent=parent)
+                    if not info.parent:
+                        previous_main_criteria = info
 
         messages.success(request, "Changes have been saved.")
         return redirect(reverse("optamos:project", args=[project.uid]))
@@ -547,10 +565,24 @@ def project(request, id, page="home"):
     values = {}
     pairs = None
     sub_pairs = {}
+    sub_criteria_pairs = 0
+
+    # This creates a list of pairs grouped by criteria, for all the sub-criteria that are entered
+    # We need this for the navigation menu so that's why we do it here
+    for each in project.criteria.annotate(child_count=Count("children")).filter(child_count__gt=0):
+        sub_combos = list(combinations(project.criteria.filter(parent=each), 2))
+        sub_pairs[each.name] = sub_combos
+        sub_criteria_pairs += len(sub_combos)
 
     if (criteria := request.GET.get("criteria")):
         page = "criteria"
         criteria = OptamosCriteria.objects.get(project=project, pk=criteria)
+
+        # If this is a parent that has children, then we will not rank the parent 
+        # but only the children, so let's redirect in that case
+        if criteria.children.all():
+            child = criteria.children.all().order_by("position").first()
+            return redirect(reverse("optamos:project", args=[project.uid]) + f"?criteria={child.id}")
 
         # Let's create a dict with the names of the <input> fields and the value for them
         # so we can load them into the form
@@ -572,10 +604,6 @@ def project(request, id, page="home"):
         # This creates pairs of all possible combinations of criteria
         pairs = list(combinations(project.criteria.filter(parent__isnull=True), 2))
 
-        # This creates a list of pairs grouped by criteria, for all the sub-criteria that are entered
-        for each in project.criteria.annotate(child_count=Count("children")).filter(child_count__gt=0):
-            sub_pairs[each.name] = list(combinations(project.criteria.filter(parent=each), 2))
-
     if request.method == "POST":
         if page == "criteria":
             OptamosAlternativeValue.objects.filter(criteria=criteria, user=request.user).delete()
@@ -590,11 +618,11 @@ def project(request, id, page="home"):
                     user = request.user,
                 )
             if "back" in request.POST:
-                next_criteria = project.criteria.filter(pk__lt=criteria.pk).order_by("-id").first()
+                next_criteria = project.criteria.filter(position__lt=criteria.position, children__isnull=True).order_by("-position").first()
                 if not next_criteria:
                     return redirect(reverse("optamos:project", args=[project.uid]) + f"?rank_all_criteria")
             else:
-                next_criteria = project.criteria.filter(pk__gt=criteria.pk).order_by("id").first()
+                next_criteria = project.criteria.filter(position__gt=criteria.position).order_by("position").first()
             if next_criteria:
                 return redirect(reverse("optamos:project", args=[project.uid]) + f"?criteria={next_criteria.id}")
             else:
@@ -611,7 +639,17 @@ def project(request, id, page="home"):
                     value = ranking_value_converter(int(float(request.POST[value]))),
                     user = request.user,
                 )
-            next_criteria = project.criteria.order_by("id").first()
+            for key, value in sub_pairs.items():
+                for criteria1,criteria2 in value:
+                    # This creates the name of the relevant input field
+                    value = f"range-{criteria1.id}-{criteria2.id}"
+                    OptamosCriteriaValue.objects.create(
+                        criteria1 = criteria1,
+                        criteria2 = criteria2,
+                        value = ranking_value_converter(int(float(request.POST[value]))),
+                        user = request.user,
+                    )
+            next_criteria = project.criteria.order_by("position").first()
             if next_criteria:
                 return redirect(reverse("optamos:project", args=[project.uid]) + f"?criteria={next_criteria.id}")
             else:
@@ -626,11 +664,11 @@ def project(request, id, page="home"):
         "sub_pairs": sub_pairs,
         "values": values,
         "page": page,
-        "criteria_list": project.criteria.all().annotate(is_done=Count("alternative_pairs", filter=Q(alternative_pairs__user=request.user))).annotate(has_children=Count("children")),
+        "criteria_list": project.criteria.all().annotate(is_done=Count("alternative_pairs", filter=Q(alternative_pairs__user=request.user))).annotate(has_children=Count("children")).order_by("position"),
         "criteria_values": OptamosCriteriaValue.objects.filter(criteria1__project=project, user=request.user).count(), 
         # Count how many there theoretically are, so that we can verify that all are saved -- this is particularly 
         # relevant in case people edit the project and add criteria in which case we need to show an error
-        "total_required_criteria_values": len(list(combinations(project.criteria.all(), 2))), 
+        "total_required_criteria_values": len(list(combinations(project.criteria.filter(parent__isnull=True), 2))) + sub_criteria_pairs,
         "menu": "projects",
         "cr": calculate_consistency_ratio(list(project.criteria.all()), OptamosCriteriaValue.objects.filter(criteria1__project=project, user=request.user)).cr,
         "next_criteria": project.criteria.filter(pk__gt=criteria.pk).order_by("id").first() if criteria else None,
@@ -650,6 +688,14 @@ def project_results(request, id, page="results", team=False):
         return redirect("optamos:projects")
 
     user = None if team else request.user
+
+    # This creates a list of pairs grouped by criteria, for all the sub-criteria that are entered
+    # We need this for the navigation menu so that's why we do it here
+    sub_criteria_pairs = 0
+    for each in project.criteria.annotate(child_count=Count("children")).filter(child_count__gt=0):
+        sub_combos = list(combinations(project.criteria.filter(parent=each), 2))
+        sub_criteria_pairs += len(sub_combos)
+
     # START OF CRITERIA EVALUATION
     points_alternatives = {}
     points_criteria = {}
@@ -1082,11 +1128,11 @@ def project_results(request, id, page="results", team=False):
         "remove_padding_main_container": True,
         "criteria": criteria,
         "page": page,
-        "criteria_list": project.criteria.all().order_by("id").annotate(is_done=Count("alternative_pairs", filter=Q(alternative_pairs__user=request.user))),
+        "criteria_list": project.criteria.all().annotate(is_done=Count("alternative_pairs", filter=Q(alternative_pairs__user=request.user))).annotate(has_children=Count("children")).order_by("position"),
         "criteria_values": OptamosCriteriaValue.objects.filter(criteria1__project=project, user=request.user).count(), 
         # Count how many there theoretically are, so that we can verify that all are saved -- this is particularly 
         # relevant in case people edit the project and add criteria in which case we need to show an error
-        "total_required_criteria_values": len(list(combinations(project.criteria.all(), 2))), 
+        "total_required_criteria_values": len(list(combinations(project.criteria.filter(parent__isnull=True), 2))) + sub_criteria_pairs, 
         "menu": "projects",
 
         "criteria": criteria,

@@ -55,8 +55,8 @@
                      class="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
               />
               <button type="button"
-                      class="indent cursor-pointer ml-2 text-gray-600 hover:text-gray-800"
-                      title="Make child of criterion above">
+                      class="indent cursor-pointer ml-2 text-gray-600 hover:text-gray-800 indent_{{ each.id}}"
+                      title="Make this into a sub-criterion">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                         <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                     </svg>
@@ -76,7 +76,6 @@
                       placeholder="Description">{{ each.description|default_if_none:"" }}</textarea>
           </div>
         {% endfor %}
-
 
         <div class="mt-2 item flex flex-col">
           <div class="flex items-center">
@@ -213,9 +212,7 @@ $(function(){
     $("#desc_criteria").click();
   {% endif %}
 
-});
-
-  $(document).on('click', '.indent', function (e) {
+  $(document).on("click", ".indent", function (e) {
     const $button = $(this);
     const $item = $button.closest(".item");
     const iid = $item.data("id");
@@ -251,10 +248,17 @@ $(function(){
       $button
         .removeClass("text-gray-600 hover:text-gray-800")
         .addClass("text-sky-600")
-        .prop("title", "Already a child criterion");
+        .prop("title", "Convert to a main criterion");
     }
   });
 
+  {% for each in project.criteria.all %}
+    {% if each.parent %}
+      $(".indent.indent_{{ each.id }}").click();
+    {% endif %}
+  {% endfor %}
+
+});
 
 </script>
   
