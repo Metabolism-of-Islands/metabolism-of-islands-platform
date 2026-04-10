@@ -61,12 +61,21 @@
         <path d="M256 144C256 117.5 277.5 96 304 96L336 96C362.5 96 384 117.5 384 144L384 496C384 522.5 362.5 544 336 544L304 544C277.5 544 256 522.5 256 496L256 144zM64 336C64 309.5 85.5 288 112 288L144 288C170.5 288 192 309.5 192 336L192 496C192 522.5 170.5 544 144 544L112 544C85.5 544 64 522.5 64 496L64 336zM496 160L528 160C554.5 160 576 181.5 576 208L576 496C576 522.5 554.5 544 528 544L496 544C469.5 544 448 522.5 448 496L448 208C448 181.5 469.5 160 496 160z"/>
       </svg>
       <div>
-        <a href="{% url "optamos:project_team_ranking" project.uid %}" class="btn-blue mt-1">
+        <a href="{% url "optamos:project_team_ranking" project.uid %}" class="btn-blue mt-1 {% if project.users.count == 1 %}cursor-default{% endif %}">
           Group results
         </a>
       </div>
     </div>
   </div>
+</div>
+
+<div class="justify-end flex mt-10">
+  <a href="{% url "optamos:projects" %}?delete={{ project.uid }}" onclick="javascript:return confirm('Are you sure you want to delete this project?')" class="remove text-gray-500 flex items-center text-sm cursor-pointer ml-2 focus:outline-none focus:ring-2 focus:ring-red-500 hover:text-red-600">
+    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor" class="mr-2">
+      <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/>
+    </svg>
+    Delete this project
+  </a>
 </div>
 
 {% endblock %}

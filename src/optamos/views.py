@@ -157,7 +157,7 @@ def resources(request):
 
 def projects(request):
     if not request.user.is_authenticated:
-        return redirect("optamos:login")
+        return redirect(f"{reverse("optamos:login")}?redirect={request.path}")
 
     access_qs = OptamosUser.objects.filter(project=OuterRef("pk"), user=request.user).values("level")[:1]
     projects = OptamosProject.objects_include_private.filter(users__user=request.user).annotate(
@@ -180,7 +180,7 @@ def projects(request):
 def project_create(request):
 
     if not request.user.is_authenticated:
-        return redirect("optamos:login")
+        return redirect(f"{reverse("optamos:login")}?redirect={request.path}")
 
     if request.method == "POST":
 
@@ -277,7 +277,7 @@ def project_create(request):
 def project_settings(request, id):
 
     if not request.user.is_authenticated:
-        return redirect("optamos:login")
+        return redirect(f"{reverse("optamos:login")}?redirect={request.path}")
 
     project = OptamosProject.objects_include_private.get(pk=id)
     user_access = OptamosUser.objects.filter(project=project, user=request.user, level="admin")
@@ -366,7 +366,7 @@ def project_settings(request, id):
 def project_overview(request, id):
 
     if not request.user.is_authenticated:
-        return redirect("optamos:login")
+        return redirect(f"{reverse("optamos:login")}?redirect={request.path}")
 
     project = OptamosProject.objects_include_private.get(pk=id)
     user_access = OptamosUser.objects.filter(project=project, user=request.user, level="admin")
@@ -384,7 +384,7 @@ def project_overview(request, id):
 def project_team_results(request, id, page="rank_all_criteria"):
 
     if not request.user.is_authenticated:
-        return redirect("optamos:login")
+        return redirect(f"{reverse("optamos:login")}?redirect={request.path}")
 
     project = OptamosProject.objects_include_private.get(pk=id)
     user_access = OptamosUser.objects.filter(project=project, user=request.user, level="admin")
@@ -450,7 +450,7 @@ def project_team_results(request, id, page="rank_all_criteria"):
 def project_team(request, id):
 
     if not request.user.is_authenticated:
-        return redirect("optamos:login")
+        return redirect(f"{reverse("optamos:login")}?redirect={request.path}")
 
     project = OptamosProject.objects_include_private.get(pk=id)
     user_access = OptamosUser.objects.filter(project=project, user=request.user, level="admin")
@@ -552,7 +552,7 @@ def project_team(request, id):
 def project(request, id, page="home"):
 
     if not request.user.is_authenticated:
-        return redirect("optamos:login")
+        return redirect(f"{reverse("optamos:login")}?redirect={request.path}")
 
     if not request.GET:
         return redirect(f"{request.path}?rank_all_criteria=true")
@@ -680,7 +680,7 @@ def project(request, id, page="home"):
 def project_results(request, id, page="results", team=False):
 
     if not request.user.is_authenticated:
-        return redirect("optamos:login")
+        return redirect(f"{reverse("optamos:login")}?redirect={request.path}")
 
     project = OptamosProject.objects_include_private.filter(pk=id, users__user=request.user).first()
     if not project:
@@ -1200,7 +1200,7 @@ def account_logout(request):
 
 def account(request):
     if not request.user.is_authenticated:
-        return redirect("optamos:login")
+        return redirect(f"{reverse("optamos:login")}?redirect={request.path}")
 
     if request.method == "POST":
         user = request.user

@@ -36,6 +36,9 @@
 
       <div>
         <button type="submit" class="flex w-full justify-center btn-blue px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 cursor-pointer">Log in</button>
+        {% if referer %}
+          <input type="hidden" name="next" value="{{ referer }}" />
+        {% endif %}
       </div>
     </form>
 
