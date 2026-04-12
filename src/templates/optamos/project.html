@@ -128,7 +128,7 @@
 
     </section>
 
-    <section class="mt-10" id="inconsistency">
+    <section class="mt-10">
       <h2>Results</h2>
         <ul class="pr-5">
           <li>
@@ -341,29 +341,48 @@
             {% for o in alternatives %}
               <th>{{ o.name }}</th>
             {% endfor %}
-            <th hidden>CR</th>
             <th>% Importance</th>
           </tr>
         </thead>
+
         <tbody>
-          {% for row in summary_table %}
-            <tr>
-              <th>{{ row.criterion }}</th>
-              {% for val in row.alternatives %}
-                <td>{{ val|floatformat:1 }}%</td>
-              {% endfor %}
-              <td hidden>{{ row.cr|floatformat:2 }}</td>
-              <td>{{ row.importance|floatformat:1 }}%</td>
+          {% for group in grouped_summary %}
+
+            <!-- Parent Row -->
+            <tr style="background-color: #f3f4f6;">
+              <th colspan="{{ alternatives|length|add:'2' }}">
+                <strong>{{ group.parent }}</strong>
+              </th>
             </tr>
+
+            <!-- Children -->
+            {% for row in group.rows %}
+              <tr>
+                <td style="padding-left: 2rem;">
+                  {% if group.is_group %}
+                    <span style="color:#9ca3af;">→</span>
+                  {% endif %}
+                  {{ row.child }}
+                </td>
+
+                {% for val in row.alternatives %}
+                  <td>{{ val|floatformat:1 }}%</td>
+                {% endfor %}
+
+                <td><strong>{{ row.importance|floatformat:1 }}%</strong></td>
+              </tr>
+            {% endfor %}
+
           {% endfor %}
         </tbody>
+
         <tfoot>
           <tr>
             <th>Totals</th>
-            {% for total in summary_totals %}
+            {% for total in totals %}
               <th>{{ total|floatformat:1 }}%</th>
             {% endfor %}
-            <th colspan="2"></th>
+            <th></th>
           </tr>
         </tfoot>
       </table>
@@ -375,7 +394,7 @@
           <tr>
             <th>Rank</th>
             <th>Alternative</th>
-            <th>Percentage</th>
+            <th>Score (%)</th>
           </tr>
         </thead>
         <tbody>
@@ -383,7 +402,7 @@
             <tr>
               <td>{{ forloop.counter }}</td>
               <td>{{ item.alternative.name }}</td>
-              <td>{{ item.score|multiply:100|floatformat:1 }}%</td>
+              <td><strong>{{ item.score|multiply:100|floatformat:1 }}%</strong></td>
             </tr>
           {% endfor %}
         </tbody>
@@ -391,14 +410,9 @@
 
       <div class="mt-5 p-5 bg-gray-100">
         <h2>Excel data export</h2>
-        <a class="btn btn-blue" href="?export=true">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path fill="#ffffff" d="M352 96C352 78.3 337.7 64 320 64C302.3 64 288 78.3 288 96L288 306.7L246.6 265.3C234.1 252.8 213.8 252.8 201.3 265.3C188.8 277.8 188.8 298.1 201.3 310.6L297.3 406.6C309.8 419.1 330.1 419.1 342.6 406.6L438.6 310.6C451.1 298.1 451.1 277.8 438.6 265.3C426.1 252.8 405.8 252.8 393.3 265.3L352 306.7L352 96zM160 384C124.7 384 96 412.7 96 448L96 480C96 515.3 124.7 544 160 544L480 544C515.3 544 544 515.3 544 480L544 448C544 412.7 515.3 384 480 384L433.1 384L376.5 440.6C345.3 471.8 294.6 471.8 263.4 440.6L206.9 384L160 384zM464 440C477.3 440 488 450.7 488 464C488 477.3 477.3 488 464 488C450.7 488 440 477.3 440 464C440 450.7 450.7 440 464 440z"/></svg>
-          Download summary
-        </a>
-        <a class="btn btn-blue" href="?export_full=true">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path fill="#ffffff" d="M352 96C352 78.3 337.7 64 320 64C302.3 64 288 78.3 288 96L288 306.7L246.6 265.3C234.1 252.8 213.8 252.8 201.3 265.3C188.8 277.8 188.8 298.1 201.3 310.6L297.3 406.6C309.8 419.1 330.1 419.1 342.6 406.6L438.6 310.6C451.1 298.1 451.1 277.8 438.6 265.3C426.1 252.8 405.8 252.8 393.3 265.3L352 306.7L352 96zM160 384C124.7 384 96 412.7 96 448L96 480C96 515.3 124.7 544 160 544L480 544C515.3 544 544 515.3 544 480L544 448C544 412.7 515.3 384 480 384L433.1 384L376.5 440.6C345.3 471.8 294.6 471.8 263.4 440.6L206.9 384L160 384zM464 440C477.3 440 488 450.7 488 464C488 477.3 477.3 488 464 488C450.7 488 440 477.3 440 464C440 450.7 450.7 440 464 440z"/></svg>
-          Download all tables
-        </a>
+
+        <a class="btn btn-blue" href="?export=true">Download summary</a>
+        <a class="btn btn-blue" href="?export_full=true">Download all tables</a>
       </div>
 
       <h2 class="mt-10" id="detailed">Detailed calculations</h2>
@@ -406,118 +420,14 @@
 
       <div id="full-details" class="hidden">
 
-        <h1 class="mt-5">Criteria evaluation</h1>
-
-        <table class="table table-striped">
-          <thead>
-            <tr>
-              <th></th>
-              {% for c in matrix_criteria %}
-                <th>{{ c.name }}</th>
-              {% endfor %}
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in matrix_criteria %}
-              <tr>
-                <th>{{ row.name }}</th>
-                {% for col in matrix_criteria %}
-                  <td>
-                    {{ matrix|get_item:row.name|get_item:col.name|floatformat:2 }}
-                  </td>
-                {% endfor %}
-              </tr>
-            {% endfor %}
-          </tbody>
-          <tfoot>
-            <tr>
-              <th>TOTAL</th>
-              {% for col in matrix_criteria %}
-                <th>{{ column_totals|get_item:col.id|floatformat:2 }}</th>
-              {% endfor %}
-            </tr>
-          </tfoot>
-        </table>
-
-        <p class="mt-2 mb-4 text-gray-700 text-sm">
-          This pairwise comparison matrix captures how important each criterion is relative to every other criterion,
-          based on the judgments that have been set.
-        </p>
-
-        <h3 class="mt-5">Normalized Matrix</h3>
-
-        <table class="table table-striped">
-          <thead>
-            <tr>
-              <th></th>
-              {% for c in matrix_criteria %}
-                <th>{{ c.name }}</th>
-              {% endfor %}
-              <th>TOTAL</th>
-              <th>AVERAGE</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in matrix_criteria %}
-              <tr>
-                <th>{{ row.name }}</th>
-                {% for col in matrix_criteria %}
-                  <td>
-                    {{ normalized_matrix|get_item:row.id|get_item:col.id|floatformat:2 }}
-                  </td>
-                {% endfor %}
-                <td>{{ row_totals|get_item:row.id|floatformat:2 }}</td>
-                <td style="font-weight: bold;">
-                  {{ row_averages|get_item:row.id|floatformat:2 }}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-
-        <p class="mt-2 mb-4 text-gray-700 text-sm">
-          This normalized matrix converts the raw comparisons into comparable proportions,
-          and the row averages represent the final weight (importance) of each criterion.
-        </p>
-
-        <h3 class="mt-5">Consistency Check</h3>
-
-        <table class="table table-striped">
-          <tbody>
-            <tr>
-              <th>λ max</th>
-              <td>{{ lambda_max|floatformat:4 }}</td>
-            </tr>
-            <tr>
-              <th>Consistency Index (CI)</th>
-              <td>{{ ci|floatformat:4 }}</td>
-            </tr>
-            <tr>
-              <th>Consistency Ratio (CR)</th>
-              <td>
-                {{ cr|floatformat:4 }}
-                {% if cr < 0.10 %}
-                  <span class="text-lime-600 font-bold">✓ Acceptable</span>
-                {% else %}
-                  <span class="text-red-600 font-bold">✗ Inconsistent</span>
-                {% endif %}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <p class="mt-2 mb-4 text-gray-700 text-sm">
-          The consistency check indicates whether the pairwise judgments are logically coherent;
-          a low consistency ratio means the comparisons are reliable.
-        </p>
-
         <hr class="mt-5">
-        <h1 class="mt-5">Alternatives evaluation</h1>
+
+        <h1 class="mt-5">Alternatives Evaluation (Per Criterion)</h1>
 
         {% for c in criteria %}
           <h3 class="mt-5">Criterion: {{ c.name }}</h3>
 
-          <h4 class="mt-5">Raw Matrix</h4>
+          <h4 class="mt-3">Raw Matrix</h4>
 
           <table class="table table-striped">
             <thead>
@@ -542,16 +452,7 @@
             </tbody>
           </table>
 
-        <p class="mt-2 mb-4 text-gray-700 text-sm">
-            This matrix compares the available alternatives against each other with respect to the current criterion.
-          </p>
-
-          <h4 class="mt-5">Normalized Matrix</h4>
-
-          <p hidden>
-            Consistency Ratio (CR) for this criterion:
-            {{ alternative_crs|get_item:c.id|floatformat:2 }}
-          </p>
+          <h4 class="mt-4">Normalized Matrix</h4>
 
           <table class="table table-striped">
             <thead>
@@ -576,19 +477,14 @@
             </tbody>
           </table>
 
-        <p class="mt-2 mb-4 text-gray-700 text-sm">
-            This table shows the relative performance of each alternative after normalizing the comparisons
-            so they can be meaningfully compared.
-          </p>
-
-          <h4 class="mt-5">Alternatives Weights (Row Averages)</h4>
+          <h4 class="mt-4">Alternative Weights</h4>
 
           <table class="table table-striped">
             <thead>
               <tr>
                 <th>Alternative</th>
                 <th>Weight</th>
-                <th>Percentage</th>
+                <th>%</th>
               </tr>
             </thead>
             <tbody>
@@ -596,24 +492,25 @@
                 <tr>
                   <td>{{ o.name }}</td>
                   <td>{{ alternative_weights|get_item:c.id|get_item:o.id|floatformat:2 }}</td>
-                  <td>
-                    {{ alternative_weights|get_item:c.id|get_item:o.id|multiply:100|floatformat:1 }}%
-                  </td>
+                  <td>{{ alternative_weights|get_item:c.id|get_item:o.id|multiply:100|floatformat:1 }}%</td>
                 </tr>
               {% endfor %}
             </tbody>
           </table>
 
-        <p class="mt-2 mb-4 text-gray-700 text-sm">
-            These weights represent how well each alternative satisfies this specific criterion,
-            and they are later combined with the criterion’s importance.
+          <p class="mt-2 text-sm text-gray-600">
+            Consistency Ratio (CR):
+            <strong>
+              {{ alternative_crs|get_item:c.id|floatformat:2 }}
+            </strong>
           </p>
 
         {% endfor %}
 
-        <a class="btn btn-blue" href="#full-details" id="hide-details">Collapse all calculations</a>
+        <a class="btn btn-blue mt-4" href="#full-details" id="hide-details">Collapse all calculations</a>
 
       </div>
+
 
     {% elif page == "sensitivity" %}
 
@@ -637,33 +534,55 @@
       </p>
 
       <form id="sensitivity-form">
-        {% for each in importance %}
-          <div class="mb-10">
-            <label for="weight_{{ each.id }}" class="block text-sm font-medium text-gray-700">{{ each.name }}</label>
 
-            <input
-              type="range"
-              id="weight_{{ each.id }}"
-              name="weight_{{ each.id }}"
-              data-id="{{ each.id }}"
-              min="0"
-              max="100"
-              value="{{ each.value|floatformat:0 }}"
-              class="mt-1 w-full h-2 bg-gray-200 rounded-lg cursor-pointer range"
-            />
+        {% for group in grouped_summary %}
+          <div class="mb-8 bg-gray-100 p-4 rounded-lg">
 
-            <span
-              id="weight_value_{{ each.id }}"
-              class="mt-2 text-lg font-semibold"
-            >
-              {{ each.value|floatformat:0 }}%
-            </span>
+            <h3 class="text-md font-bold text-gray-800 mb-3">
+              {{ group.parent }}
+            </h3>
+
+            {% for row in group.rows %}
+              <div class="mb-6 ml-4">
+
+                {% if row.child != group.parent %}
+                  <label
+                    for="weight_{{ row.child_id }}"
+                    class="block text-sm font-medium text-gray-700"
+                  >
+                    → {{ row.child }}
+                  </label>
+                {% endif %}
+
+                <input
+                  type="range"
+                  id="weight_{{ row.child_id }}"
+                  data-id="{{ row.child_id }}"
+                  min="0"
+                  max="100"
+                  value="{{ row.importance|floatformat:0 }}"
+                  class="mt-1 w-full h-2 bg-gray-200 rounded-lg cursor-pointer range"
+                />
+
+                <span
+                  id="weight_value_{{ row.child_id }}"
+                  class="mt-2 text-lg font-semibold"
+                >
+                  {{ row.importance|floatformat:0 }}%
+                </span>
+
+              </div>
+            {% endfor %}
+
           </div>
         {% endfor %}
+
       </form>
 
       <div class="flex justify-end">
-        <a href="./" class="btn-sm btn-white" id="revert">Revert to original weights</a>
+        <a href="./" class="btn-sm btn-white" id="revert">
+          Revert to original weights
+        </a>
       </div>
 
       <h2 class="mt-10 text-lg font-bold">Adjusted Results</h2>
@@ -699,98 +618,175 @@
     });
 
     {% if page == "results" %}
-      var chart_criteria = echarts.init(document.getElementById('chart_criteria'));
+
+      var yAxisLabels = [];
+      var seriesData = [];
+      var parentTotals = [];
+
+      {% for group in grouped_summary %}
+        yAxisLabels.push("{{ group.parent|escapejs }}");  // Only top-level criteria
+
+        var stackValues = [];
+        var totalValue = 0;
+        {% for row in group.rows %}
+          var val = {{ row.importance|floatformat:1 }};
+          stackValues.push({ value: val, name: "{{ row.child|escapejs }}" });
+          totalValue += val;
+        {% endfor %}
+        seriesData.push(stackValues);
+        parentTotals.push(totalValue);  // Store total for top-level criterion
+      {% endfor %}
+
+      var chart_criteria = echarts.init(document.getElementById("chart_criteria"));
+
+      // Prepare Y-axis labels (top-level criteria) and series data
+      var yAxisLabels = [];
+      var seriesData = [];
+      var parentTotals = [];
+
+      {% for group in grouped_summary %}
+        yAxisLabels.push("{{ group.parent|escapejs }}");  // Only top-level
+
+        var stackValues = [];
+        var totalValue = 0;
+        {% for row in group.rows %}
+          var val = {{ row.importance|floatformat:1 }};
+          stackValues.push({ value: val, name: "{{ row.child|escapejs }}" });
+          totalValue += val;
+        {% endfor %}
+        seriesData.push(stackValues);
+        parentTotals.push(totalValue);  // Total for tooltip
+      {% endfor %}
+
+      // Determine max number of sub-criteria for stacking
+      var maxSubCount = Math.max(...seriesData.map(d => d.length));
+
+      var series = [];
+      for (var i = 0; i < maxSubCount; i++) {
+        var data = [];
+        for (var j = 0; j < seriesData.length; j++) {
+          data.push(seriesData[j][i] ? seriesData[j][i].value : 0);
+        }
+
+        series.push({
+          name: "Sub-criterion " + (i + 1),
+          type: "bar",
+          stack: "total",
+          data: data,
+          showBackground: true,
+          backgroundStyle: { color: "rgba(220,220,220,0.3)" },
+          label: {
+            show: true,
+            position: "inside",
+            formatter: function(params) {
+              if (seriesData[params.dataIndex][i]) {
+                return seriesData[params.dataIndex][i].name;
+              }
+              return "";
+            },
+            fontSize: 12
+          },
+          itemStyle: {
+            borderRadius: function(params) {
+              var stackLength = seriesData[params.dataIndex].length;
+              // Horizontal bars: round top-right and bottom-right of last segment
+              if (params.seriesIndex === stackLength - 1 || stackLength === 1) {
+                return [0, 5, 5, 0];
+              }
+              return 0; // intermediate segments: no rounding
+            }
+          }
+        });
+      }
+
       var criteria_config = {
-        title: {
-          text: 'Criteria importance'
+        title: { text: "Criteria importance" },
+        tooltip: {
+          trigger: "axis",
+          axisPointer: { type: "shadow" },
+          formatter: function(params) {
+            var dataIndex = params[0].dataIndex;
+            var hasChildren = seriesData[dataIndex].length > 1;
+            var str = "";
+
+            if (hasChildren) {
+              str += yAxisLabels[dataIndex] + " (Total: " + parentTotals[dataIndex].toFixed(1) + "%)<br/>";
+              params.forEach(function(p) {
+                if (seriesData[dataIndex][p.seriesIndex]) {
+                  str += "  " + seriesData[dataIndex][p.seriesIndex].name + ": " +
+                         seriesData[dataIndex][p.seriesIndex].value.toFixed(1) + "%<br/>";
+                }
+              });
+            } else {
+              str += yAxisLabels[dataIndex] + ": " + parentTotals[dataIndex].toFixed(1) + "%";
+            }
+            return str;
+          }
         },
         xAxis: {
-          type: 'value',
-          name: 'Importance (%)',
-          nameLocation: 'middle',
+          type: "value",
+          name: "Importance (%)",
+          nameLocation: "middle",
           nameGap: 30
         },
         yAxis: {
-          type: 'category',
-          data: [{% for each in importance %}'{{ each.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+          type: "category",
+          data: yAxisLabels,
           inverse: true
         },
-        series: [{
-          name: 'Criteria',
-          type: 'bar',
-          data: [{% for each in importance %}{{ each.value }}{% if not forloop.last %},{% endif %}{% endfor %}],
-          showBackground: true,
-          backgroundStyle: {
-            color: 'rgba(220, 220, 220, 0.3)'
-          },
-          itemStyle: {
-            color: function(params) {
-              return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                { offset: 0, color: '#0084d1' },
-                { offset: 0.5, color: '#0678ba' },
-                { offset: 1, color: '#0c6fa9' }
-              ]);
-            },
-            borderRadius: [0, 5, 5, 0]
-          }
-        }]
+        series: series
       };
+
       chart_criteria.setOption(criteria_config);
+
+
     {% endif %}
 
-    // We want to show them in the order high>low so we resort
-    var names = [{% for each in alternatives %}'{{ each.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+    var names = [{% for each in alternatives %}"{{ each.name|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
     var values = [{% for each in summary_totals %}{{ each }}{% if not forloop.last %},{% endif %}{% endfor %}];
 
-    // Combine into objects
-    var combined = names.map((name, i) => ({
-      name: name,
-      value: values[i]
-    }));
-
-    // Sort descending (highest first)
+    // sort
+    var combined = names.map((name, i) => ({ name: name, value: values[i] }));
     combined.sort((a, b) => b.value - a.value);
 
-    // Split back into arrays
     var sortedNames = combined.map(item => item.name);
     var sortedValues = combined.map(item => item.value);
 
-    var chart_alternatives = echarts.init(document.getElementById('chart_alternatives'));
+    var chart_alternatives = echarts.init(document.getElementById("chart_alternatives"));
+
     var alternatives_config = {
-      title: {
-        text: 'Alternatives'
-      },
+      title: { text: "Alternatives" },
       xAxis: {
-        type: 'value',
-        name: 'Importance (%)',
-        nameLocation: 'middle',
+        type: "value",
+        name: "Importance (%)",
+        nameLocation: "middle",
         nameGap: 30
       },
       yAxis: {
-        type: 'category',
+        type: "category",
         data: sortedNames,
         inverse: true
       },
       series: [{
-        name: 'Alternatives',
-        type: 'bar',
+        type: "bar",
         data: sortedValues,
         showBackground: true,
         backgroundStyle: {
-          color: 'rgba(220, 220, 220, 0.3)'
+          color: "rgba(220, 220, 220, 0.3)"
         },
         itemStyle: {
           color: function(params) {
             return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: '#ff6900' },
-              { offset: 0.5, color: '#e66810' },
-              { offset: 1, color: '#c8580a' }
+              { offset: 0, color: "#ff6900" },
+              { offset: 0.5, color: "#e66810" },
+              { offset: 1, color: "#c8580a" }
             ]);
           },
           borderRadius: [0, 5, 5, 0]
         }
       }]
     };
+
     chart_alternatives.setOption(alternatives_config);
 
   </script>
@@ -800,8 +796,10 @@
     <script type="text/javascript">
     $(function(){
       let debounceTimer;
+
       $("input[type=range]").on("input", function() {
         clearTimeout(debounceTimer);
+
         var slider = $(this);
         var critId = slider.data("id");
         var value = slider.val();
@@ -820,35 +818,37 @@
             },
             success: function(data) {
 
-                // Update sliders with new weights
-                $.each(data.adjusted_weights, function(id, weight) {
-                    var sliderElem = $("#weight_" + id);
-                    sliderElem.val(weight.toFixed(0));
-                    $("#weight_value_" + id).text(weight.toFixed(0) + "%");
-                });
+              // ✅ ONLY update sliders that exist
+              Object.entries(data.adjusted_weights).forEach(([id, weight]) => {
+                var sliderElem = $("#weight_" + id);
+                if (sliderElem.length) {
+                  sliderElem.val(weight.toFixed(0));
+                  $("#weight_value_" + id).text(weight.toFixed(0) + "%");
+                }
+              });
 
-                // Update the chart
-                var names = [];
-                var scores = [];
-                $.each(data.sensitivity_ranking, function(i, item) {
-                    names.push(item.alternative_name);
-                    scores.push(item.score);
-                });
+              // update chart
+              var names = [];
+              var scores = [];
 
-                chart_alternatives.setOption({
-                    yAxis: { data: names },
-                    series: [{ data: scores }]
-                });
+              data.sensitivity_ranking.forEach(item => {
+                names.push(item.alternative_name);
+                scores.push(item.score);
+              });
+
+              chart_alternatives.setOption({
+                yAxis: { data: names },
+                series: [{ data: scores }]
+              });
             },
-            error: function(xhr, status, error) {
-                $("input[type=range]").prop("disabled", true).fadeTo(150, 0.5);
-                $("#chart_alternatives").fadeTo(150, 0.5);
-                console.error("Sensitivity update failed:", error);
-                alert("Sorry, an error ocurred. Please reload the page");
+            error: function() {
+              $("input[type=range]").prop("disabled", true).fadeTo(150, 0.5);
+              $("#chart_alternatives").fadeTo(150, 0.5);
+              alert("Sorry, an error occurred. Please reload the page");
             }
           });
 
-        }, 150); // wait 150ms after last input
+        }, 150);
       });
     });
     </script>

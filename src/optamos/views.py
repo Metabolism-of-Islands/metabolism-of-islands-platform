@@ -370,6 +370,7 @@ def project_overview(request, id):
 
     project = OptamosProject.objects_include_private.get(pk=id)
     user_access = OptamosUser.objects.filter(project=project, user=request.user, level="admin")
+
     if not user_access.exists():
         return redirect(reverse("optamos:access_denied") + "?role=admin&url=" + request.get_full_path())
 
@@ -696,86 +697,111 @@ def project_results(request, id, page="results", team=False):
         sub_combos = list(combinations(project.criteria.filter(parent=each), 2))
         sub_criteria_pairs += len(sub_combos)
 
-    # START OF CRITERIA EVALUATION
-    points_alternatives = {}
-    points_criteria = {}
-    for each in project.alternatives.all():
-        points_alternatives[each] = 0
-    for each in project.criteria.all():
-        points_criteria[each] = 0
-    for each in OptamosCriteriaValue.objects.filter(criteria1__project=project, user=user):
-        if each.value > 0:
-            points_criteria[each.criteria2] += each.value
-        elif each.value < 0:
-            points_criteria[each.criteria1] += each.value*-1
-    for each in OptamosAlternativeValue.objects.filter(criteria__project=project, user=user):
-        if each.value > 0:
-            points_alternatives[each.alternative2] += each.value
-        elif each.value < 0:
-            points_alternatives[each.alternative1] += each.value*-1
-
-    matrix = create_matrix(project, request)
-    matrix_criteria = list(project.criteria.all())
-
-    # Give the proper labels to the matrix columns and rows
-    named_matrix = {
-        c1.name: {
-            c2.name: matrix[c1.id][c2.id]
-            for c2 in matrix_criteria
-        }
-        for c1 in matrix_criteria
-    }
-
-    # Initialize totals per column
-    column_totals = {c.id: 0 for c in matrix_criteria}
-
-    # Sum column values
-    for row in matrix_criteria:
-        for col in matrix_criteria:
-            column_totals[col.id] += matrix[row.id][col.id]
-
-    # Normalized matrix
-    normalized_matrix_criteria = {
-        row.id: {} for row in matrix_criteria
-    }
-
-    for row in matrix_criteria:
-        for col in matrix_criteria:
-            total = column_totals[col.id]
-
-            if total != 0:
-                normalized_matrix_criteria[row.id][col.id] = (
-                    matrix[row.id][col.id] / total
-                )
-            else:
-                normalized_matrix_criteria[row.id][col.id] = 0
-
-    # Calculate the total and the average for each row in the normalized matrix
-    row_totals = {}
-    row_averages = {}
-
-    num_criteria = len(matrix_criteria)
-
-    for row in matrix_criteria:
-        total = 0
-        for col in matrix_criteria:
-            total += normalized_matrix_criteria[row.id][col.id]
-
-        row_totals[row.id] = total
-        row_averages[row.id] = (
-            total / num_criteria if num_criteria > 0 else 0
-        )
-
-    # END OF CRITERIA EVALUTION
-
-    # START OF ALTERNATIVES EVALATION
+    # ---------------------------------------------
+    # START OF HIERARCHICAL AHP CALCULATION
+    # ---------------------------------------------
 
     # Get all criteria and alternatives
     criteria = list(OptamosCriteria.objects.filter(project=project))
     alternatives = list(OptamosAlternative.objects.filter(project=project))
+
+    # ---------------------------------------------
+    # STEP 1: BUILD HIERARCHY STRUCTURE
+    # ---------------------------------------------
+    children_map = {}
+    for c in criteria:
+        parent_id = c.parent.id if c.parent else None
+        children_map.setdefault(parent_id, []).append(c)
+
+    root_criteria = children_map.get(None, [])
+    leaf_criteria = [c for c in criteria if c.id not in children_map]
+
+    # ---------------------------------------------
+    # STEP 2: BUILD MATRIX FOR CRITERIA SUBSET
+    # ---------------------------------------------
+    def create_matrix_for_subset(criteria_subset):
+        matrix = {
+            c1.id: {c2.id: 1 if c1.id == c2.id else 0 for c2 in criteria_subset}
+            for c1 in criteria_subset
+        }
+
+        values = OptamosCriteriaValue.objects.filter(
+            criteria1__in=criteria_subset,
+            criteria2__in=criteria_subset,
+            user=user
+        )
+
+        for v in values:
+            c1 = v.criteria1.id
+            c2 = v.criteria2.id
+            matrix[c1][c2] = v.value1
+            matrix[c2][c1] = v.value2
+
+        return matrix
+
+    # ---------------------------------------------
+    # STEP 3: COMPUTE LOCAL WEIGHTS PER NODE
+    # ---------------------------------------------
+    criteria_weights_local = {}
+
+    def compute_local_weights(criteria_subset):
+        if len(criteria_subset) == 1:
+            return {criteria_subset[0].id: 1.0}
+
+        matrix = create_matrix_for_subset(criteria_subset)
+
+        col_totals = {c.id: 0 for c in criteria_subset}
+        for col in criteria_subset:
+            for row in criteria_subset:
+                col_totals[col.id] += matrix[row.id][col.id]
+
+        normalized = {}
+        for row in criteria_subset:
+            normalized[row.id] = {}
+            for col in criteria_subset:
+                total = col_totals[col.id]
+                normalized[row.id][col.id] = matrix[row.id][col.id] / total if total else 0
+
+        weights = {}
+        for row in criteria_subset:
+            weights[row.id] = sum(normalized[row.id][col.id] for col in criteria_subset) / len(criteria_subset)
+
+        return weights
+
+    def compute_all_local_weights(parent_id=None):
+        siblings = children_map.get(parent_id, [])
+        if not siblings:
+            return
+
+        local_weights = compute_local_weights(siblings)
+
+        for c in siblings:
+            criteria_weights_local[c.id] = local_weights[c.id]
+            compute_all_local_weights(c.id)
+
+    compute_all_local_weights()
+
+    # ---------------------------------------------
+    # STEP 4: COMPUTE GLOBAL WEIGHTS
+    # ---------------------------------------------
+    criteria_weights_global = {}
+
+    def compute_global_weights(parent_id=None, parent_weight=1.0):
+        siblings = children_map.get(parent_id, [])
+        for c in siblings:
+            local_w = criteria_weights_local.get(c.id, 1)
+            global_w = parent_weight * local_w
+            criteria_weights_global[c.id] = global_w
+
+            compute_global_weights(c.id, global_w)
+
+    compute_global_weights()
+
+    # ---------------------------------------------
+    # STEP 5: ALTERNATIVE EVALUATION
+    # ---------------------------------------------
     alternative_values = OptamosAlternativeValue.objects.filter(criteria__project=project, user=user)
 
-    # Step 1: Initialize matrices per criterion
     alternative_matrices = {}
     for c in criteria:
         alternative_matrices[c.id] = {
@@ -783,148 +809,216 @@ def project_results(request, id, page="results", team=False):
             for o1 in alternatives
         }
 
-    # Step 2: Fill matrices with AlternativeValue data
     for ov in alternative_values:
         c_id = ov.criteria.id
         o1_id = ov.alternative1.id
         o2_id = ov.alternative2.id
 
-        # Fill reciprocal matrix
         alternative_matrices[c_id][o1_id][o2_id] = ov.value1
         alternative_matrices[c_id][o2_id][o1_id] = ov.value2
 
-    # Step 3: Normalize matrices and compute alternative weights
     normalized_alternative_matrices = {}
-    alternative_weights = {}  # row averages per criterion
+    alternative_weights = {}
 
     for c in criteria:
         matrix = alternative_matrices[c.id]
 
-        # Compute column totals
         col_totals = {o.id: 0 for o in alternatives}
         for col in alternatives:
             for row in alternatives:
                 col_totals[col.id] += matrix[row.id][col.id]
 
-        # Normalize matrix
         normalized_matrix = {}
         for row in alternatives:
             normalized_matrix[row.id] = {}
             for col in alternatives:
                 total = col_totals[col.id]
-                normalized_matrix[row.id][col.id] = (
-                    matrix[row.id][col.id] / total if total != 0 else 0
-                )
+                normalized_matrix[row.id][col.id] = matrix[row.id][col.id] / total if total else 0
 
         normalized_alternative_matrices[c.id] = normalized_matrix
 
-        # Compute row averages → alternative weights for this criterion
         row_avg = {}
         for row in alternatives:
             total = sum(normalized_matrix[row.id][col.id] for col in alternatives)
             row_avg[row.id] = total / len(alternatives)
+
         alternative_weights[c.id] = row_avg
 
-    # END OF ALTERNATIVES EVALUATION
-
-
-    # Calculate global scores
-
+    # ---------------------------------------------
+    # STEP 6: GLOBAL SCORING (LEAF ONLY!)
+    # ---------------------------------------------
     global_scores = {o.id: 0 for o in alternatives}
 
     for o in alternatives:
         total_score = 0
-        for c in criteria:
-            weight_c = row_averages[c.id]  # criteria weight
-            weight_o = alternative_weights[c.id][o.id]  # alternative weight under this criterion
+        for c in leaf_criteria:
+            weight_c = criteria_weights_global[c.id]
+            weight_o = alternative_weights[c.id][o.id]
             total_score += weight_c * weight_o
+
         global_scores[o.id] = total_score
 
     global_ranking = sorted(
         [{'alternative': o, 'score': global_scores[o.id]} for o in alternatives],
         key=lambda x: x['score'],
-        reverse=True  # highest score first
+        reverse=True
     )
 
-    # CONSISTENCY RATIO CALCULATION
-    consistency = calculate_consistency_ratio(list(project.criteria.all()), OptamosCriteriaValue.objects.filter(criteria1__project=project, user=user))
+    # ---------------------------------------------
+    # STEP 7: CONSISTENCY RATIOS (UNCHANGED)
+    # ---------------------------------------------
+    consistency = calculate_consistency_ratio(criteria, OptamosCriteriaValue.objects.filter(criteria1__project=project, user=user))
 
-    # Compute CR per criterion
     alternative_crs = {}
     for c in criteria:
         alternative_crs[c.id] = calculate_consistency_ratio(alternatives, alternative_values.filter(criteria=c)).cr
 
-    # Build a summary taable
-    summary_table = []
-
+    # ---------------------------------------------
+    # STEP 8: SUMMARY TABLE (LEAF ONLY!)
+    # ---------------------------------------------
+    grouped_summary = []
     importance = []
-    for c in criteria:
-        row = {
-            "criterion": c.name,
-            "alternatives": [
-                alternative_weights[c.id][o.id] * row_averages[c.id] * 100
-                for o in alternatives
-            ],
-            "cr": alternative_crs[c.id],
-            "importance": row_averages[c.id] * 100
-        }
-        importance.append({
-            "id": c.id,
-            "name": c.name,
-            "value": row["importance"],
-        })
-        summary_table.append(row)
 
-    # Compute totals for each alternative column
+    # Separate standalone and grouped criteria
+    groups = {}
+
+    for c in leaf_criteria:
+        if c.parent:
+            groups.setdefault(c.parent, []).append(c)
+        else:
+            groups.setdefault(c, []).append(c)  # acts as its own group
+
+    for parent, children in groups.items():
+        group = {
+            "parent": parent.name,
+            "is_group": any(child.parent for child in children),  # True if real parent
+            "rows": []
+        }
+
+        for c in children:
+            row = {
+                "child": c.name,
+                "child_id": c.id,
+                "alternatives": [
+                    alternative_weights[c.id][o.id] * criteria_weights_global[c.id] * 100
+                    for o in alternatives
+                ],
+                "cr": alternative_crs[c.id],
+                "importance": criteria_weights_global[c.id] * 100
+            }
+
+            importance.append({
+                "id": c.id,
+                "name": f"{parent.name} → {c.name}" if c.parent else c.name,
+                "value": row["importance"]
+            })
+
+            group["rows"].append(row)
+
+        grouped_summary.append(group)
+
+    # Compute totals
     totals = []
-    n_alternatives = len(alternatives)
-    for idx in range(n_alternatives):
-        total = sum(row["alternatives"][idx] for row in summary_table)
+    for idx in range(len(alternatives)):
+        total = sum(
+            row["alternatives"][idx]
+            for group in grouped_summary
+            for row in group["rows"]
+        )
         totals.append(total)
 
+    # ---------------------------------------------
+    # END OF HIERARCHICAL AHP CALCULATION
+    # ---------------------------------------------
+
     if "export" in request.GET:
+
         workbook = openpyxl.Workbook()
         worksheet = workbook.active
         worksheet.title = "Summary Table"
 
+        bold_font = Font(bold=True)
+
+        # ----------------------------------------
+        # HEADER
+        # ----------------------------------------
         header = ["Criterion"] + [o.name for o in alternatives] + ["CR", "% Importance"]
         worksheet.append(header)
 
-        for row in summary_table:
-            data_row = (
-                [row["criterion"]]
-                + [val / 100 for val in row["alternatives"]]
-                + [row["cr"], row["importance"] / 100]
-            )
-            worksheet.append(data_row)
+        for cell in worksheet[1]:
+            cell.font = bold_font
 
-        totals_row = ["Totals"] + [total / 100 for total in totals] + [""]
-        worksheet.append(totals_row)
+        # ----------------------------------------
+        # DATA
+        # ----------------------------------------
+        for group in grouped_summary:
+            parent_name = group["parent"]
+            is_group = group["is_group"]
+            rows = group["rows"]
 
+            if is_group:
+                # Parent row (sum of children)
+                parent_alternatives = [
+                    sum(row["alternatives"][i] for row in rows)
+                    for i in range(len(alternatives))
+                ]
+                parent_importance = sum(row["importance"] for row in rows)
+
+                worksheet.append(
+                    [parent_name] +
+                    [val / 100 for val in parent_alternatives] +
+                    ["", parent_importance / 100]
+                )
+
+                # Children rows
+                for row in rows:
+                    worksheet.append(
+                        [f"  → {row['child']}"] +
+                        [val / 100 for val in row["alternatives"]] +
+                        [row["cr"], row["importance"] / 100]
+                    )
+
+            else:
+                # Single (no hierarchy)
+                row = rows[0]
+                worksheet.append(
+                    [parent_name] +
+                    [val / 100 for val in row["alternatives"]] +
+                    [row["cr"], row["importance"] / 100]
+                )
+
+        # ----------------------------------------
+        # TOTALS
+        # ----------------------------------------
+        worksheet.append(
+            ["Totals"] +
+            [val / 100 for val in totals] +
+            ["", ""]
+        )
+
+        # ----------------------------------------
+        # FORMATTING
+        # ----------------------------------------
         for row in worksheet.iter_rows(min_row=2, min_col=2):
             for i, cell in enumerate(row):
                 if isinstance(cell.value, (int, float)):
-                    # alternatives and importance columns are percentages
-                    if i < len(alternatives) or i == len(alternatives) + 1:  
+                    # Alternatives + importance → %
+                    if i < len(alternatives) or i == len(alternatives) + 1:
                         cell.number_format = "0.0%"
                     else:  # CR column
                         cell.number_format = "0.00"
 
-        bold_font = Font(bold=True)
-
-        # Make header row bold
-        for cell in worksheet[1]:
-            cell.font = bold_font
-
-        # Make first column (Column A) bold
+        # Bold first column
         for cell in worksheet["A"]:
             cell.font = bold_font
 
-        # Make totals row bold
-        totals_row_index = worksheet.max_row
-        for cell in worksheet[totals_row_index]:
+        # Bold totals row
+        for cell in worksheet[worksheet.max_row]:
             cell.font = bold_font
 
+        # ----------------------------------------
+        # RESPONSE
+        # ----------------------------------------
         buffer = BytesIO()
         workbook.save(buffer)
         buffer.seek(0)
@@ -933,15 +1027,26 @@ def project_results(request, id, page="results", team=False):
             buffer.getvalue(),
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
+
         filename = f"Summary table - {project.name}.xlsx"
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
         return response
 
     elif "export_full" in request.GET:
-        workbook = openpyxl.Workbook()
 
+        workbook = openpyxl.Workbook()
         bold = Font(bold=True)
+
+        def auto_width(ws):
+            for col in ws.columns:
+                max_length = 0
+                col_letter = col[0].column_letter
+                for cell in col:
+                    if cell.value:
+                        max_length = max(max_length, len(str(cell.value)))
+                ws.column_dimensions[col_letter].width = max_length + 2
+
 
         # --------------------------------------------------
         # 1. SUMMARY TABLE
@@ -953,113 +1058,199 @@ def project_results(request, id, page="results", team=False):
         for cell in ws[1]:
             cell.font = bold
 
-        for row in summary_table:
-            ws.append(
-                [row["criterion"]]
-                + row["alternatives"]
-                + [row["cr"], row["importance"]]
-            )
+        current_row = 2
 
-        ws.append(["Totals"] + totals + ["", ""])
+        for group in grouped_summary:
+            parent_name = group["parent"]
+            is_group = group["is_group"]
+            rows = group["rows"]
+
+            if is_group:
+                parent_alternatives = [
+                    sum(row["alternatives"][i] for row in rows)
+                    for i in range(len(alternatives))
+                ]
+                parent_importance = sum(row["importance"] for row in rows)
+
+                ws.append(
+                    [parent_name] +
+                    [v / 100 for v in parent_alternatives] +
+                    ["", parent_importance / 100]
+                )
+
+                parent_excel_row = current_row
+                current_row += 1
+
+                for row in rows:
+                    ws.append(
+                        [f"  → {row['child']}"] +
+                        [v / 100 for v in row["alternatives"]] +
+                        [row["cr"], row["importance"] / 100]
+                    )
+                    ws.row_dimensions[current_row].outlineLevel = 1
+                    ws.row_dimensions[current_row].hidden = True
+                    current_row += 1
+
+                ws.row_dimensions[parent_excel_row].collapsed = True
+
+            else:
+                row = rows[0]
+                ws.append(
+                    [parent_name] +
+                    [v / 100 for v in row["alternatives"]] +
+                    [row["cr"], row["importance"] / 100]
+                )
+                current_row += 1
+
+        # totals
+        ws.append(["Totals"] + [v / 100 for v in totals] + ["", ""])
         for cell in ws[ws.max_row]:
             cell.font = bold
+
+        # formatting
+        for row in ws.iter_rows(min_row=2, min_col=2):
+            for i, cell in enumerate(row):
+                if isinstance(cell.value, (int, float)):
+                    if i < len(alternatives) or i == len(alternatives) + 1:
+                        cell.number_format = "0.0%"
+                    else:
+                        cell.number_format = "0.00"
+
+        ws.freeze_panes = "A2"
+        auto_width(ws)
 
         # --------------------------------------------------
         # 2. GLOBAL RANKING
         # --------------------------------------------------
         ws = workbook.create_sheet("Global Ranking")
+
         ws.append(["Rank", "Alternative", "Score (%)"])
         for cell in ws[1]:
             cell.font = bold
 
         for idx, item in enumerate(global_ranking, start=1):
-            ws.append([idx, item["alternative"].name, item["score"] * 100])
+            ws.append([idx, item["alternative"].name, item["score"]])
+
+        for row in ws.iter_rows(min_row=2, min_col=3, max_col=3):
+            for cell in row:
+                cell.number_format = "0.0%"
+
+        ws.freeze_panes = "A2"
+        auto_width(ws)
+
 
         # --------------------------------------------------
-        # 3. CRITERIA – RAW MATRIX
+        # 3. CRITERIA WEIGHTS 
         # --------------------------------------------------
-        ws = workbook.create_sheet("Criteria Raw Matrix")
-        ws.append([""] + [c.name for c in matrix_criteria])
+        ws = workbook.create_sheet("Criteria Weights")
+
+        ws.append(["Criterion", "Weight", "Percentage"])
         for cell in ws[1]:
             cell.font = bold
 
-        for row in matrix_criteria:
-            ws.append(
-                [row.name]
-                + [named_matrix[row.name][col.name] for col in matrix_criteria]
-            )
+        current_row = 2
 
-        ws.append(["TOTAL"] + [column_totals[c.id] for c in matrix_criteria])
-        for cell in ws[ws.max_row]:
-            cell.font = bold
+        for group in grouped_summary:
+            parent = group["parent"]
+            is_group = group["is_group"]
+            rows = group["rows"]
+
+            if is_group:
+                parent_weight = sum(row["importance"] for row in rows)
+
+                ws.append([parent, parent_weight / 100, parent_weight / 100])
+                parent_excel_row = current_row
+                current_row += 1
+
+                for row in rows:
+                    ws.append([
+                        f"  → {row['child']}",
+                        row["importance"] / 100,
+                        row["importance"] / 100
+                    ])
+                    ws.row_dimensions[current_row].outlineLevel = 1
+                    ws.row_dimensions[current_row].hidden = True
+                    current_row += 1
+
+                ws.row_dimensions[parent_excel_row].collapsed = True
+
+            else:
+                row = rows[0]
+                ws.append([
+                    parent,
+                    row["importance"] / 100,
+                    row["importance"] / 100
+                ])
+                current_row += 1
+
+        for row in ws.iter_rows(min_row=2, min_col=2):
+            for i, cell in enumerate(row):
+                if i == 0:
+                    cell.number_format = "0.000"
+                else:
+                    cell.number_format = "0.0%"
+
+        ws.freeze_panes = "A2"
+        auto_width(ws)
+
 
         # --------------------------------------------------
-        # 4. CRITERIA – NORMALIZED MATRIX
-        # --------------------------------------------------
-        ws = workbook.create_sheet("Criteria Normalized")
-        ws.append([""] + [c.name for c in matrix_criteria] + ["Total", "Average"])
-        for cell in ws[1]:
-            cell.font = bold
-
-        for row in matrix_criteria:
-            ws.append(
-                [row.name]
-                + [normalized_matrix_criteria[row.id][col.id] for col in matrix_criteria]
-                + [row_totals[row.id], row_averages[row.id]]
-            )
-
-        # --------------------------------------------------
-        # 5. CRITERIA – CONSISTENCY
-        # --------------------------------------------------
-        ws = workbook.create_sheet("Criteria Consistency")
-        ws.append(["Metric", "Value"])
-        for cell in ws[1]:
-            cell.font = bold
-
-        ws.append(["Lambda max", consistency.lambda_max])
-        ws.append(["Consistency Index (CI)", consistency.ci])
-        ws.append(["Consistency Ratio (CR)", consistency.cr])
-
-        # --------------------------------------------------
-        # 6–8. ALTERNATIVES EVALUATION (PER CRITERION)
+        # 4–6. ALTERNATIVE MATRICES
         # --------------------------------------------------
         for c in criteria:
-            # Raw matrix
+            # RAW
             ws = workbook.create_sheet(f"{c.name} – Raw")
             ws.append([""] + [o.name for o in alternatives])
             for cell in ws[1]:
                 cell.font = bold
 
-            for row in alternatives:
+            for r in alternatives:
                 ws.append(
-                    [row.name]
-                    + [alternative_matrices[c.id][row.id][col.id] for col in alternatives]
+                    [r.name] +
+                    [alternative_matrices[c.id][r.id][col.id] for col in alternatives]
                 )
 
-            # Normalized matrix
+            ws.freeze_panes = "B2"
+            auto_width(ws)
+
+            # NORMALIZED
             ws = workbook.create_sheet(f"{c.name} – Normalized")
             ws.append([""] + [o.name for o in alternatives])
             for cell in ws[1]:
                 cell.font = bold
 
-            for row in alternatives:
+            for r in alternatives:
                 ws.append(
-                    [row.name]
-                    + [
-                        normalized_alternative_matrices[c.id][row.id][col.id]
+                    [r.name] +
+                    [
+                        normalized_alternative_matrices[c.id][r.id][col.id]
                         for col in alternatives
                     ]
                 )
 
-            # Alternative weights
+            ws.freeze_panes = "B2"
+            auto_width(ws)
+
+            # WEIGHTS
             ws = workbook.create_sheet(f"{c.name} – Weights")
             ws.append(["Alternative", "Weight", "Percentage"])
             for cell in ws[1]:
                 cell.font = bold
 
             for o in alternatives:
-                weight = alternative_weights[c.id][o.id]
-                ws.append([o.name, weight, weight * 100])
+                w = alternative_weights[c.id][o.id]
+                ws.append([o.name, w, w])
+
+            for row in ws.iter_rows(min_row=2, min_col=2):
+                for i, cell in enumerate(row):
+                    if i == 0:
+                        cell.number_format = "0.000"
+                    else:
+                        cell.number_format = "0.0%"
+
+            ws.freeze_panes = "A2"
+            auto_width(ws)
+
 
         # --------------------------------------------------
         # RESPONSE
@@ -1072,20 +1263,30 @@ def project_results(request, id, page="results", team=False):
             buffer.getvalue(),
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
-        response["Content-Disposition"] = (
-            f'attachment; filename="Full AHP Results - {project.name}.xlsx"'
-        )
+        response["Content-Disposition"] = f'attachment; filename="Full AHP Results - {project.name}.xlsx"'
+
         return response
 
     if request.method == "POST" and page == "sensitivity":
+
+        # ---------------------------------------------
+        # SENSITIVITY VIEW (HIERARCHY-AWARE)
+        # ---------------------------------------------
+
         crit_id = int(request.POST.get("criterion_id"))
         new_weight = float(request.POST.get("new_weight")) / 100
 
-        adjusted_weights = row_averages.copy()
+        # ONLY leaf criteria matter
+        adjusted_weights = {
+            c.id: criteria_weights_global[c.id]
+            for c in leaf_criteria
+        }
+
         old_weight = adjusted_weights[crit_id]
         remaining_weight = 1.0 - new_weight
         old_remaining_weight = 1.0 - old_weight
 
+        # redistribute
         for c_id in adjusted_weights:
             if c_id == crit_id:
                 adjusted_weights[c_id] = new_weight
@@ -1095,13 +1296,16 @@ def project_results(request, id, page="results", team=False):
                     if old_remaining_weight > 0 else 0
                 )
 
+        # recompute scores (LEAF ONLY!)
         sensitivity_global_scores = {o.id: 0 for o in alternatives}
+
         for o in alternatives:
             total_score = 0
-            for c in criteria:
+            for c in leaf_criteria:
                 weight_c = adjusted_weights[c.id]
                 weight_o = alternative_weights[c.id][o.id]
                 total_score += weight_c * weight_o
+
             sensitivity_global_scores[o.id] = total_score
 
         sensitivity_ranking = sorted(
@@ -1121,6 +1325,7 @@ def project_results(request, id, page="results", team=False):
             "sensitivity_ranking": sensitivity_ranking,
             "adjusted_weights": {k: v * 100 for k, v in adjusted_weights.items()}
         })
+
 
     context = {
         "bg": random.choice(OPTAMOS_BG),
@@ -1144,17 +1349,9 @@ def project_results(request, id, page="results", team=False):
         "global_scores": global_scores,
         "global_ranking": global_ranking,
         "alternative_crs": alternative_crs,
-        "summary_table": summary_table,
+        "grouped_summary": grouped_summary,
         "summary_totals": totals,
-
-        "points_criteria": points_criteria,
-        "points_alternatives": points_alternatives,
-        "matrix": named_matrix,
-        "matrix_criteria": matrix_criteria,
-        "column_totals": column_totals,
-        "normalized_matrix": normalized_matrix_criteria,
-        "row_totals": row_totals,
-        "row_averages": row_averages,
+        "totals": totals,
         "lambda_max": consistency.lambda_max,
         "ci": consistency.ci,
         "cr": consistency.cr,
