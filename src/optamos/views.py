@@ -197,9 +197,9 @@ def project_create(request):
                 try:
                     decoded_file = csv_file.read().decode("utf-8").splitlines()
                     reader = csv.DictReader(decoded_file)
-                    required_headers = {"Criteria", "Alternatives"}
+                    required_headers = {"CRITERIA", "ALTERNATIVES"}
                     if not reader.fieldnames or not required_headers.issubset(set(reader.fieldnames)):
-                        csv_error = "CSV must contain headers: Criteria, Alternatives. Your file was not valid and could not be loaded."
+                        csv_error = "CSV must contain headers: CRITERIA, ALTERNATIVES. Your file was not valid and could not be loaded."
                     else:
                         valid_csv = True
                 except Exception as e:
@@ -249,13 +249,20 @@ def project_create(request):
             if request.FILES.get("csv_file"):
                 messages.success(request, "Your csv file was loaded.")
                 position = 0
+                previous_main_criteria = None
                 for row in reader:
-                    criteria = row.get("Criteria")
-                    alternative = row.get("Alternatives")
+                    criteria = row.get("CRITERIA")
+                    alternative = row.get("ALTERNATIVES")
 
                     if criteria:
                         position += 1
-                        OptamosCriteria.objects.create(project=project, name=criteria.strip(), position=position)
+                        parent = None
+                        if criteria.startswith("-") and previous_main_criteria:
+                            parent = previous_main_criteria
+                            criteria = criteria[1:]
+                        info = OptamosCriteria.objects.create(project=project, name=criteria.strip(), position=position, parent=parent)
+                        if not parent:
+                            previous_main_criteria = info
 
                     if alternative:
                         OptamosAlternative.objects.create(project=project, name=alternative.strip())
@@ -1358,6 +1365,7 @@ def project_results(request, id, page="results", team=False):
         "importance": importance,
         "team": team,
         "access_level": OptamosUser.objects.get(user=request.user, project=project).level,
+        "project_has_subcriteria": OptamosCriteria.objects.filter(project=project, parent__isnull=False).exists(),
     }
 
     return render(request, "optamos/project.html", context)

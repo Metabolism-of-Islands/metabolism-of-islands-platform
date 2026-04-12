@@ -348,17 +348,19 @@
         <tbody>
           {% for group in grouped_summary %}
 
-            <!-- Parent Row -->
-            <tr style="background-color: #f3f4f6;">
-              <th colspan="{{ alternatives|length|add:'2' }}">
-                <strong>{{ group.parent }}</strong>
-              </th>
-            </tr>
+            {% if project_has_subcriteria %}
+              <!-- Parent Row -->
+              <tr style="background-color: #f3f4f6;">
+                <th colspan="{{ alternatives|length|add:'2' }}">
+                  <strong>{{ group.parent }}</strong>
+                </th>
+              </tr>
+            {% endif %}
 
             <!-- Children -->
             {% for row in group.rows %}
               <tr>
-                <td style="padding-left: 2rem;">
+                <td>
                   {% if group.is_group %}
                     <span style="color:#9ca3af;">→</span>
                   {% endif %}
@@ -425,7 +427,7 @@
         <h1 class="mt-5">Alternatives Evaluation (Per Criterion)</h1>
 
         {% for c in criteria %}
-          <h3 class="mt-5">Criterion: {{ c.name }}</h3>
+          <h3 class="mt-10">Criterion: {{ c.name }}</h3>
 
           <h4 class="mt-3">Raw Matrix</h4>
 
@@ -452,7 +454,7 @@
             </tbody>
           </table>
 
-          <h4 class="mt-4">Normalized Matrix</h4>
+          <h4 class="mt-8">Normalized Matrix</h4>
 
           <table class="table table-striped">
             <thead>
@@ -477,7 +479,7 @@
             </tbody>
           </table>
 
-          <h4 class="mt-4">Alternative Weights</h4>
+          <h4 class="mt-8">Alternative Weights</h4>
 
           <table class="table table-striped">
             <thead>
@@ -498,7 +500,7 @@
             </tbody>
           </table>
 
-          <p class="mt-2 text-sm text-gray-600">
+          <p class="mt-2 text-sm text-gray-600" hidden>
             Consistency Ratio (CR):
             <strong>
               {{ alternative_crs|get_item:c.id|floatformat:2 }}
