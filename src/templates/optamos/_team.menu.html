@@ -16,17 +16,21 @@
         </li>
       {% if criteria_list %}
         {% for each in criteria_list %}
-          <li>
-            <a href="{% url "optamos:project_team_ranking" project.uid %}?criteria={{ each.id }}" 
-              class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold no-underline
-              {% if each == criteria %}
-                text-white bg-sky-600 
-              {% else %}
-                text-gray-700 hover:bg-gray-50 hover:text-sky-600 
-              {% endif %}
-             ">
+          <li class="{% if each.has_children %}mt-4 mb-2 font-bold uppercase{% endif %}">
+            {% if each.has_children %}
               <span class="truncate">{{ each }}</span>
-            </a>
+            {% else %}
+              <a href="{% url "optamos:project_team_ranking" project.uid %}?criteria={{ each.id }}" 
+                class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold no-underline
+                {% if each == criteria %}
+                  text-white bg-sky-600 
+                {% else %}
+                  text-gray-700 hover:bg-gray-50 hover:text-sky-600 
+                {% endif %}
+               ">
+                <span class="truncate">{{ each }}</span>
+              </a>
+            {% endif %}
           </li>
         {% endfor %}
 

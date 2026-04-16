@@ -91,6 +91,33 @@
         </div>
       {% endfor %}
 
+      {% if sub_pairs and page == "rank_all_criteria" %}
+        {% for name, pair in sub_pairs.items %}
+          <h2>Criteria: {{ name }}</h2>
+
+          {% for alternative1, alternative2 in pair %}
+            <div class="mb-30 bg-gray-50 p-2 rounded">
+              {% for each in users %}
+                <section class="mb-5">
+                  {% if forloop.first %}
+                    <div class="flex justify-between mb-4">
+                      <span class="left_alternative truncate w-2/5">{{ alternative1 }}</span>
+                      <span class="right_alternative truncate w-2/5 text-right">{{ alternative2 }}</span>
+                    </div>
+                  {% endif %}
+                  {% with label="range-"|concat:alternative1.id|concat:"-"|concat:alternative2.id %}
+                    <div class="slider {% if not label in values|get_item:each %}opacity-10{% endif %}">
+                      <input disabled name="{{ label }}" type="range" min="-8" max="8" step="1" value="{{ values|get_item:each|get_item:label|default_if_none:0 }}" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range range-lg range-primary">
+                    {% endwith %}
+                    <output class="block text-center text-gray-900">{{ each }}</output>
+                  </div>
+                </section>
+              {% endfor %}
+            </div>
+          {% endfor %}
+        {% endfor %}
+      {% endif %}
+
     {% elif page == "home" %}
 
       <div class="bg-gray-100 shadow-sm sm:rounded-lg">

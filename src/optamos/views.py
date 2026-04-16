@@ -407,6 +407,7 @@ def project_team_results(request, id, page="rank_all_criteria"):
     users = []
     values = {}
     criteria = None
+    sub_pairs = {}
 
     for each in OptamosUser.objects.filter(project=project).order_by("user__first_name"):
         values[each.user.first_name] = {}
@@ -425,7 +426,13 @@ def project_team_results(request, id, page="rank_all_criteria"):
             values[user][label] = each.value
 
         # This creates pairs of all possible combinations of alternatives
-        pairs = list(combinations(project.criteria.all(), 2))
+        pairs = list(combinations(project.criteria.filter(parent__isnull=True), 2))
+
+        # This creates a list of pairs grouped by criteria, for all the sub-criteria that are entered
+        for each in project.criteria.annotate(child_count=Count("children")).filter(child_count__gt=0):
+            sub_combos = list(combinations(project.criteria.filter(parent=each), 2))
+            sub_pairs[each.name] = sub_combos
+
 
     elif (criteria := request.GET.get("criteria")):
         page = "criteria"
@@ -445,10 +452,11 @@ def project_team_results(request, id, page="rank_all_criteria"):
         "bg": random.choice(OPTAMOS_BG),
         "menu": "projects",
         "project": project,
-        "criteria_list": project.criteria.all().order_by("id"),
+        "criteria_list": project.criteria.all().annotate(has_children=Count("children")).order_by("position"),
         "remove_padding_main_container": True,
         "page": page,
         "pairs": pairs,
+        "sub_pairs": sub_pairs,
         "values": values,
         "users": users,
         "criteria": criteria,
