@@ -412,7 +412,7 @@ def project_team_results(request, id, page="rank_all_criteria"):
         values[each.user.first_name] = {}
         users.append(each.user.first_name)
     # Also add a new entry for the average
-    values["AVERAGE"] = {} 
+    values["AVERAGE"] = {}
     users.append("AVERAGE")
 
     if page == "rank_all_criteria":
@@ -852,7 +852,7 @@ def project_results(request, id, page="results", team=False):
         alternative_weights[c.id] = row_avg
 
     # ---------------------------------------------
-    # STEP 6: GLOBAL SCORING (LEAF ONLY!)
+    # STEP 6: GLOBAL SCORING
     # ---------------------------------------------
     global_scores = {o.id: 0 for o in alternatives}
 
@@ -872,7 +872,7 @@ def project_results(request, id, page="results", team=False):
     )
 
     # ---------------------------------------------
-    # STEP 7: CONSISTENCY RATIOS (UNCHANGED)
+    # STEP 7: CONSISTENCY RATIOS
     # ---------------------------------------------
     consistency = calculate_consistency_ratio(criteria, OptamosCriteriaValue.objects.filter(criteria1__project=project, user=user))
 
@@ -881,7 +881,7 @@ def project_results(request, id, page="results", team=False):
         alternative_crs[c.id] = calculate_consistency_ratio(alternatives, alternative_values.filter(criteria=c)).cr
 
     # ---------------------------------------------
-    # STEP 8: SUMMARY TABLE (LEAF ONLY!)
+    # STEP 8: SUMMARY TABLE
     # ---------------------------------------------
     grouped_summary = []
     importance = []
@@ -1277,7 +1277,7 @@ def project_results(request, id, page="results", team=False):
     if request.method == "POST" and page == "sensitivity":
 
         # ---------------------------------------------
-        # SENSITIVITY VIEW (HIERARCHY-AWARE)
+        # SENSITIVITY ANALYSIS
         # ---------------------------------------------
 
         crit_id = int(request.POST.get("criterion_id"))
@@ -1333,6 +1333,67 @@ def project_results(request, id, page="results", team=False):
             "adjusted_weights": {k: v * 100 for k, v in adjusted_weights.items()}
         })
 
+    # The following code is used to construct the various tables under VIEW ALL CALCULATIONS on the page
+    # Flatten criteria list for display
+    def flatten_criteria(criteria_list, parent_id=None):
+        flat_list = []
+        for c in children_map.get(parent_id, []):
+            flat_list.append({
+                "id": c.id,
+                "name": c.name,
+                "parent_id": parent_id,
+                "local_weight": criteria_weights_local[c.id],
+                "global_weight": criteria_weights_global[c.id],
+            })
+            # Recursively add children
+            flat_list.extend(flatten_criteria(children_map, c.id))
+        return flat_list
+
+    flat_criteria = flatten_criteria(root_criteria)
+
+    # Build the raw pairwise comparison matrix for all criteria (flat_criteria is list of dicts)
+    matrix_criteria = {
+        c['id']: {c2['id']: 1 if c['id'] == c2['id'] else 0 for c2 in flat_criteria}
+        for c in flat_criteria
+    }
+
+    # Fill with actual CriteriaValue data
+    values = OptamosCriteriaValue.objects.filter(
+        criteria1__in=[c['id'] for c in flat_criteria],
+        criteria2__in=[c['id'] for c in flat_criteria],
+        user=user
+    )
+    for v in values:
+        c1, c2 = v.criteria1.id, v.criteria2.id
+        matrix_criteria[c1][c2] = v.value1
+        matrix_criteria[c2][c1] = v.value2
+
+    # Column totals
+    row_totals = {c['id']: sum(matrix_criteria[c['id']].values()) for c in flat_criteria}
+
+    # Normalized matrix
+    normalized_matrix = {}
+    for c in flat_criteria:
+        normalized_matrix[c['id']] = {}
+        for c2 in flat_criteria:
+            col_total = sum(matrix_criteria[r['id']][c2['id']] for r in flat_criteria)
+            normalized_matrix[c['id']][c2['id']] = matrix_criteria[c['id']][c2['id']] / col_total if col_total else 0
+
+    # Row averages = local weights
+    row_averages = {c['id']: sum(normalized_matrix[c['id']].values()) / len(flat_criteria) for c in flat_criteria}
+
+    # Raw matrix (same as before but not normalized)
+    matrix_raw_criteria = {c['id']: {c2['id']: 1 if c['id']==c2['id'] else 0 for c2 in flat_criteria} for c in flat_criteria}
+    for v in values:  # values = CriteriaValue.objects.filter(...)
+        c1, c2 = v.criteria1.id, v.criteria2.id
+        matrix_raw_criteria[c1][c2] = v.value1
+        matrix_raw_criteria[c2][c1] = v.value2
+
+    # Row totals for raw matrix
+    row_totals_raw = {c['id']: sum(matrix_raw_criteria[c['id']].values()) for c in flat_criteria}
+
+    # Row averages for raw matrix (optional, just for completeness)
+    row_averages_raw = {c['id']: sum(matrix_raw_criteria[c['id']].values()) / len(flat_criteria) for c in flat_criteria}
 
     context = {
         "bg": random.choice(OPTAMOS_BG),
@@ -1366,6 +1427,17 @@ def project_results(request, id, page="results", team=False):
         "team": team,
         "access_level": OptamosUser.objects.get(user=request.user, project=project).level,
         "project_has_subcriteria": OptamosCriteria.objects.filter(project=project, parent__isnull=False).exists(),
+
+        "criteria_weights_local": criteria_weights_local,
+        "criteria_weights_global": criteria_weights_global,
+        "children_map": children_map,
+        "flat_criteria": flat_criteria,
+        "matrix_raw_criteria": matrix_criteria,
+        "normalized_matrix": normalized_matrix,
+        "row_totals": row_totals,
+        "row_averages": row_averages,
+        "row_totals_raw": row_totals_raw,
+        "row_averages_raw": row_averages_raw,
     }
 
     return render(request, "optamos/project.html", context)

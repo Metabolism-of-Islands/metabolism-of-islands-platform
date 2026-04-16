@@ -422,6 +422,172 @@
 
       <div id="full-details" class="hidden">
 
+        <h1 class="mt-5">Criteria evaluation</h1>
+
+        <p class="mt-2 mb-4 text-gray-700 text-sm">
+          This table shows the local and global weights of each criterion.
+          Local weight is relative to siblings; global weight accounts for hierarchy.
+        </p>
+
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Criterion</th>
+              <th>Local Weight</th>
+              <th>Global Weight</th>
+              <th>% Global Importance</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in flat_criteria %}
+              <tr>
+                <td>
+                  {% if c.parent_id %}
+                    <span style="color:#9ca3af;">→</span>
+                  {% endif %}
+                  {{ c.name }}
+                </td>
+                <td>{{ c.local_weight|floatformat:3 }}</td>
+                <td>{{ c.global_weight|floatformat:3 }}</td>
+                <td>{{ c.global_weight|multiply:100|floatformat:1 }}%</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <p class="mt-2 mb-4 text-gray-700 text-sm">
+          The local weight shows the importance of the criterion among its siblings,
+          while the global weight represents its overall importance considering hierarchy.
+        </p>
+
+        <h3 class="mt-5">Pairwise Comparison Matrix</h3>
+
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Criterion</th>
+              {% for c in flat_criteria %}
+                <th>{{ c.name }}</th>
+              {% endfor %}
+              <th>TOTAL</th>
+              <th>AVERAGE</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for parent_id, children in children_map.items %}
+              {% if parent_id %}
+                {% for c in children %}
+                  <tr>
+                    <th>
+                      <span style="color:#9ca3af;">→</span> {{ c.name }}
+                    </th>
+                    {% for col in flat_criteria %}
+                      <td>{{ matrix_raw_criteria|get_item:c.id|get_item:col.id|floatformat:3 }}</td>
+                    {% endfor %}
+                    <td>{{ row_totals_raw|get_item:c.id|floatformat:3 }}</td>
+                    <td style="font-weight:bold;">{{ row_averages_raw|get_item:c.id|floatformat:3 }}</td>
+                  </tr>
+                {% endfor %}
+              {% else %}
+                {% for c in children %}
+                  <tr style="background-color:#f3f4f6;">
+                    <th>{{ c.name }}</th>
+                    {% for col in flat_criteria %}
+                      <td>{{ matrix_raw_criteria|get_item:c.id|get_item:col.id|floatformat:3 }}</td>
+                    {% endfor %}
+                    <td>{{ row_totals_raw|get_item:c.id|floatformat:3 }}</td>
+                    <td style="font-weight:bold;">{{ row_averages_raw|get_item:c.id|floatformat:3 }}</td>
+                  </tr>
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <p class="mt-2 mb-4 text-gray-700 text-sm">
+          This pairwise comparison matrix shows the relative importance of each criterion.
+          Parent criteria are shown as group headers, and children are indented with arrows.
+        </p>
+
+        <h3 class="mt-5">Pairwise Comparison Matrix (Normalized)</h3>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Criterion</th>
+              {% for c in flat_criteria %}
+                <th>{{ c.name }}</th>
+              {% endfor %}
+              <th>TOTAL</th>
+              <th>AVERAGE</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for parent_id, children in children_map.items %}
+              {% if parent_id %}
+                {% for c in children %}
+                  <tr>
+                    <th>
+                      <span style="color:#9ca3af;">→</span> {{ c.name }}
+                    </th>
+                    {% for col in flat_criteria %}
+                      <td>{{ normalized_matrix|get_item:c.id|get_item:col.id|floatformat:3 }}</td>
+                    {% endfor %}
+                    <td>{{ row_totals|get_item:c.id|floatformat:3 }}</td>
+                    <td style="font-weight:bold;">{{ row_averages|get_item:c.id|floatformat:3 }}</td>
+                  </tr>
+                {% endfor %}
+              {% else %}
+                {% for c in children %}
+                  <tr style="background-color:#f3f4f6;">
+                    <th>{{ c.name }}</th>
+                    {% for col in flat_criteria %}
+                      <td>{{ normalized_matrix|get_item:c.id|get_item:col.id|floatformat:3 }}</td>
+                    {% endfor %}
+                    <td>{{ row_totals|get_item:c.id|floatformat:3 }}</td>
+                    <td style="font-weight:bold;">{{ row_averages|get_item:c.id|floatformat:3 }}</td>
+                  </tr>
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <p class="mt-2 mb-4 text-gray-700 text-sm">
+          This normalized matrix converts the raw comparisons into comparable proportions,
+          and the row averages represent the final weight (importance) of each criterion.
+        </p>
+
+        <h3 class="mt-5">Consistency Check</h3>
+
+        <table class="table table-striped">
+          <tbody>
+            <tr>
+              <th>λ max</th>
+              <td>{{ lambda_max|floatformat:4 }}</td>
+            </tr>
+            <tr>
+              <th>Consistency Index (CI)</th>
+              <td>{{ ci|floatformat:4 }}</td>
+            </tr>
+            <tr>
+              <th>Consistency Ratio (CR)</th>
+              <td>
+                {{ cr|floatformat:4 }}
+                {% if cr < 0.10 %}
+                  <span class="text-lime-600 font-bold">✓ Acceptable</span>
+                {% else %}
+                  <span class="text-red-600 font-bold">✗ Inconsistent</span>
+                {% endif %}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p class="mt-2 mb-4 text-gray-700 text-sm">
+          The consistency check indicates whether the pairwise judgments are logically coherent;
+          a low consistency ratio means the comparisons are reliable.
+        </p>
+
         <hr class="mt-5">
 
         <h1 class="mt-5">Alternatives Evaluation (Per Criterion)</h1>
@@ -454,6 +620,10 @@
             </tbody>
           </table>
 
+          <p class="mt-2 mb-4 text-gray-700 text-sm">
+            This matrix compares the available alternatives against each other with respect to the current criterion.
+          </p>
+
           <h4 class="mt-8">Normalized Matrix</h4>
 
           <table class="table table-striped">
@@ -479,6 +649,11 @@
             </tbody>
           </table>
 
+          <p class="mt-2 mb-4 text-gray-700 text-sm">
+            This table shows the relative performance of each alternative after normalizing the comparisons
+            so they can be meaningfully compared.
+          </p>
+
           <h4 class="mt-8">Alternative Weights</h4>
 
           <table class="table table-striped">
@@ -499,6 +674,11 @@
               {% endfor %}
             </tbody>
           </table>
+
+          <p class="mt-2 mb-4 text-gray-700 text-sm">
+            These weights represent how well each alternative satisfies this specific criterion,
+            and they are later combined with the criterion’s importance.
+          </p>
 
           <p class="mt-2 text-sm text-gray-600" hidden>
             Consistency Ratio (CR):
