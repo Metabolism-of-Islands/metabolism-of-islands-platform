@@ -1,0 +1,274 @@
+{% extends "optamos/_base.html" %}
+
+{% block title %}
+  Edit project: {{ project }}
+{% endblock %}
+
+{% block content %}
+
+<div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
+
+  <div class="absolute top-4 right-4">
+    <a href="{% url "optamos:project_overview" project.uid %}" class="btn-white btn-sm">
+    <svg xmlns="http://www.w3.org/2000/svg" class="size-5" fill="currentColor" viewBox="0 0 640 640"><!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path d="M96 128C78.3 128 64 142.3 64 160C64 177.7 78.3 192 96 192L182.7 192C195 220.3 223.2 240 256 240C288.8 240 317 220.3 329.3 192L544 192C561.7 192 576 177.7 576 160C576 142.3 561.7 128 544 128L329.3 128C317 99.7 288.8 80 256 80C223.2 80 195 99.7 182.7 128L96 128zM96 288C78.3 288 64 302.3 64 320C64 337.7 78.3 352 96 352L342.7 352C355 380.3 383.2 400 416 400C448.8 400 477 380.3 489.3 352L544 352C561.7 352 576 337.7 576 320C576 302.3 561.7 288 544 288L489.3 288C477 259.7 448.8 240 416 240C383.2 240 355 259.7 342.7 288L96 288zM96 448C78.3 448 64 462.3 64 480C64 497.7 78.3 512 96 512L150.7 512C163 540.3 191.2 560 224 560C256.8 560 285 540.3 297.3 512L544 512C561.7 512 576 497.7 576 480C576 462.3 561.7 448 544 448L297.3 448C285 419.7 256.8 400 224 400C191.2 400 163 419.7 150.7 448L96 448z"/></svg>
+      Manage project
+    </a>
+  </div>
+
+  <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+    <h2 class="mt-10 text-center text-3xl/9 font-bold tracking-tight text-gray-900">Edit project</h2>
+  </div>
+
+  <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+
+    <form method="POST" class="space-y-6">
+      {% csrf_token %}
+      <div>
+        <label for="name" class="block font-medium text-gray-900">Project name</label>
+        <div class="mt-2">
+          <input id="name" type="text" name="name" required  class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-cyan-600" 
+          value="{{ project.name }}" />
+        </div>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between">
+          <label for="goal" class="block font-medium text-gray-900">Project goal</label>
+        </div>
+        <div class="mt-2">
+          <input id="goal" type="text" name="goal" required value="{{ project.goal }}" />
+        </div>
+      </div>
+
+      <section id="criteria">
+        <div class="flex items-center justify-between">
+          <label for="goal" class="block font-medium text-gray-900">Criteria</label>
+          <span class="btn-sm btn-white" id="desc_criteria">+ Add descriptions</a>
+        </div>
+
+        {% for each in project.criteria.all %}
+          <div class="mt-2 item flex flex-col" data-id="{{ each.id }}">
+            <div class="flex items-center">
+              <input type="text" name="criteria_{{ each.id }}" value="{{ each }}" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white" />
+              <button type="button" class="indent cursor-pointer ml-2 text-gray-600 hover:text-gray-800 indent_{{ each.id}}" title="Make this into a sub-criterion">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+              </svg>
+              </button>
+              <button type="button" class="remove cursor-pointer ml-2 text-gray-500 hover:text-red-600">
+                <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
+                  <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/>
+                </svg>
+              </button>
+
+              <input type="hidden" name="child_{{ each.id }}" value="false" class="child-flag" />
+            </div>
+
+            <textarea class="mb-3 desc_criteria hidden mt-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-gray-50" name="desc_criteria_{{ each.id }}" placeholder="Description">{{ each.description|default_if_none:"" }}</textarea>
+          </div>
+        {% endfor %}
+
+        <div class="mt-2 item flex flex-col">
+          <div class="flex items-center">
+            <input type="text" name="criteria" placeholder="Add a new criteria" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white" />
+            <button type="button" class="indent cursor-pointer ml-2 text-gray-600 hover:text-gray-800" title="Make child of criterion above">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+              </svg>
+            </button>
+            <input type="hidden" name="child" value="false" class="child-flag" />
+
+          </div>
+          <textarea class="mb-3 desc_criteria hidden" name="desc_criteria" placeholder="Description"></textarea>
+        </div>
+      </section>
+
+      <section id="alternatives">
+        <div class="flex items-center justify-between">
+          <label class="block font-medium text-gray-900">Alternatives</label>
+        </div>
+
+        {% for each in project.alternatives.all %}
+          <div class="mt-2 item">
+            <div class="flex items-center">
+              <input type="text" name="alternative_{{ each.id }}" value="{{ each }}" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white" />
+              <button type="button" class="remove cursor-pointer ml-2 focus:outline-none focus:ring-2 focus:ring-red-500 hover:text-red-600">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor">
+                  <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        {% endfor %}
+
+        <div class="mt-2">
+          <input type="text" name="alternative" placeholder="Add a new alternative" />
+        </div>
+
+      </section>
+
+      <section class="bg-gray-100 p-4 rounded-lg">
+        <h3>Meta data (optional)</h3>
+        <div>
+          <div class="flex items-center justify-between">
+            <label for="goal" class="block font-medium text-gray-900">Description</label>
+          </div>
+          <div class="mt-2">
+            <textarea class="h-32" name="description" placeholder="Short description of your project">{{ project.description|default_if_none:"" }}</textarea>
+          </div>
+        </div>
+
+        <section class="mt-4" id="tags">
+          <div class="flex items-center justify-between">
+            <label class="block font-medium text-gray-900">Tag(s)</label>
+          </div>
+          {% for each in project.tag_list.all %}
+            <div class="mt-2 item">
+              <div class="flex items-center">
+                <input type="text" name="tag_{{ each.id }}" value="{{ each }}" class="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white" />
+                <button type="button" class="remove cursor-pointer ml-2 focus:outline-none focus:ring-2 focus:ring-red-500 hover:text-red-600">
+                  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor">
+                    <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          {% endfor %}
+
+        <div class="mt-2">
+          <input type="text" name="tag" placeholder="Add a new tag" />
+        </div>
+        </section>
+      </section>
+
+      {% if project.users.count > 1 %}
+        <section class="bg-gray-100 p-4 rounded-lg">
+            <div class="flex items-center justify-between">
+              <label class="block font-medium text-gray-900">Lock this project</label>
+              <svg height="1em" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free v5.15.4 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path d="M400 224h-24v-72C376 68.2 307.8 0 224 0S72 68.2 72 152v72H48c-26.5 0-48 21.5-48 48v192c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48V272c0-26.5-21.5-48-48-48zm-104 0H152v-72c0-39.7 32.3-72 72-72s72 32.3 72 72v72z"/></svg>
+            </div>
+            <div class="mt-2 text-gray-700">
+              When you are ready to start processing team results, you can lock this 
+              project to prevent submissions or edits from all team members. You can always
+              unlock this at a later stage if you want.
+            </div>
+            <label class="mt-2 block"><input type="checkbox" value="1" name="is_locked" {% if project.is_locked %}checked{% endif %} /> Lock this project</label>
+        </section>
+      {% endif %}
+
+      <div>
+        <button type="submit" class="flex w-full justify-center btn-blue px-3 py-1.5 font-semibold text-white shadow-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 cursor-pointer">Save</button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<!-- only exists to ensure tailwind creates this class; is applied in js, see code below -->
+<div class="pl-6 ml-2 bg-sky-200 w-1 rounded-md ml-1"></div>
+
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript">
+$(function(){
+  $("section#alternatives").on("input", "input[name='alternative']", function() {
+    if ($(this).data("is-typed") !== true) {
+      var newDiv = $(this).closest("div").clone();
+      newDiv.find("input").val(""); // Clear the cloned input
+      $(this).closest("section").append(newDiv);
+      $(this).data("is-typed", true); // Mark this input as typed
+    }
+  }); 
+  $("section#tags").on("input", "input[name='tag']", function() {
+    if ($(this).data("is-typed") !== true) {
+      var newDiv = $(this).closest("div").clone();
+      newDiv.find("input").val(""); // Clear the cloned input
+      $(this).closest("section").append(newDiv);
+      $(this).data("is-typed", true); // Mark this input as typed
+    }
+  }); 
+  $("section#criteria").on("input", "input[name='criteria']", function() {
+    if ($(this).data("is-typed") !== true) {
+      var newDiv = $(this).closest("div.item").clone();
+      newDiv.find("input").val(""); // Clear the cloned input
+      newDiv.find("textarea").val(""); // Clear the cloned textarea
+      newDiv.find(".indent").show(); // Make sure we always show the option to make sub-cat
+      $(this).closest("section").append(newDiv);
+      $(this).data("is-typed", true); // Mark this input as typed
+    }
+  }); 
+  $(".remove").on("click", function() {
+    $(this).closest(".item").slideUp("fast", function() {
+      $(this).remove();
+    });
+  });
+
+  $("#desc_criteria").click(function(){
+    var $btn = $(this);
+    if ($btn.hasClass("btn-green")) {
+      $btn.removeClass("btn-green").addClass("btn-white");
+      $(".desc_criteria").hide();
+    } else {
+      $btn.removeClass("btn-white").addClass("btn-green");
+      $(".desc_criteria").show();
+    }
+  });
+  {% if has_descriptions %}
+    $("#desc_criteria").click();
+  {% endif %}
+
+  $(document).on("click", ".indent", function (e) {
+    const $button = $(this);
+    const $item = $button.closest(".item");
+    const iid = $item.data("id");
+    const $childFlag = $item.find(".child-flag");
+
+    const isChild = $item.hasClass("child");
+
+    if (isChild) {
+      // Currently a child → un‑indent
+      $item.removeClass("child ml-6");
+      $childFlag.val("false");
+
+      // Revert button state
+      $button
+        .removeClass("text-sky-600")
+        .addClass("text-gray-600 hover:text-gray-800")
+        .prop("title", "Make child of criterion above");
+    } else {
+      // Currently top‑level → try to indent
+
+      const $prevItem = $item.prevAll(".item:not(.child)").first();
+
+      if ($prevItem.length === 0) {
+        // No valid parent above
+        alert("No parent criterion available");
+        return;
+      }
+
+      $item.addClass("child ml-6");
+      $childFlag.val("true");
+
+      // Visual feedback
+      $button
+        .removeClass("text-gray-600 hover:text-gray-800")
+        .addClass("text-sky-600")
+        .prop("title", "Convert to a main criterion");
+    }
+  });
+
+  {% for each in project.criteria.all %}
+    {% if each.parent %}
+      $(".indent.indent_{{ each.id }}").click();
+    {% endif %}
+  {% endfor %}
+
+  // You cannot make the first criteria a sub-criteria so hide the icon
+  $("#criteria .indent").first().hide();
+
+});
+
+</script>
+  
+{% endblock %}

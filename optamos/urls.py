@@ -1,0 +1,27 @@
+from django.urls import path
+from . import views
+
+app_name = "optamos"
+
+urlpatterns = [
+    path("", views.index, name="index"),
+    path("login/", views.account_login, name="login"),
+    path("logout/", views.account_logout, name="logout"),
+    path("about/", views.about, name="about"),
+    path("resources/", views.resources, name="resources"),
+    path("manual/", views.manual, name="manual"),
+    path("projects/create/", views.project_create, name="project_create"),
+    path("projects/", views.projects, name="projects"),
+    path("projects/<int:id>/", views.project, name="project"),
+    path("projects/<int:id>/results/", views.project_results, name="project_results"),
+    path("projects/<int:id>/overview/", views.project_overview, name="project_overview"),
+    path("projects/<int:id>/sensitivity/", views.project_results, {"page": "sensitivity"}, name="project_sensitivity"),
+    path("projects/<int:id>/team/sensitivity/", views.project_results, {"page": "sensitivity", "team": True}, name="project_team_sensitivity"),
+    path("projects/<int:id>/settings/", views.project_settings, name="project_settings"),
+    path("projects/<int:id>/team/", views.project_team, name="project_team"),
+    path("projects/<int:id>/team/ranking/", views.project_team_results, name="project_team_ranking"),
+    path("projects/<int:id>/team/results/", views.project_results, {"team": True}, name="project_team_results"),
+    path("accessdenied/", views.access_denied, name="access_denied"),
+    path("account/", views.account, name="account"),
+    path("account/create/", views.account_create, name="account_create"),
+]

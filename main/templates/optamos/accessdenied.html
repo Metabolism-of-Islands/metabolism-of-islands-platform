@@ -1,0 +1,44 @@
+{% extends "optamos/_base.html" %}
+
+{% block title %}
+  Access denied
+{% endblock %}
+
+{% block content %}
+
+<div class="flex items-center justify-center bg-gray-50 p-6">
+  <div class="max-w-xl w-full bg-white shadow-lg rounded-lg border border-gray-200 overflow-hidden">
+    <div class="p-8 text-center">
+      <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-50">
+        <svg class="h-10 w-10 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4m0 4h.01" />
+        </svg>
+      </div>
+
+      <h1 class="mt-6 text-2xl font-semibold text-gray-900">You don't have access</h1>
+      <p class="mt-2 text-sm text-gray-600">
+        It looks like your account doesn't have permission to view this page.
+      </p>
+
+      <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3 px-4">
+        <a href="{% url "optamos:projects" %}" class="btn-blue">
+          My projects
+        </a>
+        <a href="javascript:history.back(1)" class="inline-flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300">
+          Back
+        </a>
+      </div>
+
+      <div class="mt-6 text-xs text-gray-400">
+        Page requested: {{ request.GET.url }}
+      </div>
+    </div>
+
+    <div class="bg-gray-50 px-6 py-3 border-t border-gray-100 text-xs text-gray-500 flex items-center justify-between">
+      <div>Required role: <span class="font-medium text-gray-700">{{ request.GET.role }}</span></div>
+      <div>Your user: <strong>{{ request.user.email }}</strong></div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,11 @@
+Django>=6.0,<6.1
+psycopg[binary]
+Pillow
+django-anymail[sendgrid]
+feedparser
+pyzotero
+django-imagekit
+python-dotenv
+
+# For OPTamos
+openpyxl

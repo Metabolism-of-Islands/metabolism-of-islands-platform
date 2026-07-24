@@ -1,0 +1,329 @@
+{% extends "optamos/_base.html" %}
+
+{% block title %}
+  User manual
+{% endblock %}
+
+{% block content %}
+
+<h1>User manual</h1>
+
+<p>
+  This manual explains how to use OPTamos in multi-criteria decision making. This is a practical 
+  overview of how this tool works. If you want to learn more about the methodology behind
+  this tool, <a href="{% url "optamos:about" %}">read more here</a>.
+</p>
+
+<h2>Step 1: Create a new project</h2>
+
+<p>
+  If you don't have one already, create an account for our platform. Once you are logged into 
+  your account, there is a "Projects" option in the menu. You can create a new project in 
+  this section by clicking the "+ New Project" button. You will see the following form:
+</p>
+
+<figure class="mx-auto max-w-max rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm my-5">
+  <img src="/media/optamos/manual/project.jpg" alt="Project form screenshot" class="mx-auto rounded-lg">
+</figure>
+
+<p>The following fields should be filled out:</p>
+
+<ul class="list-disc ml-4">
+  <li><strong>Project name</strong>: a short name to describe your project.</li>
+  <li><strong>Project goal</strong>: a sentence to describe what the goal is for your project (e.g. <em>To decide on the transformation for Lot 84</em>).</li>
+  <li><strong>Criteria</strong>: enter each criteria that is part of your evaluation process. Try to use single-word or otherwise short phrases here (e.g. <em>Ecological</em>). Every time you fill out one field, a new, empty field appears automatically in order for you to keep adding options. Please note that you can also add a description (use the "+ Add descriptions" button to add them). It is furthermore possible to make not just a single-level list of criteria, but to also add sub-criteria (for instance <em>Otter habitat</em> as a sub-criterion of <em>Ecological</em>). To make any one of the criteria a sub-criterion, click the right-hand arrow next to it. You can click it again to undo this. The arrow will only appear for the 2nd criterion onwards, because every sub-criterion needs to have a 'parent' above it. The image below shows an example of this.</li>
+</ul>
+
+<figure class="mx-auto max-w-max rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm my-5">
+  <img src="/media/optamos/manual/criteria.jpg" alt="Criteria" class="mx-auto rounded-lg">
+</figure>
+
+<ul class="list-disc ml-4">
+  <li><strong>Alternatives</strong>: the different alternatives that you are evaluating (for instance <em>Build a park</em>, <em>Create a cultural centre</em>, <em>Cattle farming</em>).</li>
+  <li><strong>Meta data</strong>: this is an optional section to enter meta data about your project, as you see fit.</li>
+</ul>
+
+<p>Once you save your information, your project is created! If you have a single-user, straightforward project, then this might be all you need to do. However, there are some more advanced settings available if you need them.</p>
+
+<h3>Optional: Managing a team</h3>
+
+<p>
+  OPTamos is set up in a way that it can be used by a single user or by a group of people. By default, any 
+  new project is set up to only give you - the user that created the project - access to it. However, 
+  you might want to involve others that give their own evaluation of the criteria and the alternatives. 
+  To do this, you have to add them as team members. To do so, you can click the link at the top of the page
+  that you see right after creating a project:
+</p>
+
+<figure class="mx-auto max-w-max rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm my-5">
+  <img src="/media/optamos/manual/manage.jpg" alt="Project created notice" class="mx-auto rounded-lg">
+</figure>
+
+<p>
+  Please note that while you will only see this text when you first create a project, but you can always 
+  manage a team by going to the MANAGE PROJECT section.
+</p>
+
+<p>
+  To add team members you simply add their e-mail address in the box that is shown. Enter one address
+  on each line, and click the button below the box to give these people access to the project.
+</p>
+
+<figure class="mx-auto max-w-max rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm my-5">
+  <img src="/media/optamos/manual/team.jpg" alt="Project created notice" class="mx-auto rounded-lg">
+</figure>
+
+<p>
+Each team member will be sent an e-mail to inform them that they have been added to the project. 
+They can follow the link in the e-mail to create their account, and once they do this, they will 
+automatically have access to the project. If a user already has an account then they will simply receive
+an e-mail notification that their existing account now has access to a new project.
+</p>
+
+<figure class="mx-auto max-w-max rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm my-5">
+  <img src="/media/optamos/manual/added.jpg" alt="Project created notice" class="mx-auto rounded-lg">
+</figure>
+
+<p>
+  You can remove team members at any time by clicking the delete icon next to their e-mail address.
+</p>
+
+<figure class="mx-auto max-w-max rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm my-5">
+  <img src="/media/optamos/manual/usermanage.jpg" alt="Project created notice" class="mx-auto rounded-lg">
+</figure>
+
+<p>
+  <strong>Important</strong>: anyone who is invited as part of your team will be able to fill out their 
+  own criteria rankings, but they can NOT change the project settings. They should be seen as participants
+  in the analysis, but not as administrators of the project. Only you (as the person who created the project) 
+  can edit the project itself. For this reason it makes sense to only invite people once you have confirmed
+  that everything in the project is looking good and it is ready for people to participate in.
+</p>
+
+<h2>Step 2: Recording rankings</h2>
+
+<p>At the core of an AHP analysis is the pair-wise comparison of different options. This means looking at two 
+items (be it criteria or alternatives) and evaluating ONLY those two in that moment. This is what is being done
+for a number of different elements in the project. Read more here about the <a href="{% url "optamos:about" %}">methodology</a>.
+</p>
+
+<p>
+   There are two types of rankings to record: <strong>criteria rankings</strong> and <strong>alternative rankings</strong>.
+</p>
+
+<h3>Ranking criteria</h3>
+
+<p>
+  To rank criteria refers to indicating how much you value different criteria. Do you care more about <em>Social</em> compared
+  to <em>Ecological</em>? Do you care more about <em>Economic</em> or <em>Ecological</em>? It is important to note that you 
+  are always looking at two items at the same time - you are only evaluating individual pairs at one time, not the entire list of options.
+</p>
+
+<p>
+  When you open a project, you will immediately see the page where you can compare all the criteria. The evaluation will list all the 
+  different pairs for your project.
+</p>
+
+<figure class="mx-auto max-w-max rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm my-5">
+  <img src="/media/optamos/manual/rank1.jpg" alt="Project created notice" class="mx-auto rounded-lg">
+</figure>
+
+<p>
+  You rank all the pairs by moving the slider in the direction of the criterion that is most important to you. The more you move the 
+  slider, the more important that criterion becomes. Underneath the slider you will see a description of how the importance is ranked. 
+  You can move it up to 8 steps into either direction. If you find both criteria equally important, leave the slider in the center.
+  Once you are happy with your rankings, save the page.
+</p>
+
+<figure class="mx-auto max-w-max rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm my-5">
+  <img src="/media/optamos/manual/rank2.jpg" alt="Project created notice" class="mx-auto rounded-lg">
+</figure>
+
+<p>
+  After you save your criteria rankings, it is important to have a look at the "Consistency ratio" shown on the left-hand side of the screen. 
+  This indicators tells you whether or not you are sufficiently consistent in your rankings. If you provide contradictory rankings, the system
+  will inform you of this and you are recommended to revisit the previous page to review your criteria rankings.
+</p>
+
+<figure class="mx-auto max-w-max rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm my-5">
+  <img src="/media/optamos/manual/ratio.jpg" alt="Project created notice" class="mx-auto rounded-lg">
+</figure>
+
+<h3>Ranking alternatives</h3>
+
+<p>
+  After you compare criteria, you will be asked to do a similar comparison for your different alternatives. However, you will be ranking 
+  the alternatives through a specific criterion lens. You do this one criterion at a time. For instance, below is the example
+  of ranking alternatives when looking at it from an Ecological angle:
+</p>
+
+<figure class="mx-auto max-w-max rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm my-5">
+  <img src="/media/optamos/manual/rank3.jpg" alt="Ranking of alternatives" class="mx-auto rounded-lg">
+</figure>
+
+<p>If you look at the alternatives from this angle, you might want to classify your options as follows:</p>
+
+<figure class="mx-auto max-w-max rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm my-5">
+  <img src="/media/optamos/manual/rank4.jpg" alt="Ranking under Ecological" class="mx-auto rounded-lg">
+</figure>
+
+<p>
+  Once you record these rankings, you will automatically be taken to the next criterion for rankings. 
+  You again fill out your preference for different alternatives but now you take a different 
+  criterion into account. For instance, from an Social perspective, you might fill it out like this:
+
+</p>
+
+<figure class="mx-auto max-w-max rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm my-5">
+  <img src="/media/optamos/manual/rank5.jpg" alt="Ranking under Ecological" class="mx-auto rounded-lg">
+</figure>
+
+<p>
+  Continue filling out the rankings until you have done all of them.
+</p>
+
+<h2>Step 3: View results</h2>
+
+<p>
+  Once you have filled out all the rankings, the system will provide you with the results. 
+  The results are automatically calculated based on your rankings, and they will present two things: 
+  </p>
+  <ol class="list-decimal ml-8">
+    <li>A ranking of all the alternatives, indicating in which order the alternatives are preferred 
+    based on all your inputs. </li>
+    <li>A ranking of the criteria, to indicate how much importance is given to each criterion, based on 
+    your criteria ranking</li>
+  </ol>
+
+</p>
+
+<figure class="mx-auto max-w-max rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm my-5">
+  <img src="/media/optamos/manual/results1.jpg" alt="Project results" class="mx-auto rounded-lg">
+</figure>
+
+<p>
+  In addition to the charts, there are additional tables available on the same page. They include a summary
+  overview of the information displayed in the charts, but there are also detailed calculations available
+  (click the "View all calculations" button). The information can also be downloaded and saved in 
+  spreadsheet format (either the summary or all the calculations).
+</p>
+
+<figure class="mx-auto max-w-max rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm my-5">
+  <img src="/media/optamos/manual/results2.jpg" alt="Project results" class="mx-auto rounded-lg">
+</figure>
+
+<h2>Step 4: Sensitivity analysis</h2>
+
+<p>
+Sensitivity analysis shows how stable the decision is when the importance of
+criteria changes. By moving a slider, you can increase or decrease the
+importance of a specific criterion and immediately see how the overall rankings
+respond. As one criterion becomes more important, the system automatically
+adjusts the importance of the remaining criteria so that the total importance
+stays balanced. This helps you explore “what-if” scenarios and understand which
+criteria have the biggest influence on the final result. You can freely play
+around with these sliders - this will not change your saved preferences and
+results. 
+</p>
+
+<figure class="mx-auto max-w-max rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm my-5">
+  <img src="/media/optamos/manual/sensitivity1.jpg" alt="Sensitivity analysis" class="mx-auto rounded-lg">
+</figure>
+
+<p>
+  Below you can see what happens if you move the <em>Ecological</em> importance
+  from the calculated 66% to 50% (thus answering the question: how would my result change
+  if I make <em>Ecological</em> less important?).
+</p>
+
+<figure class="mx-auto max-w-max rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm my-5">
+  <img src="/media/optamos/manual/sensitivity2.jpg" alt="Change in importance" class="mx-auto rounded-lg">
+</figure>
+
+<p>
+  As you can see, the bars in the expected results changed. While the order is still the same, the
+  importance levels of each alternative are different. By moving the sliders around, you can tease out 
+  exactly <em>how</em> sensitive the results are to the importance rankings of the criteria. For instance, by 
+  continuously reducing the <em>Ecological</em> importance until the rankings change, I can see that 
+  an <em>Ecological</em> importance of 44% marks the inflection point: at this percentage <em>Build a park</em>
+  no longer tops the list.
+</p>
+
+<figure class="mx-auto max-w-max rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm my-5">
+  <img src="/media/optamos/manual/sensitivity3.jpg" alt="Order is changed after moving sliders even further" class="mx-auto rounded-lg">
+</figure>
+
+<p>
+  Please note that by changing the importance of one criterion, the importance of ALL other criteria is automatically
+  recalculated. This is done by the system in order to keep the required balance of 100% distributed amongst all criteria. 
+</p>
+
+<hr class="mt-5 mb-5">
+
+<h2>Additional details: Manage project</h2>
+
+<p>
+  The administrator of a project can modify the project at any time by clicking the "Manage project" button shown at the right
+  top of the screen. This will take you to the following interface:
+</p>
+
+<figure class="mx-auto max-w-max rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm my-5">
+  <img src="/media/optamos/manual/manage2.jpg" alt="Order is changed after moving sliders even further" class="mx-auto rounded-lg">
+</figure>
+
+<p>The available options are explained below:</p>
+
+<ul class="list-disc ml-4 mb-10">
+  <li><strong>Edit project</strong>: this will take you to a screen similar to the "Create project" screen, where you can enter
+  project details such as the project name, the list of criteria, and the alternatives. <strong>Important</strong>: 
+  make sure that you settle on the list of criteria and alternatives before people fill out their rankings, otherwise they will 
+  have to redo this to match your new setup.
+  </li>
+  <li><strong>Team</strong>: this will take you to the Team page described earlier. You can always revisit this page and invite
+  more people to participate, or remove people from the list.</li>
+  <li><strong>Group results</strong>: this will show you the results for the entire group (see more below). This button is only
+  visible if you have added a team to your project.</li>
+  <li><strong>Delete this project</strong>: this will permanently remove your project. If your project has any team members, it will
+  also disappear from their account.</li>
+  <li><strong>Open project</strong>: this takes you back to your project</li>
+</ul>
+
+<h2>Additional details: Group project</h2>
+
+<p>
+  If you gave additional people access to your project, then all of these people will be able to fill out rankings in the same way
+  outlined above. They will also be able to see their individual results and perform a sensitivity analysis, exactly in the same
+  way you can do this as administrator. However, as an administrator you can also visualize the group results where ALL results 
+  from the whole team are presented. Use the "Group results" button under "Manage project" (see above) to view these results.
+</p>
+
+<p>The first thing you will see in the group results is an overview of the rankings for each of the team members. You will have
+a similar navigation menu to the one for a regular project view, but instead of showing sliders that you can modify, it shows
+a list of sliders displaying the answers of each group member. There is also an AVERAGE shown, which is the geometric mean 
+for that answer, representing the average answer given by your team.
+</p>
+
+<figure class="mx-auto max-w-max rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm my-5">
+  <img src="/media/optamos/manual/teamresult1.jpg" alt="Overview of results for each person in the team" class="mx-auto rounded-lg">
+</figure>
+
+<p>
+  Depending on your group context, you could show the results to the team and discuss the answers to better understand 
+  everybody's motivations and values. If the discussion leads to a better understanding of everybody's points of view, that 
+  might lead to improved and more broadly accepted decision making.
+</p>
+
+<p>In addition to viewing the answers to each question, you can also visualize the final group results. The presentation 
+is identical to the individual presentation, but in this case the group results are shown based on the average answers 
+presented before.</p>
+
+<figure class="mx-auto max-w-max rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm my-5">
+  <img src="/media/optamos/manual/teamresult2.jpg" alt="Group results" class="mx-auto rounded-lg">
+</figure>
+
+<p>Similarly, there is a sensitivity analysis available to see what the impact would be of changing the importance. This
+is identical to the personal sensitivity analysis but it is based on the group results instead.</p>
+
+
+
+{% endblock %}

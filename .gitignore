@@ -1,0 +1,16 @@
+# Secrets and Configuration
+.env
+
+# Python compilation files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Media files
+media/
+
+# Tailwind executables
+tailwindcss-cli
+
+# Storage documents
+docs/

@@ -1,0 +1,1 @@
+sudo docker exec -it metabolismofislands_web /code/tailwindcss-cli -i /code/static/css/input.css -o /code/static/css/styles.css
