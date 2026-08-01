@@ -1,3 +1,2290 @@
 from django.db import models
 
-# Create your models here.
+# Used for image resizing
+from stdimage.models import StdImageField
+
+# To indicate which site a record belongs to
+from django.urls import reverse
+from django.forms import ModelForm
+from django.conf import settings
+from markdown import markdown
+import re
+from unidecode import unidecode
+from django.utils.text import slugify
+
+from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+# To sanitize user input
+import bleach
+from django.utils.safestring import mark_safe
+
+# To get the geometry fields
+from django.contrib.gis.db import models
+
+# To record the points for gps spreadsheets
+from django.contrib.gis.geos import Point
+
+# To be able to set an UUID
+import uuid
+
+# To be able to call just the filename in the file field
+# Maybe move to def filename @property?
+import os
+
+# For youtube url parsing
+from urllib.parse import urlparse, parse_qs
+
+# For date parsing
+from dateutil.parser import parse
+
+from django.utils import timezone
+
+# To get the total number of points
+from django.db.models import Sum
+
+# To get recently registered students in the course
+import datetime
+
+# To add a timestamp if needed to duplicated slugs
+import time
+
+import pandas as pd
+import numpy as np
+
+# To create the sample shapefile images
+import geopandas
+
+from django.template.defaultfilters import filesizeformat
+from django.db.models import Q
+
+# For the regular extpression replacement in Data Articles
+import re
+
+# For our shapefile work
+from django.contrib.gis.gdal import DataSource, OGRGeometry
+from django.contrib.gis.gdal.srs import (AxisOrder, CoordTransform, SpatialReference)
+
+# For the signals we use to update reference spaces when new pics are uploaded
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+# This is to raise an error if the monthly email quota is being exceeded
+from anymail.signals import pre_send, post_send
+from anymail.exceptions import AnymailCancelSend
+
+# To check if a value is NaN: https://stackoverflow.com/questions/944700/how-can-i-check-for-nan-values
+import math
+
+from django.core.cache import cache
+
+# For the translations
+from django.utils.translation import gettext_lazy as _
+
+# For calculating geometric mean in OPTamos
+import statistics
+
+def get_date_range(start, end, months_only=False):
+
+    if start and not end and months_only:
+        return "Since " + start.strftime("%b %Y")
+
+    elif start and not end:
+        return "Start date: " + start.strftime("%b %d, %Y")
+
+    if not start or not end:
+        return None
+
+    start_date = start.strftime("%b %Y") if months_only else start.strftime("%b %d, %Y")
+    start_time = "00:00" if months_only else start.strftime("%H:%M")
+    end_date = end.strftime("%b %Y") if months_only else end.strftime("%b %d, %Y")
+    end_time = "00:00" if months_only else end.strftime("%H:%M")
+
+    if start_date == end_date:
+        if months_only:
+            return start_date
+        elif start_time == "00:00" and end_time == "00:00":
+            return start_date
+        elif start_time == end_time:
+            return start.strftime("%b %d, %Y %H:%M")
+        else:
+            return start_date + " " + start_time + " - " + end_time
+    else:
+        if start.strftime("%Y%m") == end.strftime("%Y%m"):
+            return start.strftime("%b") + " " + start.strftime("%d") + " - " + end.strftime("%d") + ", " + start.strftime("%Y")
+        elif start_time != "00:00" and end_time != "00:00":
+            return start.strftime("%b %d, %Y %H:%M") + " - " + end.strftime("%b %d, %Y %H:%M")
+        elif start.strftime("%Y") == end.strftime("%Y"):
+            if months_only:
+                return start.strftime("%b") + " - " + end_date
+            else:
+                return start.strftime("%b %d") + " - " + end_date
+        else:
+            return start_date + " - " + end_date
+
+# By default we really only want to see those records that are both public and not deleted
+class PublicActiveRecordManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False, is_public=True)
+
+# This returns those records that are private (a check around ownership needs to take place in the codebase)
+# and that are not deleted
+class PrivateRecordManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
+
+# This is to filter those that are public (so NOT private), including deleted items
+class PublicRecordManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_public=True)
+
+class Tag(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    description_html = models.TextField(null=True, blank=True, help_text="Do not edit... auto-generated by the system")
+    parent_tag = models.ForeignKey("self", on_delete=models.CASCADE, null=True, blank=True, related_name="children")
+    hidden = models.BooleanField(db_index=True, default=False, help_text="Mark if tag is superseded/not yet approved/deactivated")
+    include_in_glossary = models.BooleanField(db_index=True, default=False)
+    belongs_to = models.ForeignKey("Record", on_delete=models.CASCADE, null=True, blank=True)
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    is_public = models.BooleanField(default=True, db_index=True)
+    icon = models.CharField(max_length=50, null=True, blank=True, help_text="Only include the icon name, not fa- classes --- see https://fontawesome.com/icons?d=gallery")
+    color = models.CharField(max_length=30, null=True, blank=True)
+    slug = models.SlugField(max_length=50, unique=True, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    def get_description(self):
+        # The description_html field is already sanitized, according to the settings (see the save() function below)
+        # So when we retrieve the html description we can trust this is safe, and will mark it as such
+        # We avoid using |safe in templates -- to centralize the effort to sanitize input
+        if self.description:
+            return mark_safe(self.description_html)
+        else:
+            return ""
+
+    def get_name_after_colon(self):
+        # For some tags, we have a long name like:
+        # Layer 1: Infrastructure
+        # And we want an easy way to just get "Infrastructure" returned
+        try:
+            string = self.name
+            return string.split(":")[1]
+        except:
+            return self.name
+
+    def get_name_after_period(self):
+        # For some tags, we have a long name like:
+        # 1.1. City boundaries
+        # And we want an easy way to just get "City boundaries" returned
+        try:
+            string = self.name
+            return string.split(".")[-1]
+        except:
+            return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.description:
+            self.description_html = None
+        else:
+            self.description_html = markdown(self.description)
+        super().save(*args, **kwargs)
+
+    @property
+    def shortcode(self):
+        "Returns abbreviation -- text between parenthesis -- if there is any"
+        if "(" in self.name:
+            s = self.name
+            return s[s.find("(")+1:s.find(")")]
+        else:
+            return self.name
+
+    @property
+    def fullname(self):
+        "Returns full name without abbreviation -- text between parenthesis -- if there is any"
+        if "(" in self.name:
+            s = self.name
+            return s[0:s.find("(")-1]
+        else:
+            return self.name
+
+    class Meta:
+        ordering = ["name"]
+
+    objects = PublicActiveRecordManager()
+    objects_unfiltered = models.Manager()
+    objects_include_private = PrivateRecordManager()
+    objects_include_deleted = PublicRecordManager()
+
+class Record(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    description_html = models.TextField(null=True, blank=True, help_text="Do not edit... auto-generated by the system")
+    image = StdImageField(upload_to="records", variations={"thumbnail": (480, 480), "large": (1280, 1024)}, blank=True, null=True, delete_orphans=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+
+    spaces = models.ManyToManyField("ReferenceSpace", blank=True)
+    #sectors = models.ManyToManyField("Sector", blank=True)
+    #materials = models.ManyToManyField("Material", blank=True)
+    tags = models.ManyToManyField(Tag, blank=True)
+
+    # We should migrate this to become a relationship instead
+    subscribers = models.ManyToManyField("People", blank=True, related_name="subscribed")
+
+    # We use soft deleted
+    is_deleted = models.BooleanField(default=False, db_index=True)
+
+    # Only public records are shown; non-public records are used for instance to manage records
+    # belonging to logged-in users only
+    is_public = models.BooleanField(default=True, db_index=True)
+
+    # These relationships are managed through separate tables, but they allow for prefetching to make
+    # the queries run much more efficiently
+    child_of = models.ManyToManyField("self", through="RecordRelationship", through_fields=("record_child", "record_parent"), symmetrical=False, related_name="parent_of_child")
+    parent_to = models.ManyToManyField("self", through="RecordRelationship", through_fields=("record_parent", "record_child"), symmetrical=False, related_name="child_of_parent")
+
+    # We are going to delete this post-launch
+    old_id = models.IntegerField(null=True, blank=True, db_index=True, help_text="Only used for the migration between old and new structure")
+
+    meta_data = models.JSONField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        if hasattr(self, "dataset"):
+            url = reverse("data:dataset", args=[self.id])
+        elif hasattr(self, "libraryitem"):
+            url = reverse("library:item", args=[self.id])
+        elif hasattr(self, "news"):
+            url = reverse("core:news", args=[self.news.slug])
+        elif hasattr(self, "event"):
+            url = reverse("core:event", args=[self.event.slug])
+        elif hasattr(self, "video"):
+            url = reverse("multimedia:video", args=[self.id])
+        elif hasattr(self, "course"):
+            url = reverse("education:course", args=[self.course.slug])
+        elif hasattr(self, "project"):
+            url = self.project.get_website()
+        else:
+            return None
+        first_chars = url[:5]
+        if first_chars == "/http":
+            url = url[1:]
+        return url
+
+    def get_description(self):
+        # The description_html field is already sanitized, according to the settings (see the save() function below)
+        # So when we retrieve the html description we can trust this is safe, and will mark it as such
+        # We avoid using |safe in templates -- to centralize the effort to sanitize input
+        if self.description:
+            return mark_safe(self.description_html)
+        else:
+            return ""
+
+    def get_markdown_description(self):
+        return markdown(self.description) if self.description else None
+
+    # Below follows a list of properties that can be used to get specific relationships
+    # that are defined in the RecordRelationship table but that can be queried using
+    # more natural language ("authors", "uploader", etc) using these properties below.
+
+    @property
+    def authors(self):
+        return People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=4)
+
+    # Return a single author -- only use if you know the record has a single author, otherwise use 'authors'
+    @property
+    def author(self):
+        try:
+            return People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=4)[0]
+        except:
+            return None
+
+    @property
+    def funders(self):
+        return Record.objects.filter(parent_list__record_child=self, parent_list__relationship__id=5)
+
+    @property
+    def curators(self):
+        return Record.objects.filter(parent_list__record_child=self, parent_list__relationship__id=20)
+
+    @property
+    def voters(self):
+        return People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=36)
+
+    @property
+    def publisher(self):
+        list = Organization.objects.filter(parent_list__record_child=self, parent_list__relationship__id=2)
+        return list[0] if list else None
+
+    @property
+    def producer(self):
+        list = Organization.objects.filter(parent_list__record_child=self, parent_list__relationship__id=3)
+        return list[0] if list else None
+
+    @property
+    def uploader(self):
+        list = People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=11)
+        return list[0] if list else None
+
+    @property
+    def organizer(self):
+        list = People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=14)
+        return list[0] if list else None
+
+    @property
+    def processor(self):
+        list = People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=34)
+        return list[0] if list else None
+
+    @property
+    def attachments(self):
+        return Document.objects_include_private.filter(attached_to=self)
+
+    def save(self, *args, **kwargs):
+        if not self.description:
+            self.description_html = None
+        elif self.meta_data and "format" in self.meta_data and self.meta_data["format"] != "markdown":
+            if self.meta_data["format"] == "markdown_html":
+                # Here it wouldn't hurt to apply bleach and take out unnecessary tags
+                self.description_html = markdown(self.description)
+            elif self.meta_data["format"] == "html":
+                # Here it wouldn't hurt to apply bleach and take out unnecessary tags
+                self.description_html = self.description
+        else:
+            self.description_html = markdown(bleach.clean(self.description))
+            if hasattr(self, "dataarticle"):
+                # For data articles we have a special syntax that converts things like [@3893] to a link, or [#3983] to an iframe
+                p = re.compile("\\[#(\\d*)\\]")
+                self.description_html = p.sub(r'<iframe class="libraryitem card" src="/library/preview/\1/" onload="resizeIframe(this)"></iframe>', self.description_html)
+
+                # For custom dataviz, the format is [#1111-222] with 222 indicating the ID of the data viz (converted to a GET parameter)
+                p = re.compile("\\[#(\\d*)-(\\d*)\\]")
+                self.description_html = p.sub(r'<iframe class="libraryitem card" src="/library/preview/\1/?data-viz=\2" onload="resizeIframe(this)"></iframe>', self.description_html)
+
+                p = re.compile("\\[@(\\d*)\\]")
+                # For local testing, add /data/ to src=
+                self.description_html = p.sub(r'<sup>[<a data-id="\1" href="/library/\1/">source</a>]</sup>', self.description_html)
+
+            else:
+                # In normal Markdown convention, a single newline will NOT be converted to <br>
+                # However this is not how regular textareas work, and people are expecting this to work
+                # so we add these <br>s.
+                self.description_html = self.description_html.replace("\n", "<br>")
+
+                # This creates all kinds of additional <br>s in between paragraphs, headers, lists, etc
+                # This code removes that. It's ugly and inefficient. Any takers to make this more efficient??
+                self.description_html = self.description_html.replace("</p><br><p>", "</p><p>")
+                self.description_html = self.description_html.replace("</p><br><ul>", "</p><ul>")
+                self.description_html = self.description_html.replace("</p><br><ol>", "</p><ol>")
+                self.description_html = self.description_html.replace("</li><br><li>", "</li><li>")
+                self.description_html = self.description_html.replace("</ul><br><p>", "</ul><p>")
+                self.description_html = self.description_html.replace("</ol><br><p>", "</ol><p>")
+                self.description_html = self.description_html.replace("<ul><br><li>", "<ul><li>")
+                self.description_html = self.description_html.replace("<ol><br><li>", "<ol><li>")
+                self.description_html = self.description_html.replace("</li><br></ul>", "</li></ul>")
+                self.description_html = self.description_html.replace("</li><br></ol>", "</li></ol>")
+                self.description_html = self.description_html.replace("<br><h", "<h")
+                self.description_html = self.description_html.replace("</h1><br>", "</h1>")
+                self.description_html = self.description_html.replace("</h2><br>", "</h2>")
+                self.description_html = self.description_html.replace("</h3><br>", "</h3>")
+                self.description_html = self.description_html.replace("</h4><br>", "</h4>")
+
+        # For all the activated spaces, we record the country_name in the meta_data
+        # That way, we can retrieve this without an additional database call
+        if hasattr(self, "activated"):
+            if not self.meta_data:
+                self.meta_data = {}
+            if self.get_country:
+                self.meta_data["country_name"] = str(self.get_country)
+            elif "country_name" in self.meta_data:
+                del(self.meta_data["country_name"])
+
+
+        super().save(*args, **kwargs)
+
+    objects = PublicActiveRecordManager()
+    objects_unfiltered = models.Manager()
+    objects_include_private = PrivateRecordManager()
+    objects_include_deleted = PublicRecordManager()
+
+class Document(Record):
+    file = models.FileField(null=True, blank=True, upload_to="documents", max_length=255)
+    attached_to = models.ForeignKey(Record, on_delete=models.CASCADE, null=True, blank=True, related_name="files")
+
+    objects = PublicActiveRecordManager()
+    objects_unfiltered = models.Manager()
+    objects_include_private = PrivateRecordManager()
+    objects_include_deleted = PublicRecordManager()
+
+    def get_size(self):
+        file = self.file if self.file else self.image
+        try:
+            return filesizeformat(file.size) if file else None
+        except:
+            return 0
+
+    def get_url(self):
+        if self.image:
+            return self.image.url
+        elif self.is_public:
+            return self.file.url
+        else:
+            return None
+
+    def get_file(self):
+        if self.attached_to and hasattr(self.attached_to, "libraryitem"):
+        # If this document is attached to a library item then we use the library URL
+        # which will force a check of credentials and allows for downloading private items
+            return f"/library/{self.attached_to.id}/download/{self.id}/"
+        else:
+        # Otherwise we create a direct download URL (which only works for public documents)
+            return f"/download/{self.id}/"
+
+    def save(self, *args, **kwargs):
+        if self.attached_to and hasattr(self.attached_to, "is_public") and not self.attached_to.is_public:
+            self.is_public = False            
+        super().save(*args, **kwargs)
+
+class News(Record):
+    date = models.DateField()
+    slug = models.SlugField(max_length=255)
+    include_in_timeline = models.BooleanField(default=False)
+
+    TYPE_CHOICES = (
+        ("news", "News"),
+        ("blog", "Blog"),
+    )
+    article_type = models.CharField(max_length=10, choices=TYPE_CHOICES, default="news")
+
+    def get_absolute_url(self):
+        if self.projects.count() > 0:
+            p = self.projects.all()[0]
+            if p.has_subsite:
+                return p.get_website() + "news/" + self.slug + "/"
+            else:
+                return "https://metabolismofislands.org/news/" + self.slug + "/"
+        else:
+            return "https://metabolismofislands.org/news/" + self.slug + "/"
+
+    def authors(self):
+        return People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=4)
+
+    def save(self, *args, **kwargs):
+        self.slug = slugify(unidecode(self.name))
+        super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name_plural = "news"
+        ordering = ["-date", "-id"]
+
+    objects = PublicActiveRecordManager()
+    objects_unfiltered = models.Manager()
+    objects_include_private = PrivateRecordManager()
+    objects_include_deleted = PublicRecordManager()
+
+# This defines the relationships that may exist between users and records, or between records
+# For instance authors, admins, employee, funder
+class Relationship(models.Model):
+    name = models.CharField(max_length=255)
+    label = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=20, db_index=True, unique=True, blank=True, null=True, help_text="Should only be set for permissions, and should only be modified by the programming team")
+    description = models.TextField(null=True, blank=True)
+    is_permission = models.BooleanField(default=False, help_text="Mark if this relationship is about giving people permissions in the system")
+    def __str__(self):
+        return self.label
+
+# This defines a particular relationship between two records.
+# For instance: Record 100 (company AA) has the relationship "Funder" of Record 104 (Project BB)
+# It will always be in the form of RECORD_PARENT is RELATIONSHIP of RECORD_CHILD
+# Wiley is the publisher of the JIE. Wiley = record_parent; JIE = record_child
+# Fulano is the author of Paper A. Fulano = record_parent; Paper A = record_child
+class RecordRelationship(models.Model):
+    record_parent = models.ForeignKey(Record, on_delete=models.CASCADE, related_name="parent_list")
+    relationship = models.ForeignKey(Relationship, on_delete=models.CASCADE, related_name="records")
+    record_child = models.ForeignKey(Record, on_delete=models.CASCADE, related_name="child_list")
+    date_created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    meta_data = models.JSONField(null=True, blank=True)
+
+    def __str__(self):
+        return str(self.record_parent) + ' ' + str(self.relationship.label) + ' ' + str(self.record_child)
+
+    class Meta:
+        verbose_name_plural = "relationship manager"
+        verbose_name = "relationship manager"
+        unique_together = ["record_parent", "relationship", "record_child"]
+
+class People(Record):
+    firstname = models.CharField(max_length=255, null=True, blank=True)
+    lastname = models.CharField(max_length=255, null=True, blank=True)
+    affiliation = models.CharField(max_length=255,null=True, blank=True)
+    email = models.EmailField(max_length=255, null=True, blank=True)
+    email_public = models.BooleanField(default=False)
+    website = models.CharField(max_length=255, null=True, blank=True)
+    twitter = models.CharField(max_length=255, null=True, blank=True)
+    google_scholar = models.CharField(max_length=255, null=True, blank=True)
+    orcid = models.CharField(max_length=255, null=True, blank=True)
+    researchgate = models.CharField(max_length=255, null=True, blank=True)
+    linkedin = models.CharField(max_length=255, null=True, blank=True)
+    research_interests = models.TextField(null=True, blank=True)
+    PEOPLE_STATUS = (
+        ("active", "Active"),
+        ("retired", "Retired"),
+        ("deceased", "Deceased"),
+        ("inactive", "Inactive"),
+        ("pending", "Pending Review"),
+    )
+    status = models.CharField(max_length=8, choices=PEOPLE_STATUS, default="active")
+    user = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse("islands:user", args=[self.id])
+
+    @property
+    def points(self):
+        points = Work.objects_unfiltered.filter(assigned_to=self, status=Work.WorkStatus.COMPLETED).aggregate(total=Sum("workactivity__points"))
+        return points["total"]
+
+    @property
+    def avatar(self):
+        if self.image and self.image != "":
+            return mark_safe('<img class="avatar" src="' + self.image.thumbnail.url + '" alt="' + self.name + '" title="' + self.name + '">')
+        else:
+            return mark_safe('<div title="' + self.name + '" class="avatar letter">' + self.name[:1] + '</div>')
+
+    @property
+    def get_photo(self):
+        if self.image:
+            return self.image
+        else:
+            photo = Photo.objects.get(pk=1278693)
+            return photo.image
+
+    @property
+    def get_my_space(self):
+        if self.spaces.all():
+            return self.spaces.all()[0]
+        else:
+            return None
+
+    @property
+    def my_voted_work_items(self):
+        return Work.objects.filter(child_list__record_parent=self, child_list__relationship__id=36, status__in=[1,4,5])
+
+    @property
+    def can_vote(self):
+        return True if self.my_voted_work_items.count() < 10 else False
+
+    @property
+    def name_and_link(self):
+        # If the user exists, then we must link it to a profile; if not, just show the name
+        if self.user:
+            return mark_safe(f'<a href="/hub/users/{self.id}/">{self.name}</a>')
+        else:
+            return self.name
+
+    class Meta:
+        verbose_name_plural = "people"
+        ordering = ["name"]
+
+    def save(self, *args, **kwargs):
+        if self.email:
+            self.email=self.email.lower()
+        if self.twitter:
+            try:
+                url = self.twitter
+                if url[:4] == "http":
+                    self.twitter = url.rsplit("/", 1)[-1]
+                elif url[:1] == "@":
+                    self.twitter = url[1:]
+            except:
+                pass
+        super(People, self).save(*args, **kwargs)
+
+    objects = PublicActiveRecordManager()
+    objects_unfiltered = models.Manager()
+    objects_include_private = PrivateRecordManager()
+    objects_include_deleted = PublicRecordManager()
+
+class Webpage(Record):
+    TYPE = [
+        ("html", "HTML"),
+        ("markdown", "Markdown"),
+        ("markdown_html", "Markdown and HTML"),
+    ]
+    type = models.CharField(max_length=13, choices=TYPE, default="markdown")
+    slug = models.CharField(db_index=True, max_length=100)
+
+    objects = PublicActiveRecordManager()
+    objects_unfiltered = models.Manager()
+    objects_include_private = PrivateRecordManager()
+    objects_include_deleted = PublicRecordManager()
+
+    def get_absolute_url(self):
+        return self.slug
+
+    def get_content(self):
+        if self.type == "markdown":
+            return bleach.clean(markdown(self.description))
+        elif self.type == "html":
+            return self.description
+        elif self.type == "markdown_html":
+            return markdown(self.description)
+
+    class Meta:
+        ordering = ["name"]
+
+class License(models.Model):
+    name = models.CharField(max_length=255)
+    url = models.CharField(max_length=255, null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ["name"]
+
+class LibraryItemType(models.Model):
+    name = models.CharField(max_length=255)
+    icon = models.CharField(max_length=255, null=True, blank=True)
+    GROUP = (
+        ("academic", "Academic"),
+        ("reports", "Reports"),
+        ("data", "Data"),
+        ("multimedia", "Multimedia"),
+        ("other", "Other"),
+    )
+    group = models.CharField(max_length=20, choices=GROUP, null=True, blank=True)
+    bibtex_name = models.CharField(max_length=100, null=True, blank=True)
+    ris_name = models.CharField(max_length=100, null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+    class Meta:
+        ordering = ["name"]
+
+class LibraryItem(Record):
+    LANGUAGES = (
+        ("EN", "English"),
+        ("ES", "Spanish"),
+        ("CH", "Chinese"),
+        ("FR", "French"),
+        ("GE", "German"),
+        ("NL", "Dutch"),
+        ("PT", "Portuguese"),
+        ("CT", "Catalan"),
+        ("FI", "Finnish"),
+        ("DN", "Danish"),
+        ("NO", "Norwegian"),
+        ("OT", "Other"),
+    )
+    language = models.CharField(max_length=2, choices=LANGUAGES, default="EN", null=True, blank=True)
+    title_original_language = models.CharField(max_length=255, blank=True, null=True)
+    author_list = models.TextField(null=True, blank=True)
+    author_citation = models.TextField(null=True, blank=True)
+    bibtex_citation = models.TextField(null=True, blank=True)
+    type = models.ForeignKey(LibraryItemType, on_delete=models.CASCADE, related_name="items")
+    is_part_of = models.ForeignKey("self", on_delete=models.SET_NULL, null=True, blank=True, related_name="children")
+    year = models.PositiveSmallIntegerField(null=True, blank=True)
+    abstract_original_language = models.TextField(null=True, blank=True)
+    date_added = models.DateTimeField(null=True, blank=True, auto_now_add=True)
+    file = models.FileField(null=True, blank=True, upload_to="library")
+    url = models.CharField(max_length=2048, null=True, blank=True)
+    file_url = models.URLField(null=True, blank=True)
+    open_access = models.BooleanField(null=True, blank=True)
+    doi = models.CharField(max_length=255, null=True, blank=True)
+    isbn = models.CharField(max_length=255, null=True, blank=True)
+    comments = models.TextField(null=True, blank=True)
+    license = models.ForeignKey(License, on_delete=models.CASCADE, null=True, blank=True)
+    #geocodes = models.ManyToManyField("Geocode", blank=True)
+
+    # Many-to-Many Relationship with the User model to let user saved the library items
+    saved_by_users = models.ManyToManyField(User, related_name="saved_library_items", blank=True)
+    contact_email = models.EmailField(max_length=255, null=True, blank=True) # this is a method for the MOI to contact the uploader directly regarding their publications upload
+
+    STATUS = (
+        ("pending", "Pending"),
+        ("active", "Active"),
+        ("deleted", "Deleted"),
+    )
+    # We will delete this after we inserted appropriate work tickets
+    status = models.CharField(max_length=8, choices=STATUS, db_index=True, null=True, blank=True, help_text="Old field, do not use")
+    #processes = models.ManyToManyField("staf.Process", blank=True, limit_choices_to={"slug__isnull": False})
+    #materials = models.ManyToManyField("staf.Material", blank=True)
+
+    def __str__(self):
+        return self.name if self.name else "Untitled " + self.type.name
+
+    class Meta:
+        ordering = ["-year", "name"]
+
+    def get_absolute_url(self):
+        if self.type_id == 31:
+            # Videos are opened in the multimedia library
+            return reverse("multimedia:video", args=[self.id])
+        elif self.type_id == 33:
+            # Data viz are opened in the multimedia library
+            return reverse("multimedia:dataviz", args=[self.id])
+        elif self.type_id == 24:
+            # Podcasts are opened in the multimedia library
+            return reverse("multimedia:podcast", args=[self.id])
+        elif self.type_id == 10 or self.type_id == 40:
+            # Datasets and shapefiles are opened in the data hub
+            return reverse("data:dataset", args=[self.id])
+        else:
+            return reverse("library:item", args=[self.id])
+
+    def get_canonical_website(self):
+        if self.type_id == 31 or self.type_id == 33 or self.type_id == 24:
+            return "https://multimedia.metabolismofcities.org"
+        elif self.type_id == 10 or self.type_id == 40:
+            return "https://data.metabolismofcities.org"
+        else:
+            return "https://library.metabolismofcities.org"
+
+    def get_full_url(self):
+        # Depending on which subsite we are on, the absolute url may
+        # already or may not yet include the HTTP part, so here we try to
+        # make sure we always have the full URL
+        url = self.get_absolute_url()
+        first_chars = url[:4]
+        if first_chars == "/htt":
+            return url[1:]
+        elif first_chars == "http":
+            return url
+        else:
+            return self.get_canonical_website() + url
+
+    def get_edit_link(self):
+        if self.type_id == 31:
+            # Videos are opened in the multimedia library
+            return "/admin/core/video/" + str(self.id) + "/change/"
+        else:
+            return "/admin/core/libraryitem/" + str(self.id) + "/change/"
+
+    # The 'author_list' part will be highly varied... some contain Firstname Lastname, Firstname Lastname
+    # others contain Lastname, Firstname and Lastname, Firstname
+    # others contain Firstname Lastname; Firstname Lastname; etc.
+    # This script tries to get the author_list ready for in-text citation (up to two authors; adding et al
+    # if there are more).
+    def get_author_citation(self, full=False):
+        if self.author_citation:
+            return self.author_citation
+        elif self.author_list:
+            author_array = []
+            author_list = self.author_list
+            if " and " in author_list:
+                authors = author_list.split(" and ")
+                for each in authors:
+                    if "," in each:
+                        lastname = each.split(",", 1)[0]
+                    else:
+                        lastname = each.rpartition(" ")[2]
+                    author_array.append(lastname)
+            elif ";" in author_list:
+                authors = author_list.split(";")
+                for each in authors:
+                    if "," in each:
+                        lastname = each.split(",", 1)[0]
+                    else:
+                        lastname = each.rpartition(" ")[2]
+                    author_array.append(lastname)
+            elif "," in author_list:
+                authors = author_list.split(",")
+                if len(authors) == 2:
+                    # If there are only two names, we assume it's one person in the Doe, Jane format and
+                    # we will format as "Jane Doe"
+                    author_array.append(f"{authors[1]} {authors[0]}")
+                else:
+                    # If we have > 1 author, then we list the last names of all involved
+                    for each in authors:
+                        lastname = each.rpartition(" ")[2]
+                        author_array.append(lastname)
+            else:
+                # One option is to show JUST the lastname, but in practice it's more likely
+                # that this is the name of an entity like "City of Cape Town", so let's do the
+                # whole name instead
+                # lastname = author_list.rpartition(" ")[2]
+                author_array.append(author_list)
+            if len(author_array) == 1:
+                return author_array[0]
+            elif len(author_array) == 2:
+                return author_array[0] + " and " + author_array[1]
+            elif len(author_array) > 2 and full:
+                return " and ".join(author_array)
+            elif len(author_array) > 2 and not full:
+                return mark_safe(bleach.clean(author_array[0]) + " <em>et al.</em>")
+            else:
+                return ""
+        else:
+            return ""
+
+    @property
+    def get_doi_url(self):
+        return None if not self.doi else f"https://doi.org/{self.doi}"
+
+    @property
+    def get_full_citation(self):
+        return mark_safe("<em>" + self.name + "</em>, " + self.get_author_citation() + ", " + str(self.year))
+
+    @property
+    def get_citation_apa(self):
+        citation = bleach.clean(f"{self.get_author_citation()} ({self.year}). {self.name}. ")
+        if self.publisher:
+            p = bleach.clean(str(self.publisher))
+            citation = citation + f"<em>{p}</em>. "
+        if self.doi:
+            citation = citation + bleach.clean(f"<a href='{self.get_doi_url}'>{self.get_doi_url}</a>")
+        elif self.url:
+            url = bleach.clean(self.url)
+            citation = citation + f"<a href='{url}'>{url}</a>"
+            
+        return mark_safe(citation)
+
+    @property
+    def get_citation_bibtex(self):
+        author_string = ""
+        journal_string = ""
+        doi_string = ""
+        url_string = ""
+        if self.get_author_citation():
+            author = self.get_author_citation(full=True)
+            author = self.author_list
+            author_string = f"  author = {{{author}}},\n"
+            tag = author.partition(" ")[0] + str(self.year) + self.name.partition(" ")[0]
+        else:
+            tag = self.name.partition(" ")[0] + str(self.year)
+        if self.publisher:
+            if self.type.name == "Journal Article":
+                journal_string = f"  journal = {{{self.publisher}}},\n"
+            else:
+                journal_string = f"  publisher = {{{self.publisher}}},\n"
+        if self.url:
+            url_string = f"  url = {{{self.url}}},\n"
+        if self.doi:
+            doi_string = f"  doi = {{{self.doi}}},\n"
+        tag = slugify(tag)
+        return (
+            f"@{self.type.bibtex_name}{{{tag},\n"
+            f"  title = {{{self.name}}}\n"
+            f"{author_string}"
+            f"{journal_string}"
+            f"{url_string}"
+            f"{doi_string}"
+            f"  year = {{{self.year}}}\n"
+            f"}}"
+        )
+
+        return citation
+
+
+    @property
+    def get_citation_ris(self):
+        author_string = ""
+        journal_string = ""
+        doi_string = ""
+        url_string = ""
+
+        if " and " in self.author_list:
+            authors = self.author_list.split(" and ")
+            for each in authors:
+                if "," in each:
+                    firstname = each.split(",", 1)[1]
+                    lastname = each.split(",", 1)[0]
+                else:
+                    firstname = each.rpartition(" ")[1]
+                    lastname = each.rpartition(" ")[2]
+                author = f"AU -{firstname} {lastname}\n"
+                author_string = author_string + author
+        elif ";" in self.author_list:
+            authors = self.author_list.split(";")
+            for each in authors:
+                if "," in each:
+                    firstname = each.split(",", 1)[1]
+                    lastname = each.split(",", 1)[0]
+                else:
+                    firstname = each.rpartition(" ")[1]
+                    lastname = each.rpartition(" ")[2]
+                author = f"AU -{firstname} {lastname}\n"
+                author_string = author_string + author
+        elif "," in self.author_list:
+            authors = self.author_list.split(",")
+            if len(authors) == 2:
+                # If there are only two names, we assume it's one person in the Doe, Jane format and
+                # we will format as "Jane Doe"
+                author_string = f"AU -{authors[1]} {authors[0]}\n"
+            else:
+                # If we have > 1 author, then we list the last names of all involved
+                for each in authors:
+                    firstname = each.rpartition(" ")[1]
+                    lastname = each.rpartition(" ")[2]
+                    author = f"AU -{firstname} {lastname}\n"
+                    author_string = author_string + author
+
+        if self.publisher:
+            if self.type.name == "Journal Article":
+                journal_string = f"T2 - {self.publisher}\n"
+            else:
+                journal_string = f"PB - {self.publisher}\n"
+        if self.url:
+            url_string = f"LK - {self.url}\n"
+        if self.doi:
+            doi_string = f"DO - {self.doi}\n"
+        return (
+            f"TY - {self.type.ris_name}\n"
+            f"TI - {self.name}\n"
+            f"PY - {self.year}\n"
+            f"{author_string}"
+            f"{journal_string}"
+            f"{url_string}"
+            f"{doi_string}"
+            f"ER - "
+        )
+
+        return citation
+
+    def embed(self):
+        if "youtu" in self.url:
+            url = self.url
+            # Thank you https://stackoverflow.com/questions/4356538/how-can-i-extract-video-id-from-youtubes-link-in-python
+            # Examples:
+            # - http://youtu.be/SA2iWivDJiE
+            # - http://www.youtube.com/watch?v=_oPAwA_Udwc&feature=feedu
+            # - http://www.youtube.com/embed/SA2iWivDJiE
+            # - http://www.youtube.com/v/SA2iWivDJiE?version=3&amp;hl=en_US
+            query = urlparse(url)
+            video = None
+            if query.hostname == "youtu.be": video = query.path[1:]
+            if query.hostname in ("www.youtube.com", "youtube.com"):
+                if query.path == "/watch": video = parse_qs(query.query)["v"][0]
+                if query.path[:7] == "/embed/": video = query.path.split("/")[2]
+                if query.path[:3] == "/v/": video = query.path.split("/")[2]
+            if video:
+                return f'<iframe class="video-embed youtube-video" src="https://www.youtube.com/embed/{video}?rel=0" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+            else:
+                return None
+        elif "ted" in self.url:
+            try:
+                url = self.url
+                url = url.split("/")
+                url = url[-1]
+                return f'<iframe class="video-embed video-ted" src="https://embed.ted.com/talks/{url}" frameborder="0" scrolling="no" allowfullscreen></iframe>'
+            except:
+                return "<div class='alert alert-warning'>Embedded video unavailable. <a href='" + self.url + "'>Click here to view the video</a></div>"
+        else:
+            return None
+
+    def get_size(self):
+        try:
+            return filesizeformat(self.file.size) if self.file else None
+        except:
+            return 0
+
+    def get_shortname(self):
+        if self.meta_data and "shortname" in self.meta_data:
+            return self.meta_data["shortname"]
+        else:
+            return self.name
+
+    @property
+    def get_shapefile_size(self):
+        try:
+            file = self.attachments.get(file__iendswith=".shp")
+            return file.file.size
+        except:
+            return 0
+
+    @property
+    def get_dataviz_properties(self):
+        try:
+            viz = self.dataviz.get(is_secondary=False)
+            return viz.meta_data["properties"]
+        except:
+            return {}
+
+    @property
+    def is_map(self):
+        if self.type.name == "Shapefile" or self.type.name == "GPS Coordinates":
+            return True
+        else:
+            return False
+
+    # When we pull in the linked spaces, we need to include private objects as well
+    # Validation needs to take place at the level of the Library Item
+    # In other words, if someone has access to this LibraryItem, they also have access
+    # to the associated reference spaces.
+    @property
+    def imported_spaces(self):
+        return ReferenceSpace.objects_include_private.filter(source=self)
+
+    # Same applies to associated data
+    @property
+    def data(self):
+        return Data.objects_include_private.filter(source=self)
+
+    # Returns all the associated reference spaces, based on the data
+    @property
+    def data_spaces(self):
+        return ReferenceSpace.objects_include_private.filter(Q(data_from_space__source=self)|Q(data_to_space__source=self)).distinct()
+
+    # Returns either 'point' if this contains points, 'polygon' if it contains other geometry, and 'unknown' if we can't tell
+    # This can be used to decide for instance whether to show markers on a map or draw polygons
+    # Note that we use the FIRST associated reference space, even though there may be many, and take that type, so we assume
+    # that the entire map has the same type (a pretty safe assumption, would be weird if different)
+    @property
+    def get_map_type(self):
+        try:
+            one_space = self.imported_spaces.all()[0]
+            if one_space.geometry.geom_type == "Point":
+                return "point"
+            else:
+                return "polygon"
+        except:
+            return "unknown"
+
+    # We have a number of cached properties, which should be deleted when we save this
+    # We also trigger this kind of deletion when we update/change associated objects,
+    # such as relationships with this document or data
+    def delete_cached_properties(self, type=None):
+        cached_properties = {}
+        cached_properties["relationships"] = ["authors", "author", "funders", "curators", "voters", "publishers", "producer", "uploader", "organizer", "processor"]
+        cached_properties["data"] = ["data", "data_spaces"]
+        cached_properties["spaces"] = ["imported_spaces", "get_map_type", "data_spaces"]
+
+        if not type:
+            properties = cached_properties["relationships"] + cached_properties["data"] + cached_properties["spaces"]
+        else:
+            properties = cached_properties[type]
+
+        # Ref: https://medium.com/@fdemmer/django-cached-property-on-models-f4673de33990
+        for property in properties:
+            try:
+                del self.__dict__[property]
+            except KeyError:
+                pass
+
+    def delete_cached_objects(self):
+        if self.meta_data and "cache" in self.meta_data:
+            for each in self.meta_data.get("cache"):
+                cache.delete(each)
+            del(self.meta_data["cache"])
+            self.save()
+        return True
+
+    # This takes the stocks or flows file and records it in the Data table
+    # Note that I feel this 'try except' fest may be a bit of a loose canon and I am
+    # very open to people with better ideas on how to structure this and properly catch
+    # errors.
+    def convert_stocks_flows_data(self):
+        error = False
+
+        try:
+            file_id = self.meta_data["processing"]["file"]
+            file = self.get_spreadsheet(file_id)
+            if file["error"]:
+                error = file["error_message"]
+        except:
+            error = "We could not find/open this file."
+
+        if not error:
+            all = Data.objects_include_private.filter(source=self)
+            all.delete()
+
+            # We may have cached space-related properties for this object, so let's clear those
+            # They will be re-cached the first time the query runs so we can run this generously
+            # even if this script doesn't come to fruition
+            self.delete_cached_properties("data")
+
+            # We may have cached the json objects based on old data, so we should
+            # delete any cached objects that exist.
+            self.delete_cached_objects()
+
+            df = file["df"]
+            column_count = len(df.columns)
+
+            if column_count <= 5:
+                this_type = "population"
+            elif column_count <= 8:
+                this_type = "stock"
+            else:
+                this_type= "flows"
+
+            materials = {}
+            units = {}
+            spaces = {}
+            times = {}
+            items = []
+
+            materials_catalog = 18998
+            if "materials_catalog" in self.meta_data["processing"]:
+                materials_catalog = self.meta_data["processing"]["materials_catalog"]
+
+            # We end up with a number of segments or comments that are nan, so let's make those fields blank instead
+            df = df.fillna("")
+
+            for row in df.itertuples():
+                if not error:
+                    try:
+                        process_origin = None
+                        process_destination = None
+                        if this_type == "flows":
+                            period = row[1]
+                            start = row[2]
+                            end = row[3]
+                            material_name = row[4]
+                            material_code = str(row[5])
+                            material_code = material_code.strip()
+                            quantity = row[6]
+                            unit = row[7]
+                            space = str(row[8])
+                            space = space.strip()
+                            comment = row[9]
+                            try:
+                                segment = row[10]
+                            except:
+                                segment = None
+                            try:
+                                process_origin = row[11]
+                            except:
+                                process_origin = None
+                            try:
+                                process_destination = row[12]
+                            except:
+                                process_destination = None
+                        elif this_type == "stock":
+                            period = row[1]
+                            start = row[1]
+                            end = None
+                            material_name = row[2]
+                            material_code = str(row[3])
+                            material_code = material_code.strip()
+                            quantity = row[4]
+                            unit = row[5]
+                            space = str(row[6])
+                            space = space.strip()
+                            comment = row[7]
+                            try:
+                                segment = row[8]
+                            except:
+                                segment = None
+                        elif this_type == "population":
+                            period = row[1]
+                            start = row[1]
+                            end = None
+                            material_name = "People"
+                            material_code = "EMP1.5.1"
+                            unit = "item"
+                            quantity = row[2]
+                            space = str(row[3])
+                            space = space.strip()
+                            comment = row[4]
+                            try:
+                                segment = row[5]
+                            except:
+                                segment = None
+                    except Exception as e:
+                        error = f"We could not properly interpret all of the columns. Are you sure this is formatted correctly and contains the right data? This is the technical error that was returned by the system: {e}"
+
+                    if material_code not in materials:
+                        try:
+                            m = Material.objects.get(catalog_id=materials_catalog, code=material_code)
+                            materials[material_code] = m
+                        except:
+                            error = f"We could not find the material/product with code: '{material_code}'"
+
+                    if space not in spaces:
+                        try:
+                            source = self.meta_data["processing"]["source"]
+                            s = ReferenceSpace.objects_include_private.get(source_id=source, name=space)
+                            spaces[space] = s
+                        except:
+                            error = f"We could not find the space with the name: '{space}'"
+
+                    if unit not in units:
+                        try:
+                            u = Unit.objects.filter(Q(symbol=unit)|Q(synonyms__contains=unit)).exclude(type=99)
+                            units[unit] = u[0]
+                        except:
+                            error = f"We could not find the unit with the name: '{unit}'"
+
+                    try:
+                        if isinstance(start, str):
+                            start = parse(start)
+                        if isinstance(end, str):
+                            end = parse(end)
+                        if this_type == "flows":
+                            start = start.strftime("%Y-%m-%d")
+                            end = end.strftime("%Y-%m-%d")
+                        elif this_type == "stock" or this_type == "population":
+                            start = start.strftime("%Y-%m-%d")
+                            end = None
+                            period = str(start)
+                    except Exception as e:
+                        error = f"We had an issue formatting your date(s) - this error came back: {e}"
+
+                    if not error:
+                        try:
+                            # Sometimes pandas sets the value to float(nan) which should be recorded as None instead
+                            if math.isnan(quantity):
+                                quantity = None
+                            unit = units[unit] if quantity else None
+                            items.append(Data(
+                                unit = unit,
+                                quantity = quantity,
+                                material = materials[material_code],
+                                material_name = material_name,
+                                source = self,
+                                origin_space = spaces[space],
+                                comments = comment,
+                                segment_name = segment,
+                                date_start = start,
+                                date_end = end,
+                                dates_label = period,
+                                origin_id = process_origin,
+                                destination_id = process_destination,
+                            ))
+                        except Exception as e:
+                            error = f"We were unable to add your item - this is the error that came back: {e} is invalid"
+
+            if not error:
+                try:
+                    Data.objects.bulk_create(items)
+                except Exception as e:
+                    error = f"We were unable to save the records - this is the error that came back: {e}"        
+        self.meta_data["ready_for_processing"] = False
+        if error:
+            self.meta_data["processing_error"] = error
+        else:
+            self.meta_data["processed"] = True
+            if "processing_error" in self.meta_data:
+                self.meta_data.pop("processing_error")
+            if "allow_deletion_data" in self.meta_data:
+                self.meta_data.pop("allow_deletion_data")
+
+        self.save()
+
+    # This function converts the shapefile into ReferenceSpaces
+    def convert_shapefile(self):
+        print(self)
+
+        check = ReferenceSpace.objects_unfiltered.filter(source=self)
+        error = False
+
+        # We may have cached space-related properties for this object, so let's clear those
+        # They will be re-cached the first time the query runs so we can run this generously
+        # even if this script doesn't come to fruition
+        self.delete_cached_properties("spaces")
+
+        if check:
+            if self.meta_data.get("allow_deletion_spaces"):
+                # only if this is flagged to allow for deletion will we allow it - otherwise we'll stop this process
+                check.delete()
+            else:
+                error = "This file was already processed - we can not process it again"
+
+        if self.type.id == 40 and not error: # Type = shapefile
+
+            layer = self.get_gis_layer()
+            fields = layer.fields
+            total_count = layer.num_feat
+            type = layer.geom_type.name
+            if total_count > 1000 and not self.meta_data.get("skip_size_check"):
+                error = "This file has too many objects. It needs to be verified by an administrator in order to be fully loaded into the system."
+            elif "single_reference_space" in self.meta_data:
+                # EXAMPLE: a shapefile containing all the water reticulation (piping) in the city
+                # This is one single space, so we do not loop but instead create a single item
+                # To do that, we get all the geos with get_geoms
+                # (https://docs.djangoproject.com/en/3.1/ref/contrib/gis/gdal/#django.contrib.gis.gdal.Layer.get_geoms)
+                # and then we loop over THOSE, and combine them, using the union function
+                # (https://docs.djangoproject.com/en/3.1/ref/contrib/gis/geos/#django.contrib.gis.geos.GEOSGeometry.union)
+                polygon = None
+                ct = None
+                if layer.srs.srid != 4326:
+                    # If this isn't WGS 84 then we need to convert the crs to this one
+                    try:
+                        ct = CoordTransform(layer.srs, SpatialReference("WGS84"))
+                    except Exception as e:
+                        error = "The following error occurred when trying to change the coordinate reference system: " + str(e)
+
+                if not error:
+                    try:
+                        for each in layer.get_geoms(True):
+                            try:
+                                if ct:
+                                    each.transform(ct)
+                            except Exception as e:
+                                error = "The following error occurred when trying to fetch the shapefile info: " + str(e)
+
+                            if not polygon:
+                                polygon = each
+                            else:
+                                try:
+                                    polygon = polygon.union(each)
+                                except Exception as e:
+                                    error = "The following error occurred when trying to merge geometries: " + str(e)
+                    except Exception as e:
+                        error = "The following error occurred when trying to get all the geometries: " + str(e)
+
+                if not error:
+
+                    if type == "Point25D" or type == "LineString25D" or type == "Polygon25D":
+                        # This type has a "Z" geometry which needs to be changed to a 2-dimensional geometry
+                        # See also https://stackoverflow.com/questions/35851577/strip-z-dimension-on-geodjango-force-2d-geometry
+                        get_clone = polygon.clone()
+                        polygon.coord_dim = 2
+                        polygon = get_clone
+
+                    if polygon.hasz:
+                        # Oddly enough the code above does not always work. Not yet sure why. I have had lines that were combined,
+                        # into a multilinestring, and it seems like it is not possible (for Django?) to remove 3D from this
+                        # kind of object. So we simply do another check to see if it 'has z'. BTW we can likely use hasz
+                        # instead of type == point25d etc but I only now learned about it. Something for later.
+                        # https://docs.djangoproject.com/en/3.1/ref/contrib/gis/geos/#django.contrib.gis.geos.GEOSGeometry.hasz
+                        error = "This shapefile includes data in 3D. We only store shapefiles with 2D data. Please remove the elevation data (Z coordinates). This can be done, for instance, using QGIS: https://docs.qgis.org/testing/en/docs/user_manual/processing_algs/qgis/vectorgeometry.html#drop-m-z-values"
+                    else:
+                        space = ReferenceSpace.objects.create(
+                            name = self.meta_data.get("shortname"),
+                            geometry = polygon,
+                            source = self,
+                        )
+            elif "group_spaces_by_name" in self.meta_data:
+                # EXAMPLE: a shapefile containing land use data, in which there are many polygons indicating
+                # a few different types (e.g. BUILT ENVIRONMENT, LAKES, AGRICULTURE). These should be saved
+                # as individual reference spaces (so we can differentiate them), grouped by their name
+                spaces = {}
+                for each in layer:
+
+                    try:
+                        if type == "Point25D" or type == "LineString25D" or type == "Polygon25D":
+                            # This type has a "Z" geometry which needs to be changed to a 2-dimensional geometry
+                            # See also https://stackoverflow.com/questions/35851577/strip-z-dimension-on-geodjango-force-2d-geometry
+                            get_clone = each.geom.clone()
+                            get_clone.coord_dim = 2
+                            geo = get_clone
+                        else:
+                            geo = each.geom
+                    except Exception as e:
+                        error = "The following error occurred when trying to prepare the shapefile element: " + str(e)
+
+                    # We use WGS 84 (4326) as coordinate reference system, so we gotta convert to that
+                    # if it uses something else
+                    if layer.srs.srid != 4326:
+                        try:
+                            ct = CoordTransform(layer.srs, SpatialReference("WGS84"))
+                            geo.transform(ct)
+                        except Exception as e:
+                            error = "The following error occurred when trying to change the coordinate reference system: " + str(e)
+
+                    name = str(each.get(self.meta_data["columns"]["name"]))
+
+                    # So what we do here is to check if this particular field (based on the name) already exists
+                    # If not, we create a new space in our dictionary with the geometry of this one.
+                    if name not in spaces:
+                        spaces[name] = geo
+                    else:
+                        # However, if it already exists then we use the union function to merge the geometry of this space
+                        # with the existing info
+                        try:
+                            s = spaces[name]
+                            spaces[name] = s.union(geo)
+                        except Exception as e:
+                            error = "The following error occurred when trying to merge geometries: " + str(e)
+
+                if not error:
+                    for name,geo in spaces.items():
+                        ReferenceSpace.objects.create(
+                            name = name,
+                            geometry = geo.wkt,
+                            source = self,
+                        )
+            else:
+                count = 0
+                for each in layer:
+                    count += 1
+                    meta_data = {}
+
+                    # We'll get all the properties and we store this in the meta data of the new object
+                    for f in fields:
+                        # We can't save datetime objects in json, so if it's a datetime then we convert to string
+                        meta_data[f] = str(each.get(f)) if isinstance(each.get(f), datetime.date) else each.get(f)
+
+                    name = str(each.get(self.meta_data["columns"]["name"]))
+
+                    try:
+                        if type == "Point25D" or type == "LineString25D" or type == "Polygon25D":
+                            # This type has a "Z" geometry which needs to be changed to a 2-dimensional geometry
+                            # See also https://stackoverflow.com/questions/35851577/strip-z-dimension-on-geodjango-force-2d-geometry
+                            get_clone = each.geom.clone()
+                            get_clone.coord_dim = 2
+                            geo = get_clone
+                        else:
+                            geo = each.geom
+                    except Exception as e:
+                        error = "The following error occurred when trying to obtain the shapefile geometry: " + str(e)
+
+                    # We use WGS 84 (4326) as coordinate reference system, so we gotta convert to that
+                    # if it uses something else
+                    if layer.srs.srid != 4326:
+                        try:
+                            ct = CoordTransform(layer.srs, SpatialReference("WGS84"))
+                            geo.transform(ct)
+                        except Exception as e:
+                            error = "The following error occurred when trying to convert the coordinate reference system to WGS84: " + str(e)
+
+                    if not error:
+                        geo = geo.wkt
+                        space = ReferenceSpace.objects.create(
+                            name = name,
+                            geometry = geo,
+                            source = self,
+                            meta_data = {"features": meta_data},
+                        )
+
+        elif self.type.id == 41 and not error: # Type = GPS coordinate spreadsheet
+
+            spreadsheet = self.get_spreadsheet()
+            df = spreadsheet["df"]
+            df = df.replace(np.NaN, "")
+            rows = len(df.index)-1
+
+            cols = self.meta_data.get("columns")
+
+            # We need to retrieve the settings for each column to figure out which is lat, lng, description, etc
+            count = 0
+            field_match = {}
+            for each in df.columns:
+                try:
+                    field_match[each] = cols[count]
+                except:
+                    error = "We are unable to match all columns - please ensure they have all been properly matched"
+                count += 1
+
+            if "Name" not in cols or "Latitude" not in cols or "Longitude" not in cols:
+                error = "Not all required fields are matched (Name, Latitude, Longitude)"
+            elif rows > 1000:
+                # We don't process files with more than a 1000 items
+                error = "More than 1,000 items - we can not import spreadsheets of this size."
+            else:
+                for i, row in df.iterrows():
+                    this_row = {}
+                    meta_data = {}
+                    # This CERTAINLY needs to be rewritten, I read everywhere that this looping is not ideal
+                    # But I'm not sure how, so TODO
+                    for column_name, content in row.items():
+                        this_field = field_match[column_name]
+                        this_row[column_name] = content
+                        if this_field == "Name":
+                            name = content
+                        elif this_field == "Latitude":
+                            lat = content
+                        elif this_field == "Longitude":
+                            lng = content
+                        elif this_field == "Other field - import":
+                            meta_data[column_name] = content
+
+                    try:
+                        geo = Point(lng, lat)
+                    except:
+                        geo = None
+
+                    space = ReferenceSpace.objects.create(
+                        name = name,
+                        geometry = geo,
+                        source = self,
+                        meta_data = {"features": meta_data} if len(meta_data) else None,
+                    )
+        self.meta_data["processing_date"] = str(timezone.now())
+        if error:
+            self.meta_data["processing_error"] = error
+        else:
+            self.meta_data["processed"] = True
+            if "ready_for_processing" in self.meta_data:
+                self.meta_data.pop("ready_for_processing")
+            if "processing_error" in self.meta_data:
+                self.meta_data.pop("processing_error")
+            if "allow_deletion_spaces" in self.meta_data:
+                self.meta_data.pop("allow_deletion_spaces")
+
+        self.save()
+
+        return True
+
+    def get_gis_layer(self):
+        # Here we try to get the .shp file and load it as a gdal layer
+        try:
+            file = self.attachments.filter(file__iendswith=".shp")
+            file = file[0]
+            filename = settings.MEDIA_ROOT + "/" + file.file.name
+            datasource = DataSource(filename)
+            return datasource[0]
+        except:
+            return None
+
+    def get_spreadsheet(self, id=None):
+        # We use this to retrieve the attached spreadsheet, if there is one.
+        # We return some general info (file type, the file object), and a pandas data frame
+
+        doc = self.attachments.count()
+
+        error = False
+        error_message = None
+        df = None
+        extension = None
+        file_type = None
+
+        if doc == 0:
+            error = True
+            error_message = "No file was found. Make sure a spreadsheet file (CSV, ODS, XLS, XLSX) is uploaded."
+        elif id:
+            doc = self.attachments.get(pk=id)
+        elif doc == 1:
+            doc = self.attachments.all()[0]
+        else:
+            doc = self.attachments.filter(name__icontains=".final.")
+            if doc.count() == 1:
+                doc = doc[0]
+            else:
+                error = True
+                error_message = "Multiple files were found. Please upload ONE file that contains '.final' in the name (example.final.xls) so that we know which file to work with"
+        if doc:
+            extension = doc.file.name
+            extension = extension.split(".")
+            extension = extension[-1].lower()
+
+            options = {
+                "xls": "Excel spreadsheet",
+                "xlsx": "Excel spreadsheet",
+                "csv": "Comma separated file",
+                "ods": "OpenDocument Spreadsheet Document",
+            }
+
+            if extension in options:
+                file_type = options[extension]
+                try:
+                    if extension == "csv":
+                        df = pd.read_csv(doc.file.file)
+                    else:
+                        df = pd.read_excel(doc.file.file)
+                except Exception as e:
+                    error = True
+                    error_message = "We could not fully load all relevant information. The following error ocurred: " + str(e)
+            else:
+                error = True
+                doc = None
+                file_type = "Unrecognised format"
+                error_message = "This file is invalid. Make sure a spreadsheet file (CSV, ODS, XLS, XLSX) is uploaded."
+
+        return {
+            "file": doc,
+            "file_type": file_type,
+            "df": df,
+            "error": error,
+            "error_message": error_message,
+            "extension": extension,
+        }
+
+    def get_color(self):
+        import random
+        list = ["green", "blue", "red", "orange", "brown", "navy", "teal", "purple", "pink", "maroon", "chocolate", "gold", "ivory", "snow"]
+        return random.choice(list)
+
+    def save(self, *args, **kwargs):
+        if self.doi:
+            try:
+                url = self.doi
+                if url[:4] == "http":
+                    self.doi = url.split("doi.org/")[-1]
+            except:
+                pass
+
+        # If there are linked Reference Spaces, Documents, or Data points then these need to have the same public status as their parent document
+        if self.id:
+            ReferenceSpace.objects_unfiltered.filter(source_id=self.id).update(is_public=self.is_public)
+            Data.objects_include_private.filter(source_id=self.id).update(is_public=self.is_public)
+            Document.objects_include_private.filter(attached_to=self.id).update(is_public=self.is_public)
+
+        super(LibraryItem, self).save(*args, **kwargs)
+
+        self.delete_cached_properties()
+
+    objects = PublicActiveRecordManager()
+    objects_unfiltered = models.Manager()
+    objects_include_private = PrivateRecordManager()
+    objects_include_deleted = PublicRecordManager()
+
+class Video(LibraryItem):
+    embed_code = models.CharField(max_length=20, null=True, blank=True)
+    date = models.DateField(blank=True, null=True)
+    duration = models.PositiveSmallIntegerField(null=True, blank=True, help_text="Duration in minutes")
+    VIDEO_SITES = [
+        ("youtube", "Youtube"),
+        ("vimeo", "Vimeo"),
+        ("ted", "TED"),
+        ("other", "Other"),
+    ]
+    video_site = models.CharField(max_length=14, choices=VIDEO_SITES)
+    def get_absolute_url(self):
+        return reverse("multimedia:video", args=[self.id])
+
+    def get_embed_code(self):
+        url = self.url
+        if not url:
+            # This is for ascus only, we should fix / remove later
+            url = self.file_url
+        if url:
+            # Thank you https://stackoverflow.com/questions/4356538/how-can-i-extract-video-id-from-youtubes-link-in-python
+            # Examples:
+            # - http://youtu.be/SA2iWivDJiE
+            # - http://www.youtube.com/watch?v=_oPAwA_Udwc&feature=feedu
+            # - http://www.youtube.com/embed/SA2iWivDJiE
+            # - http://www.youtube.com/v/SA2iWivDJiE?version=3&amp;hl=en_US
+            query = urlparse(url)
+            if query.hostname == "youtu.be": return query.path[1:]
+            if query.hostname in ("www.youtube.com", "youtube.com"):
+                if query.path == "/watch": return parse_qs(query.query)["v"][0]
+                if query.path[:7] == "/embed/": return query.path.split("/")[2]
+                if query.path[:3] == "/v/": return query.path.split("/")[2]
+                return None
+
+    def embed(self):
+        # Should be properly merged with libraryitem embed stuff
+        if self.video_site == "youtube":
+            code = self.get_embed_code()
+            return f'<iframe class="video-embed youtube-video" src="https://www.youtube.com/embed/{code}?rel=0" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+        elif self.url and "ted.com" in self.url:
+            try:
+                url = self.url
+                url = url.split("/")
+                url = url[-1]
+                return f'<iframe class="video-embed ted-video" title="ted-player" src="https://embed.ted.com/talks/{url}" frameborder="0" allowfullscreen></iframe>'
+            except:
+                return "<div class='alert alert-warning'>Embedded video unavailable. <a href='" + self.url + "'>Click here to view the video</a></div>"
+        elif self.video_site == "vimeo":
+            return f'<iframe class="video-embed vimeo-video" title="vimeo-player" src="https://player.vimeo.com/video/{self.embed_code}" frameborder="0" allowfullscreen></iframe>'
+        elif self.attachments.all():
+            try:
+                file = self.meta_data["video_settings"]["compiled_video"]
+                file = settings.MEDIA_URL + file
+            except:
+                file = self.attachments.all()[0]
+                file = file.file.url
+            return mark_safe(f'<video src="{file}" controls preload="metadata" style="height:30vh;width:100vw;max-width:100%"></video><br><a href="{file}">Download video</a>')
+
+    objects = PublicActiveRecordManager()
+    objects_unfiltered = models.Manager()
+    objects_include_private = PrivateRecordManager()
+    objects_include_deleted = PublicRecordManager()
+
+class Photo(LibraryItem):
+    position = models.PositiveSmallIntegerField(null=True, blank=True, db_index=True, default=1)
+
+    objects = PublicActiveRecordManager()
+    objects_unfiltered = models.Manager()
+    objects_include_private = PrivateRecordManager()
+    objects_include_deleted = PublicRecordManager()
+
+class ActivatedSpace(models.Model):
+    space = models.ForeignKey("ReferenceSpace", on_delete=models.CASCADE, related_name="activated")
+    slug = models.CharField(max_length=255, db_index=True)
+
+    def __str__(self):
+        return self.space.name
+
+    def get_absolute_url(self):
+        return reverse("data:dashboard", args=[self.slug])
+
+    def save(self, *args, **kwargs):
+        self.slug = slugify(unidecode(self.space.name))
+        super().save(*args, **kwargs)
+
+    class Meta:
+        ordering = ["space__name"]
+
+class ReferenceSpace(Record):
+    #geocodes = models.ManyToManyField(Geocode, through="ReferenceSpaceGeocode")
+    geometry = models.GeometryField(null=True, blank=True)
+    source = models.ForeignKey(LibraryItem, on_delete=models.CASCADE, null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    # Let's bring back slug as a field, but make it nullable and only set when activating a space
+    # TODO
+
+    @property
+    def slug(self):
+        return slugify(unidecode(self.name))
+
+    @property
+    def is_city(self):
+        #check = self.geocodes.filter(id=123)
+        check = self.geocodes.filter(name="Urban").exists()
+        return True if check else False
+
+    @property
+    def is_island(self):
+        #check = self.geocodes.filter(id=123)
+        if ActivatedSpace.objects.filter(space=self).exists():
+            return True
+        #check = self.geocodes.filter(name="Island").exists()
+        #return True if check else False
+
+    @property
+    def get_centroids(self):
+        try:
+            lat = self.geometry.centroid[1]
+            lng = self.geometry.centroid[0]
+            return [lat,lng]
+        except:
+            return None
+
+    @property
+    def get_lat(self):
+        try:
+            return self.geometry.centroid[1]
+        except:
+            return None
+
+    @property
+    def get_lng(self):
+        try:
+            return self.geometry.centroid[0]
+        except:
+            return None
+
+    # So this was what we used before, but it means a db query every time we pull this field in
+    # Not efficient. We now have a signal (update_referencespace_photo) that simply checks if
+    # photos are being changed and then adds it to the IMAGE field in the reference space, allowing
+    # us to pull in the photo using the get_thumbnail or get_large_photo properties instead, which
+    # don't need any additional db query. This photo field needs to be phased out but I want to see
+    # exactly where it lives on the site. Let's try to phase out no later than March 2021...
+
+    @property
+    def photo(self):
+        from core.models import Photo
+        try:
+            return Photo.objects.filter(spaces=self).order_by("position")[0]
+        except:
+            return Photo.objects.get(pk=1278693)
+
+    @property
+    def get_thumbnail(self):
+        if self.image:
+            return self.image.thumbnail.url
+        else:
+            return "/media/records/placeholder.thumbnail.png"
+
+    @property
+    def get_large_photo(self):
+        if self.image:
+            return self.image.large.url
+        else:
+            return "/media/records/placeholder.png"
+
+    @property
+    def get_completion(self):
+        try:
+            return self.meta_data["progress"]["completion"]
+        except:
+            None
+
+    @property
+    def get_counter(self):
+        try:
+            return self.meta_data["progress"]["counter"]
+        except:
+            None
+
+    @property
+    def get_document_counter(self):
+        try:
+            return self.meta_data["progress"]["document_counter"]
+        except:
+            None
+
+    @property
+    def get_country(self):
+        if not self.geometry or self.id == 15984 or self.id == 12279 or self.id == 14473:
+            # There is a bizarre bug with the Montreal, Singapore, and Samothraki boundaries, which return
+            # an autocommit error (psycopg2.InterfaceError: connection already closed) followed
+            # by a "FATAL:  the database system is in recovery mode". Not pretty
+            # For now the easiest solution is to skip this item. This should be dug into in more detail.
+            # To do so, remove the exception (locally) and try to run get_country on these files.
+            return None
+        try:
+            country = ReferenceSpace.objects.filter(source_id=328661, geometry__contains=self.geometry)
+            if not country:
+                # Sometimes the city boundaries are more exact than the national boundaries, and they
+                # are at the edge of the national boundaries - making them technically not be fully contained
+                # if one of the borders is just outside of the national boundaries
+                # (note that this is not really outside the country's borders, but merely a difference in GIS accuracy)
+                # In that case we try again by just taking the centroid of the city and checking in what country they are
+                # This might be troublesome for a city with a very odd shape but I doubt that we have this problem in real life
+                country = ReferenceSpace.objects.filter(source_id=328661, geometry__contains=self.geometry.centroid)
+            return country[0]
+        except:
+            return None
+
+    # Once the country has been set, we can call this by simply
+    # retrieving the meta_data information. We should normally use this field as not
+    # to incur an additional db query
+    # The field is automatically set for all activated spaces upon saving
+    @property
+    def get_country_name(self):
+            try:
+                return self.meta_data["country_name"]
+            except:
+                return None
+
+    def get_relative_url(self):
+        return f"/referencespaces/view/{self.id}/"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        # We need to clear the cached properties for this object
+        cached_properties = ["slug", "is_city", "is_island", "get_centroids", "get_lat", "get_lng"]
+        for property in cached_properties:
+            try:
+                del self.__dict__[property]
+            except KeyError:
+                pass
+
+    class Meta:
+        db_table = "stafdb_referencespace"
+        ordering = ["name"]
+
+@receiver(post_save, sender=Photo)
+def update_referencespace_photo(sender, instance, created, **kwargs):
+    for space in instance.spaces.all():
+        # Let's see which spaces this photo is related with - if any
+        # And if it turns out that this is the first photo then we mark this as the primary image
+        try:
+            photo = Photo.objects.filter(spaces=space).order_by("position", "id")[0]
+        except:
+            photo = Photo.objects.get(pk=1278693)
+        space.image = photo.image
+        space.save()
+
+class ZoteroCollection(Record):
+    uid = models.AutoField(primary_key=True)
+    record_id = models.OneToOneField(
+        Record, on_delete=models.CASCADE,
+        parent_link=True,
+        primary_key=False,
+    )
+    api = models.CharField(max_length=255)
+    zotero_id = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
+class ZoteroItem(models.Model):
+    title = models.CharField(max_length=255)
+    key = models.CharField(max_length=255)
+    library_item = models.ForeignKey(LibraryItem, on_delete=models.SET_NULL, null=True, blank=True)
+    collection = models.ForeignKey(ZoteroCollection, on_delete=models.CASCADE)
+    data = models.JSONField(null=True, blank=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+    def get_year(self):
+        # Returns the year of publication, which is part of the date field
+        # which is a string and can be formatted in any possible way, so we just
+        # look for four digits, starting with 1 or 2
+        #hit = re.search(r'.*([1-2][0-9]{3})', self.data.get("date"))
+        try:
+            pattern = re.compile("([1-2][0-9]{3})")
+            return pattern.findall(self.data.get("date"))[0]
+        except:
+            return None
+
+    def import_to_library(self):
+        info = self.find_match()
+        print("Got past info, update the entry now: ", info)
+        if not info:
+            info = LibraryItem()
+        info.name = self.title
+        info.author_list = self.get_authors()
+        info.year = self.get_year()
+        info.url = self.data.get("url")
+        info.description = self.data.get("abstractNote")
+        try:
+            # Zotero uses camelCase so we convert that into spaces
+            full_type = re.sub(r"(\w)([A-Z])", r"\1 \2", self.data.get("itemType"))
+            type = LibraryItemType.objects.get(name__iexact=full_type)
+            info.type = type
+        except:
+            info.type_id = 16 # Default to journal article if all else fails
+
+        info.save()
+        journal = self.data.get("publicationTitle")
+
+        if journal:
+            record_new_journal = True
+            check = RecordRelationship.objects.filter(record_child=info, relationship_id=2)
+            if check:
+                current = check[0]
+                if current.record_parent.name == journal:
+                    record_new_journal = False
+                else:
+                    # We will change the journal
+                    check.delete()
+            if record_new_journal:
+                # Let's check to see if this journal already exist in our list with organizations
+                organization = Organization.objects.filter(name=journal)
+                if not organization:
+                    # If not, we create it
+                    organization = Organization.objects.create(
+                        name = journal,
+                        type = "journal",
+                    )                        
+                else:
+                    organization = organization[0]
+                RecordRelationship.objects.create(
+                    record_parent = organization,
+                    record_child = info,
+                    relationship_id = 2,
+                )
+
+        # Let's now add the tags
+        if self.collection.uid == 3:
+            # Adding the island tag
+            info.tags.add(Tag.objects.get(id=219))
+
+        for each in self.find_tags():
+            info.tags.add(each)
+
+        for each in self.find_spaces():
+            info.spaces.add(each)
+
+        self.library_item = info
+        self.save()
+
+    def get_authors(self):
+        all = self.data.get("creators")
+        text = ""
+        if all:
+            for each in all:
+                if text != "":
+                    text += " and "
+                text += each.get("lastName", "") + ", " + each.get("firstName", "")
+        return text
+
+    def get_tags(self):
+        if "tags" in self.data:
+            tags = self.data["tags"]
+            all = []
+            for each in tags:
+                all.append(each["tag"])
+            return all
+        else:
+            return None
+
+    def find_match(self):
+        if self.library_item:
+            return self.library_item
+        check = LibraryItem.objects_include_deleted.filter(name__iexact=self.title) # check for both uppercase and lowercase
+        if not check and "doi" in self.data and self.data["doi"]:
+            check = LibraryItem.objects_include_deleted.filter(doi=doi)
+        if not check and "isbn" in self.data and self.data["isbn"]:
+            check = LibraryItem.objects_include_deleted.filter(isbn=isbn)
+        if check:
+            return check[0]
+        else:
+            return None
+
+    def find_tags(self):
+        tags = Tag.objects.filter(Q(parent_tag__parent_tag_id=938)|Q(parent_tag__parent_tag__parent_tag_id=938))
+        hits = []
+        for each in self.get_tags():
+            # We check for tags in two ways: first we see if the "tags" in the paper exist in our tag list...
+            check = Tag.objects.filter(name=each)
+            if check:
+                hits.append(check[0])
+        for each in tags:
+            # And then we do a broader search in which we check all tags in our database and we see if those
+            # words are used in the title/abstract...
+            # Note that we add a space before the keyword because we want the entire word
+            # to be found, and otherwise e.g. "Afghanistan" will also yield a match of the STAN software package
+            n = " " + each.fullname
+            t = self.title
+            if n.lower() in t.lower():
+                hits.append(each)
+            elif "abstractNote" in self.data and n.lower() in self.data["abstractNote"].lower():
+                hits.append(each)
+        return hits
+
+    def find_spaces(self):
+        spaces = ReferenceSpace.objects.filter(geocodes=8355)
+        hits = []
+        for each in spaces:
+            if each.name in self.title:
+                hits.append(each)
+            elif "abstractNote" in self.data and each.name in self.data["abstractNote"]:
+                hits.append(each)
+        return hits
+
+class OptamosProject(Record):
+    uid = models.AutoField(primary_key=True)
+    record_id = models.OneToOneField(
+        Record, on_delete=models.CASCADE,
+        parent_link=True,
+        primary_key=False,
+    )
+    date_updated = models.DateTimeField(auto_now=True)
+    goal = models.CharField(max_length=255, blank=True)
+    is_locked = models.BooleanField(db_index=True, default=False)
+
+    def get_absolute_url(self):
+        return reverse("optamos:project", args=[self.uid])
+
+class OptamosUser(models.Model):
+    project = models.ForeignKey(OptamosProject, on_delete=models.CASCADE, related_name="users")
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    LEVEL = (
+        ("admin", "Administrator"),
+        ("regular", "Regular user"),
+    )
+    level = models.CharField(max_length=20, choices=LEVEL, default="regular")
+    date_created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.user)
+
+    class Meta:
+        ordering = ["id"]
+        unique_together = ["project", "user"]
+
+class OptamosAlternative(models.Model):
+    name = models.CharField(max_length=255)
+    project = models.ForeignKey(OptamosProject, on_delete=models.CASCADE, related_name="alternatives")
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ["id"]
+
+class OptamosTag(models.Model):
+    name = models.CharField(max_length=255)
+    project = models.ForeignKey(OptamosProject, on_delete=models.CASCADE, related_name="tag_list")
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ["id"]
+
+class OptamosCriteria(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    project = models.ForeignKey(OptamosProject, on_delete=models.CASCADE, related_name="criteria")
+    parent = models.ForeignKey("self", on_delete=models.CASCADE, null=True, blank=True, related_name="children")
+    position = models.PositiveSmallIntegerField(db_index=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ["position"]
+
+class OptamosAlternativeValue(models.Model):
+    criteria = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="alternative_pairs")
+    alternative1 = models.ForeignKey(OptamosAlternative, on_delete=models.CASCADE, related_name="setting1")
+    alternative2 = models.ForeignKey(OptamosAlternative, on_delete=models.CASCADE, related_name="setting2")
+    value = models.FloatField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True) # If the user is null, that means this is the "average" user
+
+    class Meta:
+        unique_together = ["criteria", "alternative1", "alternative2", "user"]
+
+    @property
+    def value1(self):
+        if self.value < 0: # This score is "in favor" of alternative 1
+            return -self.value
+        else:
+            return 1/(self.value) # Inverse fraction to indicate preference of alternative 2
+
+    @property
+    def value2(self):
+        return 1/self.value1 # This is always the inverse of the other score
+
+    # For the slider we manage values from -8 to 8, with 0 being the neutral value
+    # We must therefore reduce the value with 1 if negative (so -9 becomes -8)
+    # and even when it's up to 1 (because 1 is actually neutral which is 0 in slider values)
+    # If the value is 2 and up, we reduce 1 to make the range 1-8 for positive values
+    @property
+    def js_value(self):
+        if self.value >= 1:
+            return self.value-1
+        else:
+            return self.value+1
+
+    # We create id1 and id2 so that we can use the same fields for criteria and alternative loops
+    @property
+    def id1(self):
+        return self.alternative1.id
+
+    @property
+    def id2(self):
+        return self.alternative2.id
+
+    # We keep an 'average' row in the database, based on all entered values by users. This row is updated
+    # every time someone saves new values.
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.user:
+            values = []
+            for each in OptamosAlternativeValue.objects.filter(criteria=self.criteria, alternative1=self.alternative1, alternative2=self.alternative2, user__isnull=False):
+                values.append(each.value2)
+            
+            # This is the geometric mean which we use to calculate the average value
+            geometric_mean = statistics.geometric_mean(values)
+
+            # Any value between 0 and 1 means that it favors option A, and the fraction indicates 
+            # how much (e.g. 1/7 means a 'score' of 7 for option A), which we represent as a negative
+            # number
+            if geometric_mean < 1:
+                geometric_mean = -1/geometric_mean
+
+            info, created = OptamosAlternativeValue.objects.update_or_create(
+                defaults={
+                    "value": geometric_mean,
+                },
+                criteria = self.criteria,
+                alternative1 = self.alternative1,
+                alternative2 = self.alternative2,
+                user = None,
+            )
+
+class OptamosCriteriaValue(models.Model):
+    criteria1 = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="setting1")
+    criteria2 = models.ForeignKey(OptamosCriteria, on_delete=models.CASCADE, related_name="setting2")
+    value = models.FloatField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+
+    class Meta:
+        unique_together = ["criteria1", "criteria2", "user"]
+
+    # See OptamosAlternativeValue for an explanation on this procedure
+    @property
+    def value1(self):
+        if self.value < 0: # This score is "in favor" of criteria 1
+            return -self.value
+        else:
+            return 1/(self.value) # Inverse fraction to indicate preference of criteria 2
+
+    @property
+    def value2(self):
+        return 1/self.value1 # This is always the inverse of the other score
+
+    # For the slider we manage values from -8 to 8, with 0 being the neutral value
+    # We must therefore reduce the value with 1 if negative (so -9 becomes -8)
+    # and even when it's up to 1 (because 1 is actually neutral which is 0 in slider values)
+    # If the value is 2 and up, we reduce 1 to make the range 1-8 for positive values
+    @property
+    def js_value(self):
+        if self.value >= 1:
+            return self.value-1
+        else:
+            return self.value+1
+
+    # We create id1 and id2 so that we can use the same fields for criteria and alternative loops
+    @property
+    def id1(self):
+        return self.criteria1.id
+
+    @property
+    def id2(self):
+        return self.criteria2.id
+
+    # We keep an 'average' row in the database, based on all entered values by users. This row is updated
+    # every time someone saves new values.
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if self.user:
+            values = []
+            for each in OptamosCriteriaValue.objects.filter(criteria1=self.criteria1, criteria2=self.criteria2, user__isnull=False):
+                values.append(each.value2)
+            
+            # This is the geometric mean which we use to calculate the average value
+            geometric_mean = statistics.geometric_mean(values)
+
+            # Any value between 0 and 1 means that it favors option A, and the fraction indicates 
+            # how much (e.g. 1/7 means a 'score' of 7 for option A), which we represent as a negative
+            # number
+            if geometric_mean < 1:
+                geometric_mean = -1/geometric_mean
+
+            info, created = OptamosCriteriaValue.objects.update_or_create(
+                defaults={
+                    "value": geometric_mean,
+                },
+                criteria1 = self.criteria1,
+                criteria2 = self.criteria2,
+                user = None,
+            )
+
+class EmailQuota(models.Model):
+    count = models.PositiveIntegerField(default=0)
+    last_reset = models.DateTimeField(default=timezone.now)
+
+    def is_quota_exceeded(self):
+        return self.count >= settings.EMAIL_QUOTA
+
+    @classmethod
+    def get_quota(cls):
+        quota, created = cls.objects.get_or_create(pk=1)
+        return quota
+
+@receiver(pre_send)
+def handle_quota_limit(sender, message, **kwargs):
+    quota = EmailQuota.get_quota()
+    now = timezone.now()
+
+    # Reset if the current year/month is different from the last record
+    if (now.year, now.month) != (quota.last_reset.year, quota.last_reset.month):
+        quota.count = 0
+        quota.last_reset = now
+        quota.save()
+
+    if quota.is_quota_exceeded():
+        # Stops the send before hitting your provider's API
+        raise AnymailCancelSend("Monthly limit reached.")
+
+@receiver(post_send)
+def track_sent_emails(sender, message, status, **kwargs):
+    quota = EmailQuota.get_quota()
+    quota.count += 1
+    quota.save()
+
+###
+### DUMMY FORMAT
+###
+
+# This is the format to use from now on
+# Note that there is a uid primary key, separate from the record_id
+# This is must easier to have individual primary key sequences
+#
+# We should migrate the old stuff at some points
+# See https://new.metabolismofcities.org/tasks/33488/
+#
+#class Dummy(Record):
+#    uid = models.AutoField(primary_key=True)
+#    record_id = models.OneToOneField(
+#        Record, on_delete=models.CASCADE,
+#        parent_link=True,
+#        primary_key=False,
+#    )
+#    info = models.CharField(max_length=100)
+

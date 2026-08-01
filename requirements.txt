@@ -9,3 +9,14 @@ python-dotenv
 
 # For OPTamos
 openpyxl
+
+pyzotero
+feedparser # Importing zotero items
+django-stdimage
+
+markdown
+unidecode
+bleach
+python-dateutil
+pandas
+geopandas
