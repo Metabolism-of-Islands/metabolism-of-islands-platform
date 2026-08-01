@@ -1689,9 +1689,16 @@ class Photo(LibraryItem):
     objects_include_private = PrivateRecordManager()
     objects_include_deleted = PublicRecordManager()
 
-class ActivatedSpace(models.Model):
+class Island(models.Model):
     space = models.ForeignKey("ReferenceSpace", on_delete=models.CASCADE, related_name="activated")
     slug = models.CharField(max_length=255, db_index=True)
+    REGIONS = (
+        ("pacific", "Pacific Ocean"),
+        ("indian", "Indian Ocean"),
+        ("caribbean", "Caribbean"),
+        ("other", "Other"),
+    )
+    region = models.CharField(max_length=10, choices=REGIONS, default="other")
 
     def __str__(self):
         return self.space.name
@@ -1720,20 +1727,6 @@ class ReferenceSpace(Record):
     @property
     def slug(self):
         return slugify(unidecode(self.name))
-
-    @property
-    def is_city(self):
-        #check = self.geocodes.filter(id=123)
-        check = self.geocodes.filter(name="Urban").exists()
-        return True if check else False
-
-    @property
-    def is_island(self):
-        #check = self.geocodes.filter(id=123)
-        if ActivatedSpace.objects.filter(space=self).exists():
-            return True
-        #check = self.geocodes.filter(name="Island").exists()
-        #return True if check else False
 
     @property
     def get_centroids(self):

@@ -87,11 +87,9 @@
                   <div>
                     <p class="mb-2 border-b pb-2 text-xs font-bold tracking-wider text-gray-900">Caribbean</p>
                     <ul class="space-y-2 text-xs text-gray-600">
-                      <li><a href="#" class="block hover:text-brand">Cuba</a></li>
-                      <li><a href="#" class="block hover:text-brand">Jamaica</a></li>
-                      <li><a href="#" class="block hover:text-brand">Barbados</a></li>
-                      <li><a href="#" class="block hover:text-brand">Puerto Rico</a></li>
-                      <li><a href="#" class="block hover:text-brand">Bahamas</a></li>
+                      {% for each in ISLANDS %}
+                        <li><a href="#" class="block hover:text-brand">{{ each }}</a></li>
+                      {% endfor %}
                     </ul>
                   </div>
                   <div>

@@ -1,5 +1,21 @@
 {% extends "main/_base.html" %}
 
 {% block content %}
-  Hellow!
+  {% for each in islands %}
+    <li>{{ each }}</li>
+  {% endfor %}
+
+
+<h2>Initial setup</h2>
+
+<ol>
+  <li>Load db</li>
+  <li>Load very first migration</li>
+  <li>Run renamedb.py - SQL commands to rename tables</li>
+  <li>Drop all the reference spaces that are not active islands <a href="./?migrate=1">here</a></li>
+  <li>Assign islands to regions <a href="./?migrate=2">here</a></li>
+  <li>Run /media/migrations.sql</li>
+</ol>
+
+
 {% endblock %}
