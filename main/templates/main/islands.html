@@ -1,0 +1,150 @@
+{% extends "main/_base.html" %}
+
+{% block title %}
+  {% if region %}{{ region }}{% else %}Islands{% endif %}
+{% endblock %}
+
+{% block css %}
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet.fullscreen@3.0.0/Control.FullScreen.css"
+/>
+
+<style>
+  #map {
+    height: 600px;
+    width: 100%;
+  }
+
+  .map-popup-thumb {
+    width: 120px;
+    height: 80px;
+    object-fit: cover;
+    display: block;
+    margin-top: 5px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+  }
+
+  .map-popup-btn {
+    display: inline-block;
+    padding: 4px 8px;
+    background-color: #007bff;
+    color: white !important;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+</style>
+
+  
+{% endblock %}
+
+{% block content %}
+
+  <h1>
+    {% if region %}{{ region }}{% else %}Islands{% endif %}
+  </h1>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.fullscreen@3.0.0/Control.FullScreen.js"></script>
+<script>
+  map = L.map("map", {
+    fullscreenControl: true,
+    fullscreenControlOptions: {
+      position: "topleft"
+    }
+  }).setView([0, 0], 2);
+
+  bounds = [];
+
+  {% for each in islands %}
+    {% if each.geometry %}
+
+      {% if each.geometry.geom_type == "Point" %}
+        lat = {{ each.geometry.y }};
+        lng = {{ each.geometry.x }};
+      {% else %}
+        lat = {{ each.geometry.centroid.y }};
+        lng = {{ each.geometry.centroid.x }};
+      {% endif %}
+
+      {% if region == "Pacific Ocean" %}
+        // We don't want the Pacific Ocean split in two halves on the map; this fixes that
+        if (lng < 0) {
+          lng += 360;
+        }
+      {% endif %}
+
+      markerLatLng = [lat, lng];
+      bounds.push(markerLatLng);
+
+      popupContent = `
+        <div>
+          <strong>{{ each|escapejs }}</strong>
+          {% if each.photo %}
+            <img src="{{ each.photo.url }}" class="map-popup-thumb" alt="{{ each.title|escapejs }}">
+          {% endif %}
+          <a href="{{ each.get_absolute_url }}" class="map-popup-btn">Read more</a>
+        </div>
+      `;
+
+      L.marker(markerLatLng)
+        .bindPopup(popupContent)
+        .addTo(map);
+
+    {% endif %}
+  {% endfor %}
+
+  const osm = L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      attribution: "&copy; OpenStreetMap contributors",
+      referrerPolicy: "strict-origin-when-cross-origin"
+    }
+  );
+
+  const positron = L.tileLayer(
+    "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+    {
+      attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
+      referrerPolicy: "strict-origin-when-cross-origin"
+    }
+  );
+
+  const satellite = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    {
+      attribution: "Tiles © Esri",
+      referrerPolicy: "strict-origin-when-cross-origin"
+    }
+  );
+
+  osm.addTo(map);
+
+  L.control.layers(
+    {
+      "OpenStreetMap": osm,
+      "Light": positron,
+      "Satellite": satellite
+    },
+    null,
+    {
+      collapsed: false
+    }
+  ).addTo(map);
+
+  map.fitBounds(bounds, {
+    padding: [1, 1]
+  });
+
+</script>
+
+{% endblock %}

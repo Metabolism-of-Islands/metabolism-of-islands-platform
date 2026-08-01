@@ -77,8 +77,6 @@ from anymail.exceptions import AnymailCancelSend
 # To check if a value is NaN: https://stackoverflow.com/questions/944700/how-can-i-check-for-nan-values
 import math
 
-from django.core.cache import cache
-
 # For the translations
 from django.utils.translation import gettext_lazy as _
 
@@ -225,7 +223,7 @@ class Record(models.Model):
     image = StdImageField(upload_to="records", variations={"thumbnail": (480, 480), "large": (1280, 1024)}, blank=True, null=True, delete_orphans=True)
     date_created = models.DateTimeField(auto_now_add=True)
 
-    spaces = models.ManyToManyField("ReferenceSpace", blank=True)
+    spaces = models.ManyToManyField("Island", blank=True)
     #sectors = models.ManyToManyField("Sector", blank=True)
     #materials = models.ManyToManyField("Material", blank=True)
     tags = models.ManyToManyField(Tag, blank=True)
@@ -259,9 +257,9 @@ class Record(models.Model):
         elif hasattr(self, "libraryitem"):
             url = reverse("library:item", args=[self.id])
         elif hasattr(self, "news"):
-            url = reverse("core:news", args=[self.news.slug])
+            url = reverse("main:news", args=[self.news.slug])
         elif hasattr(self, "event"):
-            url = reverse("core:event", args=[self.event.slug])
+            url = reverse("main:event", args=[self.event.slug])
         elif hasattr(self, "video"):
             url = reverse("multimedia:video", args=[self.id])
         elif hasattr(self, "course"):
@@ -1021,7 +1019,7 @@ class LibraryItem(Record):
     # to the associated reference spaces.
     @property
     def imported_spaces(self):
-        return ReferenceSpace.objects_include_private.filter(source=self)
+        return Island.objects_include_private.filter(source=self)
 
     # Same applies to associated data
     @property
@@ -1031,7 +1029,7 @@ class LibraryItem(Record):
     # Returns all the associated reference spaces, based on the data
     @property
     def data_spaces(self):
-        return ReferenceSpace.objects_include_private.filter(Q(data_from_space__source=self)|Q(data_to_space__source=self)).distinct()
+        return Island.objects_include_private.filter(Q(data_from_space__source=self)|Q(data_to_space__source=self)).distinct()
 
     # Returns either 'point' if this contains points, 'polygon' if it contains other geometry, and 'unknown' if we can't tell
     # This can be used to decide for instance whether to show markers on a map or draw polygons
@@ -1201,7 +1199,7 @@ class LibraryItem(Record):
                     if space not in spaces:
                         try:
                             source = self.meta_data["processing"]["source"]
-                            s = ReferenceSpace.objects_include_private.get(source_id=source, name=space)
+                            s = Island.objects_include_private.get(source_id=source, name=space)
                             spaces[space] = s
                         except:
                             error = f"We could not find the space with the name: '{space}'"
@@ -1269,11 +1267,11 @@ class LibraryItem(Record):
 
         self.save()
 
-    # This function converts the shapefile into ReferenceSpaces
+    # This function converts the shapefile into Islands
     def convert_shapefile(self):
         print(self)
 
-        check = ReferenceSpace.objects_unfiltered.filter(source=self)
+        check = Island.objects_unfiltered.filter(source=self)
         error = False
 
         # We may have cached space-related properties for this object, so let's clear those
@@ -1348,7 +1346,7 @@ class LibraryItem(Record):
                         # https://docs.djangoproject.com/en/3.1/ref/contrib/gis/geos/#django.contrib.gis.geos.GEOSGeometry.hasz
                         error = "This shapefile includes data in 3D. We only store shapefiles with 2D data. Please remove the elevation data (Z coordinates). This can be done, for instance, using QGIS: https://docs.qgis.org/testing/en/docs/user_manual/processing_algs/qgis/vectorgeometry.html#drop-m-z-values"
                     else:
-                        space = ReferenceSpace.objects.create(
+                        space = Island.objects.create(
                             name = self.meta_data.get("shortname"),
                             geometry = polygon,
                             source = self,
@@ -1398,7 +1396,7 @@ class LibraryItem(Record):
 
                 if not error:
                     for name,geo in spaces.items():
-                        ReferenceSpace.objects.create(
+                        Island.objects.create(
                             name = name,
                             geometry = geo.wkt,
                             source = self,
@@ -1439,7 +1437,7 @@ class LibraryItem(Record):
 
                     if not error:
                         geo = geo.wkt
-                        space = ReferenceSpace.objects.create(
+                        space = Island.objects.create(
                             name = name,
                             geometry = geo,
                             source = self,
@@ -1493,7 +1491,7 @@ class LibraryItem(Record):
                     except:
                         geo = None
 
-                    space = ReferenceSpace.objects.create(
+                    space = Island.objects.create(
                         name = name,
                         geometry = geo,
                         source = self,
@@ -1605,7 +1603,7 @@ class LibraryItem(Record):
 
         # If there are linked Reference Spaces, Documents, or Data points then these need to have the same public status as their parent document
         if self.id:
-            ReferenceSpace.objects_unfiltered.filter(source_id=self.id).update(is_public=self.is_public)
+            Island.objects_unfiltered.filter(source_id=self.id).update(is_public=self.is_public)
             Data.objects_include_private.filter(source_id=self.id).update(is_public=self.is_public)
             Document.objects_include_private.filter(attached_to=self.id).update(is_public=self.is_public)
 
@@ -1689,44 +1687,20 @@ class Photo(LibraryItem):
     objects_include_private = PrivateRecordManager()
     objects_include_deleted = PublicRecordManager()
 
-class Island(models.Model):
-    space = models.ForeignKey("ReferenceSpace", on_delete=models.CASCADE, related_name="activated")
-    slug = models.CharField(max_length=255, db_index=True)
-    REGIONS = (
-        ("pacific", "Pacific Ocean"),
-        ("indian", "Indian Ocean"),
-        ("caribbean", "Caribbean"),
-        ("other", "Other"),
-    )
-    region = models.CharField(max_length=10, choices=REGIONS, default="other")
-
-    def __str__(self):
-        return self.space.name
-
-    def get_absolute_url(self):
-        return reverse("data:dashboard", args=[self.slug])
-
-    def save(self, *args, **kwargs):
-        self.slug = slugify(unidecode(self.space.name))
-        super().save(*args, **kwargs)
-
-    class Meta:
-        ordering = ["space__name"]
-
-class ReferenceSpace(Record):
-    #geocodes = models.ManyToManyField(Geocode, through="ReferenceSpaceGeocode")
+class Island(Record):
     geometry = models.GeometryField(null=True, blank=True)
-    source = models.ForeignKey(LibraryItem, on_delete=models.CASCADE, null=True, blank=True)
+    slug = models.CharField(max_length=255, db_index=True, null=True, unique=True)
+
+    class Regions(models.IntegerChoices):
+        PACIFIC = 1, _("Pacific Ocean")
+        CARIBBEAN = 2, _("Caribbean")
+        INDIAN = 3, _("Indian Ocean")
+        OTHER = 4, _("Other")
+
+    region = models.IntegerField(choices=Regions.choices, db_index=True, null=True)
 
     def __str__(self):
         return self.name
-
-    # Let's bring back slug as a field, but make it nullable and only set when activating a space
-    # TODO
-
-    @property
-    def slug(self):
-        return slugify(unidecode(self.name))
 
     @property
     def get_centroids(self):
@@ -1760,7 +1734,7 @@ class ReferenceSpace(Record):
 
     @property
     def photo(self):
-        from core.models import Photo
+        from main.models import Photo
         try:
             return Photo.objects.filter(spaces=self).order_by("position")[0]
         except:
@@ -1811,7 +1785,7 @@ class ReferenceSpace(Record):
             # To do so, remove the exception (locally) and try to run get_country on these files.
             return None
         try:
-            country = ReferenceSpace.objects.filter(source_id=328661, geometry__contains=self.geometry)
+            country = Island.objects.filter(source_id=328661, geometry__contains=self.geometry)
             if not country:
                 # Sometimes the city boundaries are more exact than the national boundaries, and they
                 # are at the edge of the national boundaries - making them technically not be fully contained
@@ -1819,7 +1793,7 @@ class ReferenceSpace(Record):
                 # (note that this is not really outside the country's borders, but merely a difference in GIS accuracy)
                 # In that case we try again by just taking the centroid of the city and checking in what country they are
                 # This might be troublesome for a city with a very odd shape but I doubt that we have this problem in real life
-                country = ReferenceSpace.objects.filter(source_id=328661, geometry__contains=self.geometry.centroid)
+                country = Island.objects.filter(source_id=328661, geometry__contains=self.geometry.centroid)
             return country[0]
         except:
             return None
@@ -1835,19 +1809,12 @@ class ReferenceSpace(Record):
             except:
                 return None
 
-    def get_relative_url(self):
-        return f"/referencespaces/view/{self.id}/"
+    def get_absolute_url(self):
+        return f"/islands/{self.slug}/"
 
     def save(self, *args, **kwargs):
+        self.slug = slugify(unidecode(self.name))
         super().save(*args, **kwargs)
-
-        # We need to clear the cached properties for this object
-        cached_properties = ["slug", "is_city", "is_island", "get_centroids", "get_lat", "get_lng"]
-        for property in cached_properties:
-            try:
-                del self.__dict__[property]
-            except KeyError:
-                pass
 
     class Meta:
         db_table = "stafdb_referencespace"
@@ -2017,7 +1984,7 @@ class ZoteroItem(models.Model):
         return hits
 
     def find_spaces(self):
-        spaces = ReferenceSpace.objects.filter(geocodes=8355)
+        spaces = Island.objects.filter(geocodes=8355)
         hits = []
         for each in spaces:
             if each.name in self.title:

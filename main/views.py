@@ -85,7 +85,65 @@ def index(request):
             for each in islands:
                 e = str(each)
                 e = e.strip()
-                print(each, regions[e])
+                region = regions[e]
+                if region == "Pacific Ocean":
+                    each.region = 1
+                elif region == "Caribbean":
+                    each.region = 2
+                elif region == "Other":
+                    each.region = 4
+                elif region == "Indian Ocean":
+                    each.region = 3
+                each.save()
+            messages.success(request, "Regions saved")
+
+        elif migrate == "3":
+            for each in Island.objects.all():
+                space = each.space
+                space.region = each.region
+                space.slug = each.slug
+                space.save()
+            messages.success(request, "Data copied from Island to ReferenceSpace; you can now remove Island and then rename")
+
+        elif migrate == "4":
+            coords = {
+                "Antigua & Barbuda": (17.0608, -61.7964),
+                "Aruba": (12.5211, -69.9683),
+                "Cabo Verde": (15.1111, -23.6167),
+                "Canary Islands": (28.2916, -16.6291),
+                "Comoros ": (-11.8750, 43.8722),
+                "Crete": (35.2401, 24.8093),
+                "Cuba": (21.5218, -77.7812),
+                "Curacao": (12.1696, -68.9900),
+                "Faroe Islands": (62.0676, -6.9118),
+                "Fiji": (-17.7134, 178.0650),
+                "Galapagos Islands": (-0.9538, -90.9656),
+                "Haiti": (18.9712, -72.2852),
+                "Hawaii": (20.7984, -156.3319),
+                "Mallorca": (39.6953, 3.0176),
+                "malta": (35.9375, 14.3754),
+                "Micronesia": (6.8875, 158.2151),
+                "New Caledonia": (-21.2990, 165.4880),
+                "Northern Mariana Islands (CNMI)": (15.2000, 145.7500),
+                "Okinawa": (26.3344, 127.8056),
+                "Pacific Region": (0.0000, -160.0000),
+                "Réunion Island": (-21.1151, 55.5364),
+                "Sardinia": (40.1209, 9.0129),
+                "Sint Maarten": (18.0425, -63.0548),
+                "Grenada": (12.1165, -61.6790),
+                "Guinea-Bissau": (11.8037, -15.1804),
+                "Kiribati": (1.8709, -157.3630),
+            }
+            from django.contrib.gis.geos import Point
+            for each,cr in coords.items():
+                lat, lng = cr
+                try:
+                    info = Island.objects.get(name=each)
+                    info.name = each.strip()
+                    info.geometry = Point(lng, lat, srid=4326)
+                    info.save()
+                except:
+                    print(f"Not found, {each}")
                 
 
     # END OF MIGRATION CODE
@@ -95,3 +153,32 @@ def index(request):
         "islands": islands,
     }
     return render(request, "main/index.html", context)
+
+def islands(request):
+    islands = Island.objects.all()
+    context = {
+        "islands": islands,
+    }
+    return render(request, "main/islands.html", context)
+
+def island(request, slug):
+    info = Island.objects.get(slug=slug)
+    context = {
+        "info": info,
+    }
+    return render(request, "main/island.html", context)
+
+def regions(request):
+    islands = Island.objects.all()
+    context = {
+        "islands": islands,
+    }
+    return render(request, "main/islands.html", context)
+
+def region(request, region):
+    islands = Island.objects.filter(region=region)
+    context = {
+        "islands": islands,
+        "region": Island.Regions(region).label,
+    }
+    return render(request, "main/islands.html", context)

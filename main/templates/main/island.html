@@ -1,0 +1,31 @@
+{% extends "main/_base.html" %}
+
+{% block title %}
+  {{ info }}
+{% endblock %}
+
+{% block content %}
+
+  <nav class="flex px-5 py-3 text-gray-700 border border-gray-200 rounded-lg bg-gray-50 mb-5" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+      <li class="inline-flex items-center">
+        <a href="/islands/" class="text-gray-700 hover:text-emerald-600 transition-colors">Islands</a>
+      </li>
+      <li>
+        <div class="flex items-center">
+          <svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://w3.org" fill="none" viewBox="0 0 6 10"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/></svg>
+          <a href="/islands/region/{{ info.region }}/" class="text-gray-700 hover:text-emerald-600 transition-colors">{{ info.get_region_display }}</a>
+        </div>
+      </li>
+      <li aria-current="page">
+        <div class="flex items-center">
+          <svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://w3.org" fill="none" viewBox="0 0 6 10"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/></svg>
+          <span class="text-gray-400">{{ info }}</span>
+        </div>
+      </li>
+    </ol>
+  </nav>
+
+  <h1>{{ info }}</h1>
+
+{% endblock %}

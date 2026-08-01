@@ -9,7 +9,7 @@
     {% block title %}{% endblock %} - 
     Metabolism of Islands
   </title>
-  <link href="{% static "css/styles.css" %}?id=1920-2805" rel="stylesheet">
+  <link href="{% static "css/styles.css" %}?id=1111-0108" rel="stylesheet">
   <link class="favicon" rel="shortcut icon" sizes="126x126" href="/media/favicon.jpg">
 
   <meta property="og:title" content="Metabolism of Islands" />
@@ -84,44 +84,16 @@
             <div class="absolute left-0 right-0 mt-7 z-50 mt-0 hidden w-full bg-white shadow-xl group-hover:block">
               <div class="mx-auto max-w-7xl px-8 py-6">
                 <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                  {% for region, islands in REGIONS %} 
                   <div>
-                    <p class="mb-2 border-b pb-2 text-xs font-bold tracking-wider text-gray-900">Caribbean</p>
+                    <p class="mb-2 border-b pb-2 text-xs font-bold tracking-wider text-gray-900">{{ region }}</p>
                     <ul class="space-y-2 text-xs text-gray-600">
-                      {% for each in ISLANDS %}
-                        <li><a href="#" class="block hover:text-brand">{{ each }}</a></li>
+                      {% for each in islands %}
+                        <li><a href="/islands/{{ each.slug }}/" class="block hover:text-brand">{{ each }}</a></li>
                       {% endfor %}
                     </ul>
                   </div>
-                  <div>
-                    <p class="mb-2 border-b pb-2 text-xs font-bold tracking-wider text-gray-900">Pacific</p>
-                    <ul class="space-y-2 text-xs text-gray-600">
-                      <li><a href="#" class="block hover:text-brand">Fiji</a></li>
-                      <li><a href="#" class="block hover:text-brand">Hawaii</a></li>
-                      <li><a href="#" class="block hover:text-brand">Samoa</a></li>
-                      <li><a href="#" class="block hover:text-brand">Tahiti</a></li>
-                      <li><a href="#" class="block hover:text-brand">Tuvalu</a></li>
-                    </ul>
-                  </div>
-                  <div>
-                    <p class="mb-2 border-b pb-2 text-xs font-bold tracking-wider text-gray-900">Asia</p>
-                    <ul class="space-y-2 text-xs text-gray-600">
-                      <li><a href="#" class="block hover:text-brand">Maldives</a></li>
-                      <li><a href="#" class="block hover:text-brand">Bali</a></li>
-                      <li><a href="#" class="block hover:text-brand">Phuket</a></li>
-                      <li><a href="#" class="block hover:text-brand">Okinawa</a></li>
-                      <li><a href="#" class="block hover:text-brand">Langkawi</a></li>
-                    </ul>
-                  </div>
-                  <div>
-                    <p class="mb-2 border-b pb-2 text-xs font-bold tracking-wider text-gray-900">Rest of the world</p>
-                    <ul class="space-y-2 text-xs text-gray-600">
-                      <li><a href="#" class="block hover:text-brand">Madagascar</a></li>
-                      <li><a href="#" class="block hover:text-brand">Iceland</a></li>
-                      <li><a href="#" class="block hover:text-brand">Azores</a></li>
-                      <li><a href="#" class="block hover:text-brand">Mauritius</a></li>
-                      <li><a href="#" class="block hover:text-brand">Seychelles</a></li>
-                    </ul>
-                  </div>
+                  {% endfor %}
                 </div>
               </div>
             </div>
@@ -198,7 +170,7 @@
 </script>
 
     <div class="bg" style="background-image:url(/media/bg2.jpg)">
-      <div class="overlay pb-32">
+      <div class="overlay pb-64">
         <header class="py-10">
           <hgroup class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {% if project %}
@@ -221,7 +193,7 @@
       </div>
     </div>
 
-    <main class="-mt-32">
+    <main class="-mt-64">
       <div class="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
         <div class="rounded-lg bg-white {% if not remove_padding_main_container %}px-5 py-10 sm:px-6{% endif %} shadow-sm relative">
           <div class="ml-10 mr-10">
