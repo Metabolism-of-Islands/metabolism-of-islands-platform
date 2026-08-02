@@ -619,6 +619,13 @@ class Webpage(Record):
     type = models.CharField(max_length=13, choices=TYPE, default="markdown")
     slug = models.CharField(db_index=True, max_length=100)
 
+    SECTION = [
+        ("about", "About"),
+        ("research", "Research"),
+        ("other", "Other"),
+    ]
+    section = models.CharField(max_length=13, choices=SECTION, default="other")
+
     objects = PublicActiveRecordManager()
     objects_unfiltered = models.Manager()
     objects_include_private = PrivateRecordManager()

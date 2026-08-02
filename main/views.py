@@ -144,7 +144,23 @@ def index(request):
                     info.save()
                 except:
                     print(f"Not found, {each}")
-                
+            messages.success(request, "Coordinates are set for those that were missing.")
+        elif migrate == "5":
+            pages_to_keep = [51385, 31884, 1280158, 31882, 31887, 31888, 31879, 31885, 31881, 31886, 31880]
+            Webpage.objects.all().exclude(pk__in=pages_to_keep).delete()
+            messages.success(request, "Web page list is cleaned up")
+
+            Webpage.objects.filter(pk__in=[31879, 51385, 31884, 31882, 31880, 31881]).update(section="about")
+            research = Webpage.objects.get(pk=31886)
+            research.section = "research"
+            research.slug = "/research/theses/"
+            research.save()
+            research = Webpage.objects.get(pk=31885)
+            research.section = "research"
+            research.slug = "/research/projects/"
+            research.save()
+            messages.success(request, "Research & about sections configured")
+
 
     # END OF MIGRATION CODE
 
@@ -182,3 +198,49 @@ def region(request, region):
         "region": Island.Regions(region).label,
     }
     return render(request, "main/islands.html", context)
+
+def about_overview(request):
+    islands = Island.objects.filter(region=region)
+    context = {
+        "islands": islands,
+        "region": Island.Regions(region).label,
+    }
+    return render(request, "main/islands.html", context)
+
+def about(request, slug):
+    slug = f"/about/{slug}/"
+    info = Webpage.objects.get(slug=slug)
+    context = {
+        "info": info,
+    }
+    return render(request, "main/about.html", context)
+
+def research(request, slug):
+    slug = f"/research/{slug}/"
+    info = Webpage.objects.get(slug=slug)
+    context = {
+        "info": info,
+    }
+    return render(request, "main/research.html", context)
+
+# Control Panel section
+def controlpanel(request):
+    context = {
+    }
+    return render(request, "main/controlpanel/index.html", context)
+
+def controlpanel_webpages(request):
+    context = {
+        "pages": Webpage.objects.all(),
+    }
+    return render(request, "main/controlpanel/pages.html", context)
+
+def controlpanel_webpage(request, id=None):
+
+    if id:
+        info = Webpage.objects.get(pk=id)
+
+    context = {
+        "info": info,
+    }
+    return render(request, "main/controlpanel/page.html", context)

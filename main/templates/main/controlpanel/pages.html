@@ -1,0 +1,33 @@
+{% extends "main/_base.html" %}
+
+{% block content %}
+
+<h1>
+{% block title %}
+  Web pages
+{% endblock %}
+</h1>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Title</th>
+      <th>Section</th>
+      <th>Created</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for each in pages %}
+    <tr>
+      <td>{{ each.id }}<br>{{ each.slug }}</td>
+      <td><a href="{% url "controlpanel_webpage" each.id %}">{{ each }}</a></td>
+      <td>{{ each.get_section_display }}</td>
+      <td>{{ each.date_created|date:"M d, Y" }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+
+{% endblock %}
