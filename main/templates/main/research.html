@@ -6,4 +6,28 @@
 
   {{ info.get_description }}
 
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Dates</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for each in projects %}
+      <tr>
+        <td><a href="{{ each.get_absolute_url }}">{{ each }}</a></td>
+        <td class="whitespace-nowrap">
+          {% if each.start_date %}
+            {% if not each.end_date %}Started{% endif %}
+            {{ each.start_date|date:"M Y" }}{% if each.end_date %}-{{ each.end_date|date:"M Y" }}{% endif %}
+          {% elif each.end_date %}
+            Finished: {{ each.end_date|date:"M Y" }}
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
 {% endblock %}

@@ -18,4 +18,7 @@ urlpatterns = [
     path("controlpanel/webpages/", views.controlpanel_webpages, name="controlpanel_webpages"),
     path("controlpanel/webpages/<int:id>/", views.controlpanel_webpage, name="controlpanel_webpage"),
     path("controlpanel/webpages/create/", views.controlpanel_webpage, name="controlpanel_webpage"),
+    path("controlpanel/research/", views.controlpanel_research_list, name="controlpanel_research_list"),
+    path("controlpanel/research/<int:id>/", views.controlpanel_research, name="controlpanel_research"),
+    path("controlpanel/research/create/", views.controlpanel_research, name="controlpanel_research"),
 ]

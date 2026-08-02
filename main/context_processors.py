@@ -4,13 +4,17 @@ from operator import attrgetter
 
 def site(request):
 
-    qs = Island.objects.all().order_by("region", "name")
-    regions = [
-        (region, list(islands))
-        for region, islands in groupby(qs, key=lambda p: p.get_region_display())
-    ]
+    # Try can be removed once the migration is complete
+    try:
+        qs = Island.objects.all().order_by("region", "name")
+        regions = [
+            (region, list(islands))
+            for region, islands in groupby(qs, key=lambda p: p.get_region_display())
+        ]
 
-    context = {
-        "REGIONS": regions,
-    }
-    return context
+        context = {
+            "REGIONS": regions,
+        }
+        return context
+    except:
+        return {}

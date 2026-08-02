@@ -4,25 +4,23 @@
 
 <h1>
 {% block title %}
-  Web pages
+  Research
 {% endblock %}
 </h1>
 
 <table class="table table-striped">
   <thead>
     <tr>
-      <th>ID</th>
       <th>Title</th>
-      <th>Section</th>
+      <th>Type</th>
       <th>Created</th>
     </tr>
   </thead>
   <tbody>
-  {% for each in pages %}
+  {% for each in research %}
     <tr>
-      <td>{{ each.id }}<br>{{ each.slug }}</td>
-      <td><a href="{% url "controlpanel_webpage" each.id %}">{{ each }}</a></td>
-      <td>{{ each.get_section_display }}</td>
+      <td><a href="{% url "controlpanel_research" each.id %}">{{ each }}</a></td>
+      <td class="whitespace-nowrap">{{ each.get_project_type_display }}</td>
       <td class="whitespace-nowrap">{{ each.date_created|date:"M d, Y" }}</td>
     </tr>
   {% endfor %}

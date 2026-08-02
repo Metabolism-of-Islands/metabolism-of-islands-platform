@@ -42,6 +42,8 @@ new = [
     "main_zoteroitem",
     "spatial_ref_sys",
     "stafdb_referencespace ",
+
+    "main_publicproject",
 ]
 
 keep = [
@@ -163,5 +165,8 @@ for each in old:
     s = f"main_{s}"
     if s in new:
         print(f"ALTER TABLE {each} RENAME TO {s};")
-print("ALTER TABLE main_activatedspace RENAME TO main_island;")
+#print("ALTER TABLE main_activatedspace RENAME TO main_island;")
 print("COMMIT;")
+print('UPDATE "main_record_spaces" SET "referencespace_id" = \'328874\' WHERE "referencespace_id" = \'16513\';')
+print('ALTER TABLE "main_record_spaces" DROP CONSTRAINT "core_record_spaces_referencespace_id_07795752_fk_stafdb_re";')
+print('ALTER TABLE "main_record_spaces" ADD FOREIGN KEY ("referencespace_id") REFERENCES "stafdb_referencespace" ("record_ptr_id") ON DELETE CASCADE ON UPDATE NO ACTION DEFERRABLE INITIALLY DEFERRED;')

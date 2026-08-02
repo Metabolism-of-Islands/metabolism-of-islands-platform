@@ -2000,6 +2000,36 @@ class ZoteroItem(models.Model):
                 hits.append(each)
         return hits
 
+class PublicProject(Record):
+    email = models.EmailField(null=True, blank=True)
+    url = models.URLField(max_length=255, null=True, blank=True)
+    target_finish_date = models.CharField(max_length=255, null=True, blank=True)
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
+    STATUS = (
+        ("planned", "Planned"),
+        ("ongoing", "Ongoing"),
+        ("finished", "Finished"),
+        ("cancelled", "Cancelled"),
+    )
+    status = models.CharField(max_length=20, choices=STATUS, default="ongoing")
+    PROJECT_TYPES = (
+        ("thesis", "Thesis project"),
+        ("research", "Research project"),
+    )
+    project_type = models.CharField(max_length=20, choices=PROJECT_TYPES, default="research")
+
+    def get_dates(self):
+        return get_date_range(self.start_date, self.end_date)
+
+    def get_dates_months(self):
+        return get_date_range(self.start_date, self.end_date, True)
+
+    objects = PublicActiveRecordManager()
+    objects_unfiltered = models.Manager()
+    objects_include_private = PrivateRecordManager()
+    objects_include_deleted = PublicRecordManager()
+
 class OptamosProject(Record):
     uid = models.AutoField(primary_key=True)
     record_id = models.OneToOneField(
@@ -2254,4 +2284,3 @@ def track_sent_emails(sender, message, status, **kwargs):
 #        primary_key=False,
 #    )
 #    info = models.CharField(max_length=100)
-

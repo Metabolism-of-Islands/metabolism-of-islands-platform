@@ -160,7 +160,10 @@ def index(request):
             research.slug = "/research/projects/"
             research.save()
             messages.success(request, "Research & about sections configured")
-
+        elif migrate == "6":
+            PublicProject.objects.filter(part_of_project_id=1).delete()
+            PublicProject.objects.filter(part_of_project_id__isnull=True).delete()
+            messages.success(request, "Public projects are now cleaned up")
 
     # END OF MIGRATION CODE
 
@@ -216,10 +219,12 @@ def about(request, slug):
     return render(request, "main/about.html", context)
 
 def research(request, slug):
+    project_type = "thesis" if slug == "theses" else "research"
     slug = f"/research/{slug}/"
     info = Webpage.objects.get(slug=slug)
     context = {
         "info": info,
+        "projects": PublicProject.objects.filter(project_type=project_type),
     }
     return render(request, "main/research.html", context)
 
@@ -244,3 +249,19 @@ def controlpanel_webpage(request, id=None):
         "info": info,
     }
     return render(request, "main/controlpanel/page.html", context)
+
+def controlpanel_research_list(request):
+    context = {
+        "research": PublicProject.objects.all(),
+    }
+    return render(request, "main/controlpanel/research.list.html", context)
+
+def controlpanel_research(request, id=None):
+
+    if id:
+        info = PublicProject.objects.get(pk=id)
+
+    context = {
+        "info": info,
+    }
+    return render(request, "main/controlpanel/research.html", context)

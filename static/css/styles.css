@@ -294,9 +294,6 @@
   .z-10001 {
     z-index: 10001;
   }
-  .m-0 {
-    margin: calc(var(--spacing) * 0);
-  }
   .mx-1 {
     margin-inline: calc(var(--spacing) * 1);
   }
@@ -910,9 +907,6 @@
   .fill-current {
     fill: currentcolor;
   }
-  .p-0 {
-    padding: calc(var(--spacing) * 0);
-  }
   .p-0\.5 {
     padding: calc(var(--spacing) * 0.5);
   }
@@ -1091,6 +1085,9 @@
   .tracking-wider {
     --tw-tracking: var(--tracking-wider);
     letter-spacing: var(--tracking-wider);
+  }
+  .whitespace-nowrap {
+    white-space: nowrap;
   }
   .text-brand {
     color: var(--color-brand);

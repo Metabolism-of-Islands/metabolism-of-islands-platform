@@ -1,23 +1,38 @@
 {% extends "main/_base.html" %}
 
 {% block content %}
-  {% for each in islands %}
-    <li>{{ each }}</li>
-  {% endfor %}
 
 
 <h2>Initial setup</h2>
 
 <ol>
   <li>Load db</li>
-  <li>Load very first migration</li>
+  <li>Make media/models01.py the temp new model</li>
+  <li>Load very first migration but fake</li>
+  <li>Fix the stdimage models.py file<br>
+cp media/stdimagemodel.py /usr/local/lib/python3.13/site-packages/stdimage/models.py
+  </li>
   <li>Run renamedb.py - SQL commands to rename tables</li>
+  <li>Run migration 0002</li>
   <li>Drop all the reference spaces that are not active islands <a href="./?migrate=1">here</a></li>
+  <li>Make media/models02.py the new model</li>
+  <li>Run migration 0003-0008</li>
   <li>Assign islands to regions <a href="./?migrate=2">here</a></li>
-  <li>Run /media/migrations.sql</li>
-  <li>Run migration 0007 and 0008 and then <a href="./?migrate=3">open this</a> to copy the region and slugs to ReferenceSpace</li>
-  <li>Now run migration 0009 and 0010</li>
+  <li>Add a random 'space' field to referencespaces db</li>
+  <li>Now run migration 0009 and 0010 and 0011 and 0012</li>
+  <li>Now <a href="./?migrate=4">fix island gps</a></li>
+  <li>Now <a href="./?migrate=5">fix island categorization</a></li>
+  <li>FAKE run migration 0013 and 0014</li>
+  <li>Fix <a href="./?migrate=6">public projects</a></li>
+  <li>Run migration 0015</li>
 </ol>
 
+<pre>
+sudo docker exec -it metabolismofislands_web python manage.py migrate --fake
+</pre>
+
+<pre>
+sudo docker exec -it metabolismofislands_web python manage.py migrate
+</pre>
 
 {% endblock %}
