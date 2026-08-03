@@ -1,0 +1,9 @@
+{% extends "main/_base.html" %}
+
+{% block content %}
+
+    <h1>{% block title %}{% if info %}Edit tag{% else %}Add tag{% endif %}{% endblock %}</h1>
+
+    <div class="bg-gray-100 p-5 mb-5"><h2>{{ info }}</h2></div>
+
+{% endblock %}

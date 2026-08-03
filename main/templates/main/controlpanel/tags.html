@@ -1,0 +1,30 @@
+{% extends "main/_base.html" %}
+
+{% block content %}
+
+<h1>
+{% block title %}
+  Tags
+{% endblock %}
+</h1>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Title</th>
+      <th>Parent</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for each in tags %}
+    <tr>
+      <td>{{ each.id }}</td>
+      <td><a href="{% url "controlpanel_tag" each.id %}">{{ each }}</a></td>
+      <td>{{ each.parent_tag|default_if_none:"" }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

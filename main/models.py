@@ -730,6 +730,7 @@ class LibraryItem(Record):
         ordering = ["-year", "name"]
 
     def get_absolute_url(self):
+        return f"/library/{self.id}/"
         if self.type_id == 31:
             # Videos are opened in the multimedia library
             return reverse("multimedia:video", args=[self.id])

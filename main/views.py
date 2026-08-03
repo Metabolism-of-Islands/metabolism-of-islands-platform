@@ -1,6 +1,10 @@
 from django.shortcuts import render
 from django.contrib import messages
 from main.models import *
+from django.db.models import Count #, Q, Subquery, OuterRef, CharField, Avg
+from itertools import groupby
+from django.http import JsonResponse
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 def index(request):
 
@@ -97,14 +101,6 @@ def index(request):
                 each.save()
             messages.success(request, "Regions saved")
 
-        elif migrate == "3":
-            for each in Island.objects.all():
-                space = each.space
-                space.region = each.region
-                space.slug = each.slug
-                space.save()
-            messages.success(request, "Data copied from Island to ReferenceSpace; you can now remove Island and then rename")
-
         elif migrate == "4":
             coords = {
                 "Antigua & Barbuda": (17.0608, -61.7964),
@@ -165,6 +161,51 @@ def index(request):
             PublicProject.objects.filter(part_of_project_id__isnull=True).delete()
             messages.success(request, "Public projects are now cleaned up")
 
+        elif migrate == "7":
+            tags = Tag.objects.all()
+            print("ALL", tags.count())
+            tags = Tag.objects.annotate(record_count=Count('record')).filter(record_count=0).exclude(parent_tag__isnull=True)
+            keep_tags = Tag.objects.annotate(record_count=Count('record')).filter(record_count__gt=0)
+            print("Keep", keep_tags, keep_tags.count())
+            print("Remove:", tags, tags.count())
+
+            Tag.objects.filter(pk=745).delete()
+            Tag.objects.filter(pk__in=[768,924,317,942,943,1751,1226,940]).delete()
+
+            all_to_keep = []
+            for each in keep_tags:
+                if each.parent_tag:
+                    cp = each.parent_tag
+                    if cp.parent_tag:
+                        cp = cp.parent_tag
+                        if cp.parent_tag:
+                            cp = cp.parent_tag
+                            if cp.parent_tag:
+                                cp = cp.parent_tag
+                else:
+                    cp = each
+                if cp not in all_to_keep:
+                    all_to_keep.append(cp)
+            print(all_to_keep)
+
+            keep = []
+            for each in keep_tags:
+                keep.append(each.id)
+
+            for each in tags:
+                if each.parent_tag.id not in keep:
+                    grandparent = each.parent_tag.parent_tag
+                    if grandparent:
+                        if grandparent.id not in keep:
+                            #each.delete()
+                            pass
+                    else:
+                        #each.delete()
+                        pass
+
+            messages.success(request, "Unused tags are deleted")
+
+
     # END OF MIGRATION CODE
 
     islands = Island.objects.all()
@@ -201,6 +242,102 @@ def region(request, region):
         "region": Island.Regions(region).label,
     }
     return render(request, "main/islands.html", context)
+
+def library(request):
+    context = {
+        "types": LibraryItemType.objects.all().annotate(total=Count("items")).filter(total__gt=0).order_by("-total"),
+    }
+    return render(request, "main/library.html", context)
+
+def library_list(request, item_type=None):
+
+    if item_type:
+        items = LibraryItem.objects.filter(type=item_type)
+
+    tags = (
+        Tag.objects
+           .annotate(record_count=Count("record"))
+           .filter(record_count__gt=0)
+           .select_related("parent_tag")
+           .order_by("parent_tag_id", "parent_tag__name", "name")
+    )
+
+    grouped_tags = []
+    for parent_tag_id, group in groupby(tags, key=lambda t: t.parent_tag_id):
+        group_list = list(group)
+
+        parent = group_list[0].parent_tag
+        parent_name = parent.name if parent is not None else None
+
+        grouped_tags.append((parent_name, group_list))
+
+    context = {
+        "items": items,
+        "item_types": LibraryItemType.objects.all().annotate(total=Count("items")).filter(total__gt=0).order_by("-total"),
+        "tags": grouped_tags,
+    }
+    return render(request, "main/library.list.html", context)
+
+
+def library_ajax(request):
+    island_ids = request.POST.getlist("islands[]")
+    item_type_ids = request.POST.getlist("item_types[]")
+    tag_ids = request.POST.getlist("tags[]")
+    page_number = request.POST.get("page", 1)
+
+    if not any([island_ids, item_type_ids, tag_ids]):
+        return JsonResponse({
+            "results": [],
+            "total_count": 0,
+            "current_page": 1,
+            "total_pages": 1,
+            "has_next": False,
+            "has_previous": False
+        })
+
+    items = LibraryItem.objects.all()
+
+    if island_ids:
+        items = items.filter(spaces__id__in=island_ids)
+
+    if item_type_ids:
+        items = items.filter(type_id__in=item_type_ids)
+
+    if tag_ids:
+        items = items.filter(tags__id__in=tag_ids)
+
+    items = items.distinct().select_related("type")
+    total_count = items.count()
+
+    paginator = Paginator(items, 25)
+
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
+    results_list = []
+    for item in page_obj:
+        results_list.append({
+            "id": item.id,
+            "name": item.name,
+            "description": item.description,
+            "type": item.type.name if item.type else None,
+            "year": item.year,
+            "author_list": item.author_list,
+            "absolute_url": item.get_absolute_url()
+        })
+
+    return JsonResponse({
+        "results": results_list,
+        "total_count": total_count,
+        "current_page": page_obj.number,
+        "total_pages": paginator.num_pages,
+        "has_next": page_obj.has_next(),
+        "has_previous": page_obj.has_previous()
+    })
 
 def about_overview(request):
     islands = Island.objects.filter(region=region)
@@ -265,3 +402,19 @@ def controlpanel_research(request, id=None):
         "info": info,
     }
     return render(request, "main/controlpanel/research.html", context)
+
+def controlpanel_tags(request):
+    context = {
+        "tags": Tag.objects.all(),
+    }
+    return render(request, "main/controlpanel/tags.html", context)
+
+def controlpanel_tag(request, id=None):
+
+    if id:
+        info = Tag.objects.get(pk=id)
+
+    context = {
+        "info": info,
+    }
+    return render(request, "main/controlpanel/tag.html", context)

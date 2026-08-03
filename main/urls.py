@@ -14,10 +14,17 @@ urlpatterns = [
     path("research/", views.research, {"slug": "projects"}, name="research"),
     path("research/<slug:slug>/", views.research, name="research"),
 
+    path("library/", views.library, name="library"),
+    path("library/browse/<int:item_type>/", views.library_list, name="library_list"),
+    path("library/ajax/", views.library_ajax, name="library_ajax"),
+
     path("controlpanel/", views.controlpanel, name="controlpanel"),
     path("controlpanel/webpages/", views.controlpanel_webpages, name="controlpanel_webpages"),
     path("controlpanel/webpages/<int:id>/", views.controlpanel_webpage, name="controlpanel_webpage"),
     path("controlpanel/webpages/create/", views.controlpanel_webpage, name="controlpanel_webpage"),
+    path("controlpanel/tags/", views.controlpanel_tags, name="controlpanel_webpages"),
+    path("controlpanel/tags/<int:id>/", views.controlpanel_tag, name="controlpanel_tag"),
+    path("controlpanel/tags/create/", views.controlpanel_tag, name="controlpanel_tag"),
     path("controlpanel/research/", views.controlpanel_research_list, name="controlpanel_research_list"),
     path("controlpanel/research/<int:id>/", views.controlpanel_research, name="controlpanel_research"),
     path("controlpanel/research/create/", views.controlpanel_research, name="controlpanel_research"),

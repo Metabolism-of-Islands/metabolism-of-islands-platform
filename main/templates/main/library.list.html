@@ -1,0 +1,406 @@
+{% extends "main/_base.html" %}
+
+{% block content %}
+
+<h1>{% block title %}Library{% endblock %}</h1>
+
+
+
+<div class="flex flex-col md:flex-row min-h-screen bg-slate-100 font-sans">
+
+  <div id="sidebar" class="w-80 h-screen bg-slate-50 border-r border-slate-200 p-6 overflow-y-auto font-sans text-slate-700 select-none">
+    
+    <div class="mb-8">
+      <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Filter by region</h2>
+      <div class="space-y-3">
+        {% for region, islands in REGIONS %} 
+          <div class="filter-group">
+
+
+            <div class="flex items-center justify-between group py-1.5 px-2 rounded-lg hover:bg-slate-100 transition-colors duration-150 max-w-full overflow-hidden">
+              <label class="flex items-center space-x-3 cursor-pointer text-sm font-medium text-slate-800 flex-1 min-w-0 max-w-full">
+                <input type="checkbox" name="region" value="{{ region.id }}" class="parent-checkbox w-4 h-4 shrink-0 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2">
+                <span class="truncate min-w-0 pr-1">{{ region }}</span>
+                <span class="active-badge hidden items-center justify-center shrink-0 bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-full min-w-[20px]">0</span>
+              </label>
+              <button class="toggle-btn text-slate-400 hover:text-slate-600 p-1 focus:outline-none shrink-0" aria-label="Toggle children">
+                <svg class="w-4 h-4 transform transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
+
+            <ul class="child-list hidden pl-9 mt-1 space-y-2 border-l border-slate-200 ml-4 max-w-full overflow-hidden">
+              {% for each in islands %}
+                <li class="max-w-full overflow-hidden">
+                  <label class="flex items-center space-x-3 cursor-pointer text-sm text-slate-600 hover:text-slate-900 min-w-0 max-w-full">
+                    <input type="checkbox" name="island" value="{{ each.id }}" class="child-checkbox w-4 h-4 shrink-0 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2">
+                    <span class="break-words min-w-0 whitespace-normal">{{ each }}</span>
+                  </label>
+                </li>
+              {% endfor %}
+            </ul>
+
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="mb-8">
+      <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Filter by document type</h2>
+      <div class="space-y-2 pl-2">
+        {% for each in item_types %}
+          <label class="flex items-center space-x-3 cursor-pointer text-sm font-medium text-slate-800 py-1.5 px-2 rounded-lg hover:bg-slate-100 transition-colors duration-150">
+            <input type="checkbox" name="item_type" value="{{ each.id }}" class="w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2">
+            <span>{{ each }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="mb-8">
+      <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Filter by tag</h2>
+      <div class="space-y-3">
+        {% for parent, children_tags in tags %} 
+          <div class="filter-group">
+            <div class="flex items-center justify-between group py-1.5 px-2 rounded-lg hover:bg-slate-100 transition-colors duration-150">
+              <label class="flex items-center space-x-3 cursor-pointer text-sm font-medium text-slate-800 flex-1">
+                <input type="checkbox" name="parent_tag" value="{{ parent }}" class="parent-checkbox w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2">
+                <span class="truncate">{{ parent }}</span>
+                <span class="active-badge hidden items-center justify-center bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-full min-w-[20px]">0</span>
+              </label>
+              <button class="toggle-btn text-slate-400 hover:text-slate-600 p-1 focus:outline-none" aria-label="Toggle children">
+                <svg class="w-4 h-4 transform transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
+            <ul class="child-list hidden pl-9 mt-1 space-y-2 border-l border-slate-200 ml-4">
+              {% for each in children_tags %}
+                <li>
+                  <label class="flex items-center space-x-3 cursor-pointer text-sm text-slate-600 hover:text-slate-900">
+                    <input type="checkbox" name="tag" value="{{ each.id }}" class="child-checkbox w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2">
+                    <span>{{ each }}</span>
+                  </label>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Main Column -->
+  <main class="flex-1 p-6 lg:p-10">
+    <div class="max-w-7xl mx-auto">
+      
+
+    <div class="border-b border-slate-200 pb-5 mb-6 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Results</h1>
+      <span id="total-count" class="text-sm text-slate-500 font-medium hidden">
+        Found <span id="total-count-number" class="font-semibold text-slate-700">0</span> items
+      </span>
+    </div>
+
+    <div id="results-container" class="w-full">
+      <p class="text-slate-500 text-sm italic">Please use the filters to search our library.</p>
+    </div>
+
+      <!-- Empty container ready for dynamic search results or cards -->
+      <div id="results-container" class="w-full">
+        <!-- Result cards will render here -->
+      </div>
+
+      <div id="pagination-container" class="mt-8 border-t border-slate-200 pt-4 flex items-center justify-between hidden">
+        <button id="prev-page" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled>
+          Previous
+        </button>
+        <span id="page-info" class="text-sm text-slate-500 font-medium">
+          Page 1 of 1
+        </span>
+        <button id="next-page" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+          Next
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+</div>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Title</th>
+      <th>Title</th>
+      <th>Title</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for each in items %}
+    <tr>
+      <td><a href="{{ each.get_absolute_url }}">{{ each }}</a></td>
+      <td>
+        {% for space in each.spaces.all %}
+          <span class="badge">{{ space }}</span>
+        {% endfor %}
+      </td>
+      <td>
+        {% for tag in each.tags.all %}
+          <span class="badge">{{ tag }}</span>
+        {% endfor %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}
+
+{% block js %}
+  <script type="text/javascript">
+
+$(document).ready(function() {
+  
+  // Helper function to update the checked count badge for a given parent group
+  function updateBadge($group) {
+    var checkedCount = $group.find(".child-checkbox:checked").length;
+    var $badge = $group.find(".active-badge");
+    
+    if (checkedCount > 0) {
+      $badge.text(checkedCount).removeClass("hidden").addClass("inline-flex");
+    } else {
+      $badge.text("0").removeClass("inline-flex").addClass("hidden");
+    }
+  }
+
+  // 1. Sync Parent and Child Checkboxes
+  $(".parent-checkbox").on("change", function() {
+    var $group = $(this).closest(".filter-group");
+    var isChecked = $(this).is(":checked");
+    
+    $group.find(".child-checkbox").prop("checked", isChecked);
+    
+    // Recalculate badge total after selection change
+    updateBadge($group);
+  });
+
+  // 2. Monitor individual Child Checkboxes
+  $(".child-checkbox").on("change", function() {
+    var $group = $(this).closest(".filter-group");
+    var $parent = $group.find(".parent-checkbox");
+    var allChildrenChecked = $group.find(".child-checkbox").length === $group.find(".child-checkbox:checked").length;
+    
+    $parent.prop("checked", allChildrenChecked);
+    
+    // Recalculate badge total after selection change
+    updateBadge($group);
+  });
+
+  // 3. Dropdown / Accordion Slide Toggle
+  $(".toggle-btn").on("click", function(e) {
+    e.preventDefault();
+    var $button = $(this);
+    var $group = $button.closest(".filter-group");
+    var $list = $group.find(".child-list");
+    var $svg = $button.find("svg");
+
+    $list.slideToggle(200, function() {
+      $list.toggleClass("hidden", !$list.is(":visible"));
+      $list.css("display", $list.is(":visible") ? "block" : "none");
+    });
+
+    $svg.toggleClass("rotate-180");
+  });
+
+
+  // Track active pagination state globally within ready context
+  var currentPage = 1;
+
+  // 4. AJAX Filter & Pagination Submission Function
+  function fetchFilteredItems(pageNumber) {
+    currentPage = pageNumber || 1;
+    var $mainContent = $("main");
+    
+    var selectedIslands = [];
+    var selectedItemTypes = [];
+    var selectedTags = [];
+
+    $("input[name='island']:checked").each(function() {
+      selectedIslands.push($(this).val());
+    });
+
+    $("input[name='item_type']:checked").each(function() {
+      selectedItemTypes.push($(this).val());
+    });
+
+    $("input[name='tag']:checked").each(function() {
+      selectedTags.push($(this).val());
+    });
+
+    updateURLBar(selectedIslands, selectedItemTypes, selectedTags);
+
+    // Stop execution early if no checkboxes are active across the sidebar
+    if (selectedIslands.length === 0 && selectedItemTypes.length === 0 && selectedTags.length === 0) {
+      $("#results-container").html(`<p class="text-slate-500 text-sm italic">Please use the filters to search our library.</p>`);
+      $("#pagination-container").addClass("hidden");
+      $("#total-count").addClass("hidden");
+      return; // Break the cycle before running the $.ajax call
+    }
+
+    $mainContent.addClass("opacity-50 pointer-events-none transition-opacity duration-150");
+
+    $.ajax({
+      url: "/library/ajax/",
+      type: "POST",
+      dataType: "json",
+      headers: {
+        "X-CSRFToken": document.cookie.split("; ").find(row => row.startsWith("csrftoken="))?.split("=")[1]
+      },
+      data: {
+        "islands[]": selectedIslands,
+        "item_types[]": selectedItemTypes,
+        "tags[]": selectedTags,
+        "page": currentPage
+      },
+      success: function(response) {
+        var $container = $("#results-container");
+        var $paginationBar = $("#pagination-container");
+        var $totalCountWrapper = $("#total-count");
+        var $totalCountNumber = $("#total-count-number");
+        
+        $container.empty();
+
+        if (response.total_count !== undefined) {
+          $totalCountNumber.text(response.total_count);
+          $totalCountWrapper.removeClass("hidden");
+        } else {
+          $totalCountWrapper.addClass("hidden");
+        }
+
+        if (response.results && response.results.length > 0) {
+          $.each(response.results, function(index, item) {
+            // Wrap the card block inside a block-level hyperlink pointing to the absolute url string
+            var htmlCard = `
+              <a href="${item.absolute_url}" class="block group/card max-w-full mb-4">
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 group-hover/card:border-blue-400 group-hover/card:shadow-md transition-all duration-150 overflow-hidden">
+                  <h3 class="text-lg font-semibold text-slate-900 group-hover/card:text-blue-600 transition-colors">${item.name}</h3>
+                  <p class="text-sm text-slate-500 mt-1">Type: ${item.type} | Year: ${item.year || "N/A"}</p>
+                  <p class="text-slate-600 mt-2 text-sm">${item.description || ""}</p>
+                </div>
+              </a>
+            `;
+            $container.append(htmlCard);
+          });
+        } else {
+          $container.append(`<p class="text-slate-500 text-sm italic">No matching results found.</p>`);
+        }
+
+        if (response.total_pages > 1) {
+          $paginationBar.removeClass("hidden");
+          $("#page-info").text("Page " + response.current_page + " of " + response.total_pages);
+          $("#prev-page").prop("disabled", !response.has_previous);
+          $("#next-page").prop("disabled", !response.has_next);
+        } else {
+          $paginationBar.addClass("hidden");
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error("Library filtering failed: ", error);
+      },
+      complete: function() {
+        $mainContent.removeClass("opacity-50 pointer-events-none");
+      }
+    });
+  }
+
+  // Monitor checkbox filter modification updates
+  $("#sidebar").on("change", "input[type='checkbox']", function() {
+    fetchFilteredItems(1);
+  });
+
+  // Pagination navigation listeners
+  $("#prev-page").on("click", function(e) {
+    e.preventDefault();
+    if (currentPage > 1) {
+      fetchFilteredItems(currentPage - 1);
+    }
+  });
+
+  $("#next-page").on("click", function(e) {
+    e.preventDefault();
+    fetchFilteredItems(currentPage + 1);
+  });
+
+  // 5. URL Parameter Initialization Function
+  function initializeFiltersFromURL() {
+    var urlParams = new URLSearchParams(window.location.search);
+    
+    // Parse individual parameters. Example format: ?islands=1,2,5&item_types=3
+    var islands = urlParams.get("islands") ? urlParams.get("islands").split(",") : [];
+    var itemTypes = urlParams.get("item_types") ? urlParams.get("item_types").split(",") : [];
+    var tags = urlParams.get("tags") ? urlParams.get("tags").split(",") : [];
+
+    // Check matching child fields
+    islands.forEach(function(id) {
+      $("input[name='island'][value='" + id + "']").prop("checked", true);
+    });
+
+    itemTypes.forEach(function(id) {
+      $("input[name='item_type'][value='" + id + "']").prop("checked", true);
+    });
+
+    tags.forEach(function(id) {
+      $("input[name='tag'][value='" + id + "']").prop("checked", true);
+    });
+
+    // Run badge loops, parent checking state sync, and drop-down menu expansions
+    $(".filter-group").each(function() {
+      var $group = $(this);
+      var $childCheckboxes = $group.find(".child-checkbox");
+      var $checkedChildren = $group.find(".child-checkbox:checked");
+      
+      if ($checkedChildren.length > 0) {
+        // Sync parent selection checkbox state
+        if ($childCheckboxes.length === $checkedChildren.length) {
+          $group.find(".parent-checkbox").prop("checked", true);
+        }
+        
+        // Open the accordion display immediately if child filters are active
+        var $list = $group.find(".child-list");
+        $list.removeClass("hidden").show();
+        $group.find(".toggle-btn svg").addClass("rotate-180");
+        
+        // Re-evaluate badge numbers
+        updateBadge($group);
+      }
+    });
+
+    // Execute first AJAX render draw cycle on page load
+    fetchFilteredItems(1);
+  }
+
+  function updateURLBar(islands, itemTypes, tags) {
+    var params = new URLSearchParams();
+    if (islands.length > 0) params.set("islands", islands.join(","));
+    if (itemTypes.length > 0) params.set("item_types", itemTypes.join(","));
+    if (tags.length > 0) params.set("tags", tags.join(","));
+
+    var newURL = window.location.pathname;
+    if (params.toString()) {
+      newURL += "?" + params.toString();
+    }
+    // This pushes the filter state directly to the browser window without a full page refresh
+    window.history.replaceState({}, "", newURL);
+  }
+
+  initializeFiltersFromURL();
+
+
+});
+
+  </script>
+{% endblock %}

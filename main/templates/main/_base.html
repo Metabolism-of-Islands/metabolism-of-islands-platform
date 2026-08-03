@@ -23,6 +23,7 @@
   <style type="text/css">
   .mainnav img{height:5em}
   </style>
+  <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.14.0/css/all.css" integrity="sha384-VhBcF/php0Z/P5ZxlxaEx1GwqTQVIBu4G4giRWxTKOCjTxsPFETUDdVL5B6vYvOt" crossorigin="anonymous">
 
   {% block css %}{% endblock %}
 </head>
@@ -103,11 +104,12 @@
           </li>
 
           <li class="group relative py-6">
-            <button class="flex items-center gap-1 hover:text-brand focus:outline-none">
+            <a class="flex items-center gap-1 hover:text-brand focus:outline-none" href="/library/">
               Library
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
-            </button>
+            </a>
             <div class="absolute left-0 top-full z-50 mt-0 hidden w-48 rounded-md bg-white py-2 shadow-lg group-hover:block">
+              <a href="/library/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Overview</a>
               <a href="#" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Case studies</a>
               <a href="#" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Reports</a>
               <a href="#" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Books</a>
