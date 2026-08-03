@@ -9,7 +9,7 @@ def site(request):
         qs = Island.objects.all().order_by("region", "name")
         regions = [
             (region, list(islands))
-            for region, islands in groupby(qs, key=lambda p: p.get_region_display())
+            for region, islands in groupby(qs, key=lambda p: p.region.name)
         ]
 
         context = {

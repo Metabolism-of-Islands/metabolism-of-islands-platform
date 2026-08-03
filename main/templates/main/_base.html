@@ -87,7 +87,7 @@
                 <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                   {% for region, islands in REGIONS %} 
                   <div>
-                    <p class="mb-2 border-b pb-2 text-xs font-bold tracking-wider text-gray-900">{{ region }}</p>
+                    <p class="mb-2 border-b pb-2 text-xs font-bold tracking-wider text-gray-900"><a href="/islands/regions/{{ region|slugify }}/">{{ region }}</a></p>
                     <ul class="space-y-2 text-xs text-gray-600">
                       {% for each in islands %}
                         <li><a href="/islands/{{ each.slug }}/" class="block hover:text-brand">{{ each }}</a></li>

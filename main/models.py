@@ -1695,17 +1695,28 @@ class Photo(LibraryItem):
     objects_include_private = PrivateRecordManager()
     objects_include_deleted = PublicRecordManager()
 
+class Region(models.Model):
+    name = models.CharField(max_length=255)
+    position = models.PositiveSmallIntegerField(db_index=True)
+
+    def __str__(self):
+        return self.name
+
+    # Let's make this a db field later, but when the migration is complete
+    @property
+    def slug(self):
+        return slugify(self.name)        
+
+    class Meta:
+        ordering = ["position"]
+
+    def get_absolute_url(self):
+        return f"/islands/regions/{self.slug}/"
+
 class Island(Record):
     geometry = models.GeometryField(null=True, blank=True)
     slug = models.CharField(max_length=255, db_index=True, null=True, unique=True)
-
-    class Regions(models.IntegerChoices):
-        PACIFIC = 1, _("Pacific Ocean")
-        CARIBBEAN = 2, _("Caribbean")
-        INDIAN = 3, _("Indian Ocean")
-        OTHER = 4, _("Other")
-
-    region = models.IntegerField(choices=Regions.choices, db_index=True, null=True)
+    region = models.ForeignKey(Region, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return self.name
@@ -1761,61 +1772,6 @@ class Island(Record):
             return self.image.large.url
         else:
             return "/media/records/placeholder.png"
-
-    @property
-    def get_completion(self):
-        try:
-            return self.meta_data["progress"]["completion"]
-        except:
-            None
-
-    @property
-    def get_counter(self):
-        try:
-            return self.meta_data["progress"]["counter"]
-        except:
-            None
-
-    @property
-    def get_document_counter(self):
-        try:
-            return self.meta_data["progress"]["document_counter"]
-        except:
-            None
-
-    @property
-    def get_country(self):
-        if not self.geometry or self.id == 15984 or self.id == 12279 or self.id == 14473:
-            # There is a bizarre bug with the Montreal, Singapore, and Samothraki boundaries, which return
-            # an autocommit error (psycopg2.InterfaceError: connection already closed) followed
-            # by a "FATAL:  the database system is in recovery mode". Not pretty
-            # For now the easiest solution is to skip this item. This should be dug into in more detail.
-            # To do so, remove the exception (locally) and try to run get_country on these files.
-            return None
-        try:
-            country = Island.objects.filter(source_id=328661, geometry__contains=self.geometry)
-            if not country:
-                # Sometimes the city boundaries are more exact than the national boundaries, and they
-                # are at the edge of the national boundaries - making them technically not be fully contained
-                # if one of the borders is just outside of the national boundaries
-                # (note that this is not really outside the country's borders, but merely a difference in GIS accuracy)
-                # In that case we try again by just taking the centroid of the city and checking in what country they are
-                # This might be troublesome for a city with a very odd shape but I doubt that we have this problem in real life
-                country = Island.objects.filter(source_id=328661, geometry__contains=self.geometry.centroid)
-            return country[0]
-        except:
-            return None
-
-    # Once the country has been set, we can call this by simply
-    # retrieving the meta_data information. We should normally use this field as not
-    # to incur an additional db query
-    # The field is automatically set for all activated spaces upon saving
-    @property
-    def get_country_name(self):
-            try:
-                return self.meta_data["country_name"]
-            except:
-                return None
 
     def get_absolute_url(self):
         return f"/islands/{self.slug}/"

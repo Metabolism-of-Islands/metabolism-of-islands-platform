@@ -110,7 +110,7 @@
             <p class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Associated Islands</p>
             <div class="flex flex-wrap gap-1.5">
               {% for island in item.spaces.all %}
-                <a href="/library/browse/?islands={{ island.id }}" class="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-brand/10 hover:text-brand transition-colors !no-underline">{{ island.name }}</a>
+                <a href="{{ island.get_absolute_url }}" class="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-brand/10 hover:text-brand transition-colors !no-underline">{{ island.name }}</a>
               {% endfor %}
             </div>
           </div>

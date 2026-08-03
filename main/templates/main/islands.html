@@ -18,8 +18,8 @@
 <style>
   #map {
     height: 600px;
-    width: 100%;
   }
+  #islands a:hover h1{text-decoration:underline}
 
   .map-popup-thumb {
     width: 120px;
@@ -47,11 +47,66 @@
 
 {% block content %}
 
+  {% if region_selected %}
+    <a href="/islands/" class="inline-flex items-center text-xs font-semibold uppercase tracking-wider text-slate-400 hover:text-brand !no-underline transition-colors">
+      <i class="fa fa-arrow-left mr-2"></i> View global map
+    </a>
+  {% endif %}
+
   <h1>
-    {% if region %}{{ region }}{% else %}Islands{% endif %}
+    {% if region_selected %}{{ region_selected }}{% else %}Islands{% endif %}
   </h1>
 
-<div id="map"></div>
+  <div class="w-full h-full rounded-xl overflow-hidden bg-slate-50 relative z-0">
+    <div id="map" class="w-full h-full flex items-center justify-center text-sm text-slate-400">
+      <i class="fa fa-map-o mr-2"></i>
+    </div>
+  </div>
+
+  {% for region, islands in regions %} 
+
+  <h2 class="font-bold text-slate-400 border-b pb-2 mb-4 mt-8 flex justify-between">
+    <span>
+    {{ region }}
+    </span>
+    {% if not region_selected %}
+      <a class="no-underline text-lg" href="/islands/regions/{{ region|slugify }}"><i class="fa fa-map"></i> View map</a>
+    {% endif %}
+  </h2>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="islands">
+    
+    {% for each in islands %}
+      <a href="{{ each.get_absolute_url }}" class="no-underline">
+        <div class="border border-slate-200 bg-white rounded-2xl overflow-hidden flex flex-col justify-between">
+          <div>
+            {% if each.photo.image.thumbnail.url %}
+              <img src="{{ each.photo.image.thumbnail.url }}" alt="{{ each.name }}" class="w-full h-40 object-cover border-b border-slate-100">
+            {% else %}
+              <div class="w-full h-40 bg-slate-100 flex items-center justify-center text-slate-300 border-b border-slate-100">
+                <i class="fa fa-picture-o text-2xl"></i>
+              </div>
+            {% endif %}
+            
+            <div class="p-5 space-y-1">
+              <h1 class="text-xl font-bold text-slate-900 tracking-tight !mb-1">{{ each.name }}</h1>
+              <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                {{ each.region }}
+              </p>
+            </div>
+          </div>
+          
+          <div class="p-5 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center text-xs">
+            <span class="text-slate-500 font-medium">Repository:</span>
+            <span class="font-mono font-bold text-slate-900">{{ each.item_count }} items</span>
+          </div>
+        </div>
+      </a>
+    {% endfor %}
+
+  </div>
+
+{% endfor %}
 
 
 {% endblock %}
@@ -81,7 +136,7 @@
         lng = {{ each.geometry.centroid.x }};
       {% endif %}
 
-      {% if region == "Pacific Ocean" %}
+      {% if region_selected.name == "Pacific Ocean" %}
         // We don't want the Pacific Ocean split in two halves on the map; this fixes that
         if (lng < 0) {
           lng += 360;
@@ -95,7 +150,7 @@
         <div>
           <strong>{{ each|escapejs }}</strong>
           {% if each.photo %}
-            <img src="{{ each.photo.url }}" class="map-popup-thumb" alt="{{ each.title|escapejs }}">
+            <img src="/media/{{ each.photo.image.thumbnail }}" class="map-popup-thumb" alt="{{ each.title|escapejs }}">
           {% endif %}
           <a href="{{ each.get_absolute_url }}" class="map-popup-btn">Read more</a>
         </div>

@@ -206,6 +206,18 @@ def index(request):
                         pass
 
             messages.success(request, "Unused tags are deleted")
+        elif migrate == "8":
+            Region.objects.create(name="Pacific Ocean", position=1)
+            Region.objects.create(name="Caribbean", position=2)
+            Region.objects.create(name="Indian Ocean", position=3)
+            Region.objects.create(name="Other", position=4)
+            for each in Island.objects.all():
+                region = each.old_region
+                each.region_id = region
+                each.save()
+            
+            messages.success(request, "Regions are now cleaned up")
+
 
 
     # END OF MIGRATION CODE
@@ -216,15 +228,24 @@ def index(request):
     }
     return render(request, "main/index.html", context)
 
-def islands(request):
+def islands(request, region=None):
     islands = Island.objects.all()
+
+    if region:
+
+        # Horrific hack while we don't have a slug yet, but no real impact performance with 4 regions...
+        for each in Region.objects.all():
+            if slugify(each.name) == region:
+                region = each
+
+        islands = islands.filter(region=region)
 
     # 1. Base filtered items queryset excluding images for total counts
     items = LibraryItem.objects.exclude(type_id=38)
 
     # 2. Annotate islands via the parent 'record' relationship 
     # and filter down to the child 'libraryitem' subclass
-    qs = Island.objects.annotate(
+    qs = islands.annotate(
         item_count=Count(
             "record__libraryitem", 
             filter=~Q(record__libraryitem__type_id=38)
@@ -234,12 +255,13 @@ def islands(request):
     # 3. Group the annotated queryset by region
     regions = [
         (region, list(islands))
-        for region, islands in groupby(qs, key=lambda p: p.get_region_display())
+        for region, islands in groupby(qs, key=lambda p: p.region.name)
     ]
     context = {
         "islands": islands,
         "menu": "islands",
         "regions": regions,
+        "region_selected": region,
     }
     return render(request, "main/islands.html", context)
 
@@ -282,8 +304,8 @@ def island(request, slug):
         "tags": tags,
         "menu": "islands",
         "geojson": json.loads(info.geometry.geojson) if info.geometry else None,
-        "bg_image": info.photo.image.large.url,
-        "second_photo": second_photo,
+        #"bg_image": info.photo.image.large.url,
+        "second_photo": info,
     }
 
     return render(request, "main/island.html", context)
@@ -292,15 +314,6 @@ def regions(request):
     islands = Island.objects.all()
     context = {
         "islands": islands,
-        "menu": "islands",
-    }
-    return render(request, "main/islands.html", context)
-
-def region(request, region):
-    islands = Island.objects.filter(region=region)
-    context = {
-        "islands": islands,
-        "region": Island.Regions(region).label,
         "menu": "islands",
     }
     return render(request, "main/islands.html", context)
@@ -322,7 +335,7 @@ def library(request):
     # 3. Group the annotated queryset by region
     regions = [
         (region, list(islands))
-        for region, islands in groupby(qs, key=lambda p: p.get_region_display())
+        for region, islands in groupby(qs, key=lambda p: p.region.name)
     ]
 
     context = {

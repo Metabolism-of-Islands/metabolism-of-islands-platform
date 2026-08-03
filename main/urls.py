@@ -5,8 +5,8 @@ urlpatterns = [
     path("", views.index, name="index"),
     path("islands/<slug:slug>/", views.island, name="island"),
     path("islands/", views.islands, name="islands"),
-    path("islands/region/", views.regions, name="regions"),
-    path("islands/region/<int:region>/", views.region, name="region"),
+    path("islands/regions/", views.regions, name="regions"),
+    path("islands/regions/<slug:region>/", views.islands, name="region"),
 
     path("about/", views.about_overview, name="about_overview"),
     path("about/<slug:slug>/", views.about, name="about"),
