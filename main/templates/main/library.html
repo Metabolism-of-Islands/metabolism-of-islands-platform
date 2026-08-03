@@ -1,5 +1,9 @@
 {% extends "main/_base.html" %}
 
+{% block title %}
+  Library
+{% endblock %}
+
 {% block content %}
 
 <div class="max-w-6xl mx-auto py-6 space-y-8">
@@ -20,7 +24,6 @@
       <i class="fa fa-search text-base"></i>
     </div>
     <input type="text" id="search" style="padding-left:40px" autocomplete="off" placeholder="Search by publication title" class="w-full rounded-xl bg-white border border-slate-200 py-3.5 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all relative z-0">
-    
     <div id="search-results-dropdown" class="hidden absolute left-0 right-0 mt-1 max-h-80 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg z-50 divide-y divide-slate-100"></div>
   </div>
 

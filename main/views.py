@@ -218,8 +218,6 @@ def index(request):
             
             messages.success(request, "Regions are now cleaned up")
 
-
-
     # END OF MIGRATION CODE
 
     islands = Island.objects.all()
@@ -529,6 +527,42 @@ def about(request, slug):
         "menu": "about",
     }
     return render(request, "main/about.html", context)
+
+def news_overview(request):
+    news = News.objects.all()
+    context = {
+        "menu": "news",
+        "news": news,
+        "years": news.dates("date", "year", order="DESC"),
+    }
+    return render(request, "main/news.overview.html", context)
+
+def news(request, slug):
+    info = get_object_or_404(News, slug=slug)
+    context = {
+        "info": info,
+        "menu": "news",
+        "latest": News.objects.all()[:5],
+    }
+    return render(request, "main/news.html", context)
+
+def events(request):
+    events = Event.objects.all()
+    context = {
+        "menu": "events",
+        "events": events,
+        "years": events.dates("start_date", "year", order="DESC"),
+    }
+    return render(request, "main/events.html", context)
+
+def event(request, slug):
+    info = get_object_or_404(Event, slug=slug)
+    context = {
+        "info": info,
+        "menu": "news",
+        "latest": Event.objects.all()[:5],
+    }
+    return render(request, "main/event.html", context)
 
 def research(request, slug):
     project_type = "thesis" if slug == "theses" else "research"

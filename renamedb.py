@@ -16,6 +16,7 @@ new = [
     "main_document",
     "main_emailquota",
     "main_libraryitem",
+    "main_event",
     "main_libraryitem_saved_by_users",
     "main_libraryitemtype",
     "main_license",

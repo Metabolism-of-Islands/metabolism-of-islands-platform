@@ -11,6 +11,12 @@ urlpatterns = [
     path("about/", views.about_overview, name="about_overview"),
     path("about/<slug:slug>/", views.about, name="about"),
 
+    path("news/", views.news_overview, name="news"),
+    path("news/<slug:slug>/", views.news, name="news"),
+
+    path("events/", views.events, name="events"),
+    path("events/<slug:slug>/", views.event, name="event"),
+
     path("research/", views.research, {"slug": "projects"}, name="research"),
     path("research/<slug:slug>/", views.research, name="research"),
 

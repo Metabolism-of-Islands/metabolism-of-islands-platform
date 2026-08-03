@@ -12,13 +12,15 @@
   <link href="{% static "css/styles.css" %}?id=1111-0108" rel="stylesheet">
   <link class="favicon" rel="shortcut icon" sizes="126x126" href="/media/favicon.jpg">
 
-  <meta property="og:title" content="Metabolism of Islands" />
-  <meta property="og:description" content="MOI info" />
-  <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}/media/favicon.jpg" />
-  <meta property="og:image:alt" content="Metabolism of Islands logo" />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}" />
-  <meta property="og:site_name" content="Metabolism of Islands" />
+  {% if load_og_tags %}
+    <meta property="og:title" content="Metabolism of Islands" />
+    <meta property="og:description" content="MOI info" />
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}/media/favicon.jpg" />
+    <meta property="og:image:alt" content="Metabolism of Islands logo" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}" />
+    <meta property="og:site_name" content="Metabolism of Islands" />
+  {% endif %}
 
   <style type="text/css">
   .mainnav img{height:5em}
@@ -107,11 +109,11 @@
           </li>
 
           <li>
-            <a href="#" class="block py-6 hover:text-brand">News & blogs</a>
+            <a href="/news/" class="block hover:text-brand {% if menu == "news" %}active{% endif %}">News</a>
           </li>
 
           <li>
-            <a href="#" class="block py-6 hover:text-brand">Events</a>
+            <a href="/events/" class="block hover:text-brand {% if menu == "events" %}active{% endif %}">Events</a>
           </li>
         </ul>
       </div>

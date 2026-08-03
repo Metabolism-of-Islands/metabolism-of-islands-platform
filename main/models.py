@@ -452,21 +452,8 @@ class News(Record):
     slug = models.SlugField(max_length=255)
     include_in_timeline = models.BooleanField(default=False)
 
-    TYPE_CHOICES = (
-        ("news", "News"),
-        ("blog", "Blog"),
-    )
-    article_type = models.CharField(max_length=10, choices=TYPE_CHOICES, default="news")
-
     def get_absolute_url(self):
-        if self.projects.count() > 0:
-            p = self.projects.all()[0]
-            if p.has_subsite:
-                return p.get_website() + "news/" + self.slug + "/"
-            else:
-                return "https://metabolismofislands.org/news/" + self.slug + "/"
-        else:
-            return "https://metabolismofislands.org/news/" + self.slug + "/"
+        return "/news/" + self.slug + "/"
 
     def authors(self):
         return People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=4)
@@ -1986,6 +1973,60 @@ class PublicProject(Record):
     objects_unfiltered = models.Manager()
     objects_include_private = PrivateRecordManager()
     objects_include_deleted = PublicRecordManager()
+
+class Event(Record):
+    EVENT_TYPE = [
+        ("conference", "Conference"),
+        ("hackathon", "Hackathon"),
+        ("workshop", "Workshop"),
+        ("seminar", "Seminar"),
+        ("summerschool", "Summer School"),
+        ("other", "Other"),
+        ("training_outreach", "Training and Outreach"),
+    ]
+    type = models.CharField(max_length=20, blank=True, null=True, choices=EVENT_TYPE)
+    url = models.URLField(max_length=255, null=True, blank=True)
+    location = models.CharField(max_length=255, null=True, blank=True)
+    start_date = models.DateTimeField(null=True, blank=True)
+    end_date = models.DateTimeField(null=True, blank=True)
+    slug = models.SlugField(max_length=255)
+
+    class Meta:
+        ordering = ["-start_date", "-id"]
+
+    def get_absolute_url(self):
+        if self.projects.count() > 0:
+            return self.projects.all()[0].get_website() + "events/" + str(self.id) + "/" + self.slug + "/"
+        else:
+            return reverse("core:event", args=[self.id, self.slug])
+
+    def get_dates(self):
+        return get_date_range(self.start_date, self.end_date)
+
+    def save(self, *args, **kwargs):
+        self.slug = slugify(unidecode(self.name))
+        super().save(*args, **kwargs)
+
+    def get_status(self):
+        try:
+            today = timezone.now()
+            if self.end_date < today:
+                return "finished"
+            elif self.start_date <= today and self.end_date >= today:
+                return "active"
+            else:
+                return "upcoming"
+        except:
+            return "upcoming"
+
+    objects = PublicActiveRecordManager()
+    objects_unfiltered = models.Manager()
+    objects_include_private = PrivateRecordManager()
+    objects_include_deleted = PublicRecordManager()
+
+################################
+# OPTAMOS related classes below
+################################
 
 class OptamosProject(Record):
     uid = models.AutoField(primary_key=True)
