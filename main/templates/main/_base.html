@@ -1,6 +1,6 @@
 {% load static %}
 <!doctype html>
-<html lang="en" class="h-full bg-gray-100">
+<html lang="en" class="h-full" style="background:#ddd8e1">
 
 <head>
   <meta charset="utf-8">
@@ -46,10 +46,12 @@
 
         <ul class="hidden items-center text-sm font-medium text-gray-700 md:flex md:space-x-4 lg:space-x-6">
           <li class="group relative py-6">
-            <button class="flex items-center gap-1 hover:text-brand focus:outline-none">
+            <a class="flex items-center gap-1 hover:text-brand focus:outline-none {% if menu == "about" %}active{% endif %}" href="/about/">
               About us
-              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
-            </button>
+              <svg class="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </a>
             <div class="absolute left-0 top-full z-50 mt-0 hidden w-48 rounded-md bg-white py-2 shadow-lg group-hover:block">
               <a href="/about/purpose/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Purpose</a>
               <a href="/about/what-is-island-metabolism/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">What is island metabolism?</a>
@@ -61,10 +63,12 @@
           </li>
 
           <li class="group relative py-6">
-            <button class="flex items-center gap-1 hover:text-brand focus:outline-none">
+            <a class="flex items-center gap-1 hover:text-brand focus:outline-none {% if menu == "research" %}active{% endif %}" href="/research/">
               Research
-              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
-            </button>
+              <svg class="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </a>
             <div class="absolute left-0 top-full z-50 mt-0 hidden w-48 rounded-md bg-white py-2 shadow-lg group-hover:block">
               <a href="/research/theses/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Theses</a>
               <a href="/research/projects/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Research projects</a>
@@ -72,19 +76,12 @@
           </li>
 
           <li class="group static py-8">
-            <button class="flex items-center gap-1 hover:text-brand focus:outline-none">
+            <a class="flex items-center gap-1 hover:text-brand focus:outline-none {% if menu == "islands" %}active{% endif %}" href="/islands/">
               Islands
-
-
-<svg class="h-4 w-4 fill-current transition-transform duration-200 group-hover:translate-y-0.5" viewBox="0 0 24 24">
-  <path d="M12 15l-5-5h10z" />
-</svg>
-
-
-<svg class="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-</svg>
-            </button>
+              <svg class="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </a>
             <div class="absolute left-0 right-0 mt-7 z-50 mt-0 hidden w-full bg-white shadow-xl group-hover:block">
               <div class="mx-auto max-w-7xl px-8 py-6">
                 <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -104,7 +101,7 @@
           </li>
 
           <li class="group relative py-6">
-            <a class="flex items-center gap-1 hover:text-brand focus:outline-none" href="/library/">
+            <a class="flex items-center gap-1 hover:text-brand focus:outline-none {% if menu == "library" %}active{% endif %}" href="/library/">
               Library
             </a>
           </li>

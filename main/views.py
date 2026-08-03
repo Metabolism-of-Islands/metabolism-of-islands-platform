@@ -219,6 +219,7 @@ def islands(request):
     islands = Island.objects.all()
     context = {
         "islands": islands,
+        "menu": "islands",
     }
     return render(request, "main/islands.html", context)
 
@@ -226,6 +227,7 @@ def island(request, slug):
     info = Island.objects.get(slug=slug)
     context = {
         "info": info,
+        "menu": "islands",
     }
     return render(request, "main/island.html", context)
 
@@ -233,6 +235,7 @@ def regions(request):
     islands = Island.objects.all()
     context = {
         "islands": islands,
+        "menu": "islands",
     }
     return render(request, "main/islands.html", context)
 
@@ -241,6 +244,7 @@ def region(request, region):
     context = {
         "islands": islands,
         "region": Island.Regions(region).label,
+        "menu": "islands",
     }
     return render(request, "main/islands.html", context)
 
@@ -268,6 +272,7 @@ def library(request):
         "types": LibraryItemType.objects.exclude(pk=38).annotate(total=Count("items")).filter(total__gt=0).order_by("-total"),
         "regions": regions,
         "total": items.count(),
+        "menu": "library",
     }
     return render(request, "main/library.html", context)
 
@@ -293,8 +298,52 @@ def library_list(request, item_type=None):
     context = {
         "item_types": LibraryItemType.objects.exclude(pk=38).annotate(total=Count("items")).filter(total__gt=0).order_by("-total"),
         "tags": grouped_tags,
+        "menu": "library",
     }
     return render(request, "main/library.list.html", context)
+
+def library_item(request, id):
+    # Fetch the main item
+    item = LibraryItem.objects.select_related("type", "license").get(pk=id)
+    
+    # Extract IDs to compare against
+    island_ids = list(item.spaces.values_list("id", flat=True))
+    tag_ids = list(item.tags.values_list("id", flat=True))
+    
+    # 1. Base filter: Exclude current item and type 38
+    related_qs = LibraryItem.objects.exclude(pk=item.pk).exclude(type_id=38)
+    
+    # 2. Match at least one common island or tag
+    related_qs = related_qs.filter(
+        Q(spaces__id__in=island_ids) | Q(tags__id__in=tag_ids)
+    )
+    
+    # 3. Calculate overlap counts to handle priority ranking
+    related_items = related_qs.annotate(
+        # Primary priority: Count matching islands
+        same_islands_count=Count(
+            "spaces", 
+            filter=Q(spaces__id__in=island_ids), 
+            distinct=True
+        ),
+        # Secondary priority: Count matching tags
+        same_tags_count=Count(
+            "tags", 
+            filter=Q(tags__id__in=tag_ids), 
+            distinct=True
+        )
+    ).order_by(
+        "-same_islands_count",  # Highest island overlap first
+        "-same_tags_count",     # Tie-breaker: Highest tag overlap
+        "-year"                 # Freshness fallback
+    )[:3]                       # Limit results strictly to 3
+    
+    context = {
+        "item": item,
+        "related_items": related_items,
+        "menu": "library",
+    }
+    return render(request, "main/library.item.html", context)
 
 @csrf_exempt
 def library_ajax(request):
@@ -398,6 +447,7 @@ def about_overview(request):
     context = {
         "islands": islands,
         "region": Island.Regions(region).label,
+        "menu": "about",
     }
     return render(request, "main/islands.html", context)
 
@@ -406,6 +456,7 @@ def about(request, slug):
     info = Webpage.objects.get(slug=slug)
     context = {
         "info": info,
+        "menu": "about",
     }
     return render(request, "main/about.html", context)
 
@@ -416,6 +467,7 @@ def research(request, slug):
     context = {
         "info": info,
         "projects": PublicProject.objects.filter(project_type=project_type),
+        "menu": "research",
     }
     return render(request, "main/research.html", context)
 
