@@ -6,16 +6,15 @@
 
 
 
-<div class="flex flex-col md:flex-row min-h-screen bg-slate-100 font-sans">
+<div class="flex flex-col md:flex-row min-h-screen font-sans w-full overflow-x-hidden">
 
-  <div id="sidebar" class="w-80 h-screen bg-slate-50 border-r border-slate-200 p-6 overflow-y-auto font-sans text-slate-700 select-none">
+  <div id="sidebar" class="w-full md:w-80 md:min-w-80 md:max-w-80 flex-shrink-0 h-auto md:h-screen border-b md:border-b-0 md:border-r border-slate-200 p-6 overflow-y-auto font-sans text-slate-700 select-none">
     
     <div class="mb-8">
-      <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Filter by region</h2>
-      <div class="space-y-3">
+      <h2 class="font-semibold text-slate-400 mb-1">Region</h2>
+      <div class="space-y-2">
         {% for region, islands in REGIONS %} 
           <div class="filter-group">
-
 
             <div class="flex items-center justify-between group py-1.5 px-2 rounded-lg hover:bg-slate-100 transition-colors duration-150 max-w-full overflow-hidden">
               <label class="flex items-center space-x-3 cursor-pointer text-sm font-medium text-slate-800 flex-1 min-w-0 max-w-full">
@@ -47,7 +46,7 @@
     </div>
 
     <div class="mb-8">
-      <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Filter by document type</h2>
+      <h2 class="font-semibold text-slate-400 mb-1">Document type</h2>
       <div class="space-y-2 pl-2">
         {% for each in item_types %}
           <label class="flex items-center space-x-3 cursor-pointer text-sm font-medium text-slate-800 py-1.5 px-2 rounded-lg hover:bg-slate-100 transition-colors duration-150">
@@ -59,8 +58,8 @@
     </div>
 
     <div class="mb-8">
-      <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Filter by tag</h2>
-      <div class="space-y-3">
+      <h2 class="font-semibold text-slate-400 mb-1">Tag</h2>
+      <div class="space-y-2">
         {% for parent, children_tags in tags %} 
           <div class="filter-group">
             <div class="flex items-center justify-between group py-1.5 px-2 rounded-lg hover:bg-slate-100 transition-colors duration-150">
@@ -93,23 +92,17 @@
   </div>
 
   <!-- Main Column -->
-  <main class="flex-1 p-6 lg:p-10">
+  <main class="flex-1 min-w-0 p-6 lg:p-10 bg-slate-50">
     <div class="max-w-7xl mx-auto">
       
+      <div class="border-b border-slate-200 pb-5 mb-6 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Results</h1>
+        <span id="total-count" class="text-sm text-slate-500 font-medium hidden">
+          Found <span id="total-count-number" class="font-semibold text-slate-700">0</span> items
+        </span>
+      </div>
 
-    <div class="border-b border-slate-200 pb-5 mb-6 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
-      <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Results</h1>
-      <span id="total-count" class="text-sm text-slate-500 font-medium hidden">
-        Found <span id="total-count-number" class="font-semibold text-slate-700">0</span> items
-      </span>
-    </div>
-
-    <div id="results-container" class="w-full">
-      <p class="text-slate-500 text-sm italic">Please use the filters to search our library.</p>
-    </div>
-
-      <!-- Empty container ready for dynamic search results or cards -->
-      <div id="results-container" class="w-full">
+      <div id="results-container" class="w-full transition-opacity duration-150">
         <!-- Result cards will render here -->
       </div>
 
@@ -129,34 +122,6 @@
   </main>
 
 </div>
-
-<table class="table table-striped">
-  <thead>
-    <tr>
-      <th>Title</th>
-      <th>Title</th>
-      <th>Title</th>
-      <th>Title</th>
-    </tr>
-  </thead>
-  <tbody>
-  {% for each in items %}
-    <tr>
-      <td><a href="{{ each.get_absolute_url }}">{{ each }}</a></td>
-      <td>
-        {% for space in each.spaces.all %}
-          <span class="badge">{{ space }}</span>
-        {% endfor %}
-      </td>
-      <td>
-        {% for tag in each.tags.all %}
-          <span class="badge">{{ tag }}</span>
-        {% endfor %}
-      </td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
 
 {% endblock %}
 
@@ -220,10 +185,16 @@ $(document).ready(function() {
   // Track active pagination state globally within ready context
   var currentPage = 1;
 
+
   // 4. AJAX Filter & Pagination Submission Function
   function fetchFilteredItems(pageNumber) {
     currentPage = pageNumber || 1;
-    var $mainContent = $("main");
+    
+    // Target the specific container for visual feedback
+    var $container = $("#results-container");
+    var $paginationBar = $("#pagination-container");
+    var $totalCountWrapper = $("#total-count");
+    var $totalCountNumber = $("#total-count-number");
     
     var selectedIslands = [];
     var selectedItemTypes = [];
@@ -245,21 +216,20 @@ $(document).ready(function() {
 
     // Stop execution early if no checkboxes are active across the sidebar
     if (selectedIslands.length === 0 && selectedItemTypes.length === 0 && selectedTags.length === 0) {
-      $("#results-container").html(`<p class="text-slate-500 text-sm italic">Please use the filters to search our library.</p>`);
-      $("#pagination-container").addClass("hidden");
-      $("#total-count").addClass("hidden");
+      // Clear container and ensure visibility
+      $container.html(`<p class="text-slate-500 text-sm italic">Please use the filters to search our library.</p>`).removeClass("opacity-50 pointer-events-none");
+      $paginationBar.addClass("hidden");
+      $totalCountWrapper.addClass("hidden");
       return; // Break the cycle before running the $.ajax call
     }
 
-    $mainContent.addClass("opacity-50 pointer-events-none transition-opacity duration-150");
+    // Fade the container and disable interactions while loading
+    $container.addClass("opacity-50 pointer-events-none");
 
     $.ajax({
       url: "/library/ajax/",
       type: "POST",
       dataType: "json",
-      headers: {
-        "X-CSRFToken": document.cookie.split("; ").find(row => row.startsWith("csrftoken="))?.split("=")[1]
-      },
       data: {
         "islands[]": selectedIslands,
         "item_types[]": selectedItemTypes,
@@ -267,11 +237,6 @@ $(document).ready(function() {
         "page": currentPage
       },
       success: function(response) {
-        var $container = $("#results-container");
-        var $paginationBar = $("#pagination-container");
-        var $totalCountWrapper = $("#total-count");
-        var $totalCountNumber = $("#total-count-number");
-        
         $container.empty();
 
         if (response.total_count !== undefined) {
@@ -283,13 +248,25 @@ $(document).ready(function() {
 
         if (response.results && response.results.length > 0) {
           $.each(response.results, function(index, item) {
-            // Wrap the card block inside a block-level hyperlink pointing to the absolute url string
+            var authorText = item.author && item.author !== "None" ? ` | ${item.author}` : "";
+            var islands = item.islands || [];
+            var islandsHtml = islands.length > 0 ? ` • ${islands.join(' • ')}` : "";
             var htmlCard = `
-              <a href="${item.absolute_url}" class="block group/card max-w-full mb-4">
-                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 group-hover/card:border-blue-400 group-hover/card:shadow-md transition-all duration-150 overflow-hidden">
-                  <h3 class="text-lg font-semibold text-slate-900 group-hover/card:text-blue-600 transition-colors">${item.name}</h3>
-                  <p class="text-sm text-slate-500 mt-1">Type: ${item.type} | Year: ${item.year || "N/A"}</p>
-                  <p class="text-slate-600 mt-2 text-sm">${item.description || ""}</p>
+              <a href="${item.absolute_url}" class="!no-underline block group/card max-w-full mb-4">
+                <div class="bg-white p-6 rounded-lg border border-slate-200 group-hover/card:border-brand group-hover/card:shadow-md transition-all duration-150 overflow-hidden">
+                  
+                  <div class="flex justify-between items-start gap-4">
+                    <h3 class="text-lg font-semibold text-slate-900 group-hover/card:text-brand transition-colors">${item.name}</h3>
+                    ${item.year ? `<span class="text-[10px] uppercase tracking-wider font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded mt-1 whitespace-nowrap">${item.year}</span>` : ''}
+                  </div>
+                  
+                  <div class="text-sm text-slate-500 mt-1 truncate">
+                    <span>${item.type}${authorText}</span>
+                    <span class="text-slate-400 font-medium">${islandsHtml}</span>
+                  </div>
+                  
+                  <p class="text-slate-600 font-normal mt-2 text-sm overflow-hidden break-all">${item.description || ""}</p>
+                  
                 </div>
               </a>
             `;
@@ -307,12 +284,25 @@ $(document).ready(function() {
         } else {
           $paginationBar.addClass("hidden");
         }
+
+        // AUTO-SCROLL FIX: Smoothly scrolls the window to the very top
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth"
+        });
+
       },
       error: function(xhr, status, error) {
         console.error("Library filtering failed: ", error);
+        
+        // Render user-facing error message, hide UI blocks, and reset opacity
+        $container.empty().append(`<p class="text-red-500 text-sm font-medium">An error occurred while loading results. Please try again.</p>`);
+        $paginationBar.addClass("hidden");
+        $totalCountWrapper.addClass("hidden");
       },
       complete: function() {
-        $mainContent.removeClass("opacity-50 pointer-events-none");
+        // Bring back container to 100% opacity and restore pointer events
+        $container.removeClass("opacity-50 pointer-events-none");
       }
     });
   }

@@ -15,7 +15,7 @@ urlpatterns = [
     path("research/<slug:slug>/", views.research, name="research"),
 
     path("library/", views.library, name="library"),
-    path("library/browse/<int:item_type>/", views.library_list, name="library_list"),
+    path("library/browse/", views.library_list, name="library_list"),
     path("library/ajax/", views.library_ajax, name="library_ajax"),
 
     path("controlpanel/", views.controlpanel, name="controlpanel"),

@@ -6,7 +6,7 @@
 
 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-4">
   {% for each in types %}
-    <a href="/library/browse/{{ each.id }}/" class="relative !no-underline block p-4 bg-white rounded-lg shadow-sm border-t-4 border-emerald-500 hover:scale-[1.02] transition transform duration-200">
+    <a href="/library/browse/?item_types={{ each.id }}" class="relative !no-underline block p-4 bg-white rounded-lg shadow-sm border-t-4 border-emerald-500 hover:scale-[1.02] transition transform duration-200">
       <div class="text-emerald-600 flex justify-between">
         <div class="text-lg font-bold text-slate-900">
           {{ each }}

@@ -1,10 +1,11 @@
-from django.shortcuts import render
 from django.contrib import messages
-from main.models import *
-from django.db.models import Count #, Q, Subquery, OuterRef, CharField, Avg
-from itertools import groupby
-from django.http import JsonResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db.models import Count #, Q, Subquery, OuterRef, CharField, Avg
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
+from itertools import groupby
+from main.models import *
 
 def index(request):
 
@@ -251,9 +252,6 @@ def library(request):
 
 def library_list(request, item_type=None):
 
-    if item_type:
-        items = LibraryItem.objects.filter(type=item_type)
-
     tags = (
         Tag.objects
            .annotate(record_count=Count("record"))
@@ -272,13 +270,12 @@ def library_list(request, item_type=None):
         grouped_tags.append((parent_name, group_list))
 
     context = {
-        "items": items,
-        "item_types": LibraryItemType.objects.all().annotate(total=Count("items")).filter(total__gt=0).order_by("-total"),
+        "item_types": LibraryItemType.objects.exclude(pk=38).annotate(total=Count("items")).filter(total__gt=0).order_by("-total"),
         "tags": grouped_tags,
     }
     return render(request, "main/library.list.html", context)
 
-
+@csrf_exempt
 def library_ajax(request):
     island_ids = request.POST.getlist("islands[]")
     item_type_ids = request.POST.getlist("item_types[]")
@@ -295,7 +292,7 @@ def library_ajax(request):
             "has_previous": False
         })
 
-    items = LibraryItem.objects.all()
+    items = LibraryItem.objects.exclude(type_id=38)
 
     if island_ids:
         items = items.filter(spaces__id__in=island_ids)
@@ -306,7 +303,7 @@ def library_ajax(request):
     if tag_ids:
         items = items.filter(tags__id__in=tag_ids)
 
-    items = items.distinct().select_related("type")
+    items = items.distinct().select_related("type").prefetch_related("spaces")
     total_count = items.count()
 
     paginator = Paginator(items, 25)
@@ -318,16 +315,22 @@ def library_ajax(request):
     except EmptyPage:
         page_obj = paginator.page(paginator.num_pages)
 
+    def truncate(text):
+        if len(text) <= 300:
+            return text
+        return text[:300].rstrip() + "..."
+
     results_list = []
     for item in page_obj:
         results_list.append({
             "id": item.id,
             "name": item.name,
-            "description": item.description,
+            "description": truncate(item.description) if item.description else None,
             "type": item.type.name if item.type else None,
-            "year": item.year,
-            "author_list": item.author_list,
-            "absolute_url": item.get_absolute_url()
+            "year": item.year if item.year else "",
+            "author": item.get_author_citation(),
+            "absolute_url": item.get_absolute_url(),
+            "islands": [space.name for space in item.spaces.all()],
         })
 
     return JsonResponse({
@@ -336,7 +339,7 @@ def library_ajax(request):
         "current_page": page_obj.number,
         "total_pages": paginator.num_pages,
         "has_next": page_obj.has_next(),
-        "has_previous": page_obj.has_previous()
+        "has_previous": page_obj.has_previous(),
     })
 
 def about_overview(request):
