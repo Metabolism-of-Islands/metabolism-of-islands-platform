@@ -2,22 +2,71 @@
 
 {% block content %}
 
-<h1>{% block title %}Library{% endblock %}</h1>
 
-<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-4">
-  {% for each in types %}
-    <a href="/library/browse/?item_types={{ each.id }}" class="relative !no-underline block p-4 bg-white rounded-lg shadow-sm border-t-4 border-emerald-500 hover:scale-[1.02] transition transform duration-200">
-      <div class="text-emerald-600 flex justify-between">
-        <div class="text-lg font-bold text-slate-900">
-          {{ each }}
+
+<div class="max-w-6xl mx-auto py-6 space-y-8">
+  
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-200 pb-4">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900">Metabolism of Island Library</h1>
+      <p class="text-xs text-slate-500 mt-0.5">The largest island metabolism data and information repository.</p>
+    </div>
+    <div class="inline-flex items-center gap-3 bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-1.5 self-start sm:self-auto">
+      <span class="text-xs text-slate-400 font-medium tracking-wide">Library size:</span>
+      <span class="text-sm font-mono font-bold text-emerald-400">{{ total }} documents</span>
+    </div>
+  </div>
+
+  <div class="relative w-full">
+    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+      <i class="fa fa-search text-base"></i>
+    </div>
+    <input type="text" id="search" style="padding-left:40px" placeholder="Search by publication title" class="w-full rounded-xl bg-white border border-slate-200 py-3.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
+  </div>
+
+  <div class="space-y-4">
+    <h2 class="text-xs font-bold uppercase text-slate-400 border-b pb-2">Browse by island</h2>
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {% for region, islands in regions %} 
+      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col">
+        <div class="bg-slate-50 px-4 py-2.5 border-b border-slate-200">
+          <h3 class="text-xs font-bold tracking-wider text-slate-700 uppercase">{{ region }}</h3>
         </div>
-        <i class="fa fa-{{ each.icon }} text-lg"></i>
+        <div class="p-4 flex-1">
+          <ul class="space-y-2 text-sm">
+            {% for each in islands %}
+              <li>
+                <a href="/library/browse/?islands={{ each.id }}" class="flex justify-between items-center text-slate-600 hover:text-brand !no-underline group">
+                  <span class="truncate pr-2">{{ each }}</span>
+                  <span class="text-xs font-mono text-slate-400 group-hover:text-brand">({{ each.item_count }})</span>
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
       </div>
-      <div class="text-xs text-slate-400">
-        <strong>{{ each.total }}</strong> records
-      </div>
-    </a>
-  {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="space-y-4">
+    <h2 class="text-xs font-bold uppercase text-slate-400 border-b pb-2">Browse by document type</h2>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      {% for each in types %}
+        <a href="/library/browse/?item_types={{ each.id }}" class="relative !no-underline block p-4 bg-white rounded-xl border border-slate-200 hover:border-brand transition-all duration-150 group">
+          <div class="flex justify-between items-start mb-2">
+            <div class="text-sm font-bold text-slate-900 group-hover:text-brand transition-colors">{{ each }}</div>
+            <i class="fa fa-{{ each.icon }} text-slate-400 group-hover:text-brand transition-colors text-sm"></i>
+          </div>
+          <div class="text-xs text-slate-500 font-medium">
+            {{ each.total }} records
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
 </div>
+
+
 
 {% endblock %}

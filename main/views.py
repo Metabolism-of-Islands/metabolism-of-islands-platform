@@ -245,8 +245,29 @@ def region(request, region):
     return render(request, "main/islands.html", context)
 
 def library(request):
+
+    # 1. Base filtered items queryset excluding images for total counts
+    items = LibraryItem.objects.exclude(type_id=38)
+
+    # 2. Annotate islands via the parent 'record' relationship 
+    # and filter down to the child 'libraryitem' subclass
+    qs = Island.objects.annotate(
+        item_count=Count(
+            "record__libraryitem", 
+            filter=~Q(record__libraryitem__type_id=38)
+        )
+    ).order_by("region", "name")
+
+    # 3. Group the annotated queryset by region
+    regions = [
+        (region, list(islands))
+        for region, islands in groupby(qs, key=lambda p: p.get_region_display())
+    ]
+
     context = {
-        "types": LibraryItemType.objects.all().annotate(total=Count("items")).filter(total__gt=0).order_by("-total"),
+        "types": LibraryItemType.objects.exclude(pk=38).annotate(total=Count("items")).filter(total__gt=0).order_by("-total"),
+        "regions": regions,
+        "total": items.count(),
     }
     return render(request, "main/library.html", context)
 
