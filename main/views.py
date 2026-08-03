@@ -1,11 +1,12 @@
+from main.models import *
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Count #, Q, Subquery, OuterRef, CharField, Avg
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import csrf_exempt
 from itertools import groupby
-from main.models import *
+import json
 
 def index(request):
 
@@ -217,18 +218,74 @@ def index(request):
 
 def islands(request):
     islands = Island.objects.all()
+
+    # 1. Base filtered items queryset excluding images for total counts
+    items = LibraryItem.objects.exclude(type_id=38)
+
+    # 2. Annotate islands via the parent 'record' relationship 
+    # and filter down to the child 'libraryitem' subclass
+    qs = Island.objects.annotate(
+        item_count=Count(
+            "record__libraryitem", 
+            filter=~Q(record__libraryitem__type_id=38)
+        )
+    ).order_by("region", "name")
+
+    # 3. Group the annotated queryset by region
+    regions = [
+        (region, list(islands))
+        for region, islands in groupby(qs, key=lambda p: p.get_region_display())
+    ]
     context = {
         "islands": islands,
         "menu": "islands",
+        "regions": regions,
     }
     return render(request, "main/islands.html", context)
 
 def island(request, slug):
-    info = Island.objects.get(slug=slug)
+    info = get_object_or_404(Island, slug=slug)
+    
+    # Get all publication library items associated with this specific island
+    items = LibraryItem.objects.filter(
+        spaces=info
+    ).exclude(
+        type_id=38
+    ).select_related("type").prefetch_related("tags").order_by("-year", "name")
+    
+    # Extract item IDs to limit sidebar counts to this specific island context
+    item_ids = list(items.values_list("id", flat=True))
+    
+    # Aggregate only the Document Types present in this island's collection
+    doc_types = LibraryItemType.objects.filter(
+        items__id__in=item_ids
+    ).annotate(
+        island_total=Count("items", filter=Q(items__id__in=item_ids))
+    ).order_by("-island_total")
+    
+    # Aggregate only the Tags present in this island's collection
+    tags = Tag.objects.filter(
+        record__libraryitem__id__in=item_ids
+    ).annotate(
+        island_total=Count("record__libraryitem", filter=Q(record__libraryitem__id__in=item_ids))
+    ).order_by("-island_total")
+
+    try:
+        second_photo = Photo.objects.filter(spaces=info).order_by("position")[1]
+    except:
+        second_photo = None
+
     context = {
         "info": info,
+        "items": items,
+        "doc_types": doc_types,
+        "tags": tags,
         "menu": "islands",
+        "geojson": json.loads(info.geometry.geojson) if info.geometry else None,
+        "bg_image": info.photo.image.large.url,
+        "second_photo": second_photo,
     }
+
     return render(request, "main/island.html", context)
 
 def regions(request):

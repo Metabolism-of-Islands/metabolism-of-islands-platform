@@ -5,44 +5,45 @@
 }
 
 /* Base HTML Styles */
-main a {
-  @apply text-black text-cyan-800 underline font-bold hover:text-cyan-700 hover:no-underline;
+@layer base {
+  main a {
+    @apply text-black text-cyan-800 underline font-bold hover:text-cyan-700 hover:no-underline;
+  }
+  h1 {
+    @apply text-3xl font-bold mb-6;
+  }
+  h2 {
+    @apply text-2xl font-bold mb-4;
+  }
+  h3 {
+    @apply text-xl font-bold mb-2;
+  }
+  h4 {
+    @apply font-bold mb-2;
+  }
+  main p {
+    @apply mb-2;
+  }
+  main input:not([type="radio"]):not([type="checkbox"]) {
+    @apply w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white;
+  }
+  main select {
+    @apply w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50;
+  }
+  main textarea {
+    @apply w-full px-3 py-1.5 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white;
+  }
+  nav .active {
+    @apply border-brand border-b-3 text-brand;
+  }
+  .item.child {
+    @apply pl-4 border-l-2 border-sky-200;
+  }
+  table { @apply w-full border-collapse bg-white; }
+  table th { @apply bg-gray-100 text-left font-semibold p-3 border-b; border-color: #dedede; }
+  table td { @apply p-3 border-b; border-color: #dedede; }
+  table tbody tr:nth-child(even) { @apply bg-gray-50; }
 }
-main h1 {
-  @apply text-3xl font-bold mb-6;
-}
-main h2 {
-  @apply text-2xl font-bold mb-4;
-}
-main h3 {
-  @apply text-xl font-bold mb-2;
-}
-main h4 {
-  @apply font-bold mb-2;
-}
-main p {
-  @apply mb-2;
-}
-main input:not([type="radio"]):not([type="checkbox"]) {
-  @apply w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white;
-}
-main select {
-  @apply w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50;
-}
-main textarea {
-  @apply w-full px-3 py-1.5 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white;
-}
-nav .active {
-  @apply border-brand border-b-3 text-brand;
-}
-.item.child {
-  @apply pl-4 border-l-2 border-sky-200;
-}
-table { @apply w-full border-collapse bg-white; }
-table th { @apply bg-gray-100 text-left font-semibold p-3 border-b; border-color: #dedede; }
-table td { @apply p-3 border-b; border-color: #dedede; }
-table tbody tr:nth-child(even) { @apply bg-gray-50; }
-
 
 /* Custom Utilities */
 @utility btn-blue {

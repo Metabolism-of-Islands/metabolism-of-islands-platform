@@ -1,31 +1,301 @@
 {% extends "main/_base.html" %}
 
+{% block css %}
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet.fullscreen@3.0.0/Control.FullScreen.css"
+/>
+
+{% endblock %}
+
 {% block title %}
   {{ info }}
 {% endblock %}
 
 {% block content %}
 
-  <nav class="flex px-5 py-3 text-gray-700 border border-gray-200 rounded-lg bg-gray-50 mb-5" aria-label="Breadcrumb">
-    <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
-      <li class="inline-flex items-center">
-        <a href="/islands/" class="text-gray-700 hover:text-emerald-600 transition-colors">Islands</a>
-      </li>
-      <li>
-        <div class="flex items-center">
-          <svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://w3.org" fill="none" viewBox="0 0 6 10"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/></svg>
-          <a href="/islands/region/{{ info.region }}/" class="text-gray-700 hover:text-emerald-600 transition-colors">{{ info.get_region_display }}</a>
+<div class="max-w-7xl mx-auto space-y-10 py-4">
+  
+  <!-- Split Header Framework -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 items-stretch">
+    
+    <div class="md:col-span-1 border border-slate-200 bg-white rounded-2xl overflow-hidden flex flex-col justify-between">
+      <div>
+        {% if second_photo %}
+          <img src="{{ second_photo.image.thumbnail.url }}" alt="{{ info.name }}" class="w-full h-40 object-cover border-b border-slate-100">
+        {% else %}
+          <div class="w-full h-40 bg-slate-100 flex items-center justify-center text-slate-300 border-b border-slate-100">
+            <i class="fa fa-picture-o text-2xl"></i>
+          </div>
+        {% endif %}
+        <div class="p-5 space-y-1">
+          <h1 class="text-xl font-bold text-slate-900 tracking-tight !mb-1">{{ info.name }}</h1>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400"><a href="/islands/region/{{ info.region }}/">{{ info.get_region_display }}</a></p>
         </div>
-      </li>
-      <li aria-current="page">
-        <div class="flex items-center">
-          <svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://w3.org" fill="none" viewBox="0 0 6 10"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/></svg>
-          <span class="text-gray-400">{{ info }}</span>
+      </div>
+      <div class="p-5 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center text-xs">
+        <span class="text-slate-500 font-medium">Repository:</span>
+        <span class="font-mono font-bold text-slate-900">{{ items.count }} items</span>
+      </div>
+    </div>
+
+    <!-- Right Map Element Viewport Box -->
+    <div class="md:col-span-3 border border-slate-200 bg-white rounded-2xl p-2 relative min-h-[240px]">
+      {% if info.geometry %}
+        <!-- Map element renders here natively embedded -->
+        <div class="w-full h-full rounded-xl overflow-hidden bg-slate-50 relative z-0">
+          <div id="map" class="w-full h-full flex items-center justify-center text-sm text-slate-400">
+            <i class="fa fa-map-o mr-2"></i>
+          </div>
         </div>
-      </li>
-    </ol>
-  </nav>
+      {% else %}
+        <div class="w-full h-full rounded-xl bg-slate-50 flex flex-col items-center justify-center text-slate-400 space-y-1 text-center p-6">
+          <i class="fa fa-map-signs text-xl text-slate-300"></i>
+          <p class="text-sm font-medium">No map available for {{ info }}.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
 
-  <h1>{{ info }}</h1>
+  <!-- Content Workspace split into Filters Sidebar and Active Items List -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
+    
+    <!-- Sidebar Navigation Controls Widget Pane -->
+    <aside class="md:col-span-1 space-y-6">
+      
+      <!-- General Dynamic Controls Panel -->
+      <div id="filter-reset-panel" class="hidden border border-brand bg-brand/5 rounded-xl p-4 text-center">
+        <button id="btn-show-all" class="cursor-pointer text-xs font-bold text-brand hover:underline flex items-center justify-center gap-1.5 w-full">
+          <i class="fa fa-refresh"></i> View all items
+        </button>
+      </div>
 
+      <!-- Document Types Category Section -->
+      <div class="space-y-2">
+        <h2 class="text-sm font-bold text-slate-600 px-1">Document Types</h2>
+        <div class="space-y-1">
+          {% for doc in doc_types %}
+            <button data-filter-type="doc" data-target-id="{{ doc.id }}" class="cursor-pointer sidebar-filter-btn flex w-full items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-white hover:border-brand text-left text-sm text-slate-700 transition-all font-normal group">
+              <span class="truncate"><i class="fa fa-{{ doc.icon|default:'file-text' }} mr-2 text-slate-400 group-hover:text-brand"></i> {{ doc.name }}</span>
+              <span class="inline-flex items-center rounded-md bg-slate-50 px-2 py-0.5 text-2xs font-bold text-slate-400 ring-1 ring-inset ring-slate-500/10 group-hover:bg-brand/10 group-hover:text-brand transition-colors">{{ doc.island_total }}</span>
+            </button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Tag Taxonomy Navigation Cloud List -->
+      <div class="space-y-2">
+        <h2 class="text-xs font-bold text-slate-600 px-1">Tags</h2>
+        <div class="space-y-1">
+          {% for tag in tags %}
+            <button data-filter-type="tag" data-target-id="{{ tag.id }}" class="cursor-pointer sidebar-filter-btn flex w-full items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-white hover:border-brand text-left text-sm text-slate-700 transition-all font-normal group">
+              <span class="truncate text-slate-600 group-hover:text-brand">{{ tag.name }}</span>
+              <span class="inline-flex items-center rounded-md bg-slate-50 px-2 py-0.5 text-2xs font-bold text-slate-400 ring-1 ring-inset ring-slate-500/10 group-hover:bg-brand/10 group-hover:text-brand transition-colors">{{ tag.island_total }}</span>
+            </button>
+          {% endfor %}
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Output Directory Catalog List Deck -->
+    <section class="md:col-span-3 space-y-3">
+      <div id="island-items-catalog">
+        <h2>{{ info }} document repository</h2>
+        {% for item in items %}
+          <!-- Serialized card item mapping with targeted data identifiers to enable jQuery manipulation -->
+          <div class="island-item-card max-w-full mb-3" data-type-id="{{ item.type_id }}" data-tag-ids="{% for t in item.tags.all %}{{ t.id }}{% if not forloop.last %},{% endif %}{% endfor %}">
+            <a href="{{ item.get_absolute_url }}" class="!no-underline block">
+              <div class="bg-white p-5 rounded-xl border border-slate-200 hover:border-brand transition-all duration-150 overflow-hidden">
+                <div class="flex justify-between items-start gap-4">
+                  <h3 class="text-base font-semibold text-slate-900 hover:text-brand transition-colors leading-snug">{{ item.name }}</h3>
+                  {% if item.year %}
+                    <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded mt-0.5 whitespace-nowrap">{{ item.year }}</span>
+                  {% endif %}
+                </div>
+                
+                <div class="text-xs text-slate-400 mt-1 truncate">
+                  <span class="font-medium text-slate-500"><i class="fa fa-{{ item.type.icon|default:'file' }} mr-1"></i>{{ item.type.name }}</span>
+                  {% if item.authors %}
+                    <span class="text-slate-300 mx-1.5">|</span> <span class="italic text-slate-500">By: {{ item.authors }}</span>
+                  {% endif %}
+                </div>
+                
+                {% if item.description %}
+                  <p class="text-slate-600 font-normal mt-2.5 text-sm overflow-hidden break-all line-clamp-2 leading-relaxed">{{ item.description }}</p>
+                {% endif %}
+              </div>
+            </a>
+          </div>
+        {% empty %}
+          <div class="border border-slate-200 rounded-xl bg-white p-8 text-center text-sm italic text-slate-500">
+            No active library items cataloged for this island.
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Dynamic JS Empty Results Placeholder Banner -->
+      <div id="island-catalog-empty" class="hidden border border-slate-200 rounded-xl bg-white p-8 text-center text-sm italic text-slate-500">
+        No documents in this island repository match the selected classification filter.
+      </div>
+    
+  </div>
+</div>
+
+{% endblock %}
+
+{% block js %}
+<script>
+  $(document).ready(function() {
+    var $cards = $(".island-item-card");
+    var $filterButtons = $(".sidebar-filter-btn");
+    var $resetPanel = $("#filter-reset-panel");
+    var $label = $("#active-filter-label");
+    var $emptyBanner = $("#island-catalog-empty");
+
+    // Standard baseline reset function
+    function resetFilters() {
+      $filterButtons.removeClass("border-brand bg-brand/5 text-brand").addClass("border-slate-200 bg-white text-slate-700");
+      $cards.fadeIn();
+      $emptyBanner.addClass("hidden");
+      $resetPanel.addClass("hidden");
+    }
+
+    $filterButtons.on("click", function(e) {
+      e.preventDefault();
+      var $btn = $(this);
+      
+      // TWEAK: If the clicked button is already active, deactivate it and stop
+      if ($btn.hasClass("border-brand")) {
+        resetFilters();
+        return;
+      }
+      
+      // Update global layout visual focus states
+      $filterButtons.removeClass("border-brand bg-brand/5 text-brand").addClass("border-slate-200 bg-white text-slate-700");
+      $btn.removeClass("border-slate-200 bg-white text-slate-700").addClass("border-brand bg-brand/5 text-brand");
+
+      var filterType = $btn.data("filter-type");
+      var targetId = String($btn.data("target-id"));
+      var categoryName = $btn.find("span").text().trim();
+
+      // Show the header reset panel container
+      $label.text(categoryName);
+      $resetPanel.removeClass("hidden");
+
+      var dynamicMatchCount = 0;
+
+      // Handle item visibility based on taxonomy classifications
+      $cards.each(function() {
+        var $card = $(this);
+        if (filterType === "doc") {
+          var cardTypeId = String($card.data("type-id"));
+          if (cardTypeId === targetId) {
+            $card.fadeIn();
+            dynamicMatchCount++;
+          } else {
+            $card.hide();
+          }
+        } else if (filterType === "tag") {
+          var rawTagsStr = String($card.data("tag-ids") || "");
+          var cardTagIds = rawTagsStr ? rawTagsStr.split(",") : [];
+          if (cardTagIds.includes(targetId)) {
+            $card.fadeIn();
+            dynamicMatchCount++;
+          } else {
+            $card.hide();
+          }
+        }
+      });
+
+      // Toggle fallback messaging panel if search drops to 0 rows
+      if (dynamicMatchCount === 0) {
+        $emptyBanner.removeClass("hidden");
+      } else {
+        $emptyBanner.addClass("hidden");
+      }
+    });
+
+    // Reset workflow to re-expose full listings configuration 
+    $("#btn-show-all").on("click", function(e) {
+      e.preventDefault();
+      resetFilters();
+    });
+  });
+</script>
+
+{% if info.geometry %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.fullscreen@3.0.0/Control.FullScreen.js"></script>
+<script>
+  map = L.map("map", {
+    fullscreenControl: true,
+    fullscreenControlOptions: {
+      position: "topleft"
+    }
+  }).setView([0, 0], 2);
+
+  bounds = [];
+
+  {% if info.geometry.geom_type == "Point" %}
+    lat = {{ info.geometry.y }};
+    lng = {{ info.geometry.x }};
+    map.setView([lat, lng], 6);
+  {% else %}
+    const layer = L.geoJSON({{ geojson|safe }}, {
+      style: {
+        opacity: 0,
+        fillOpacity: 0,
+        weight: 0
+      },
+      interactive: false
+    }).addTo(map);
+
+    map.fitBounds(layer.getBounds());
+  {% endif %}
+
+  const osm = L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      attribution: "&copy; OpenStreetMap contributors",
+      referrerPolicy: "strict-origin-when-cross-origin"
+    }
+  );
+
+  const positron = L.tileLayer(
+    "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+    {
+      attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
+      referrerPolicy: "strict-origin-when-cross-origin"
+    }
+  );
+
+  const satellite = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    {
+      attribution: "Tiles © Esri",
+      referrerPolicy: "strict-origin-when-cross-origin"
+    }
+  );
+
+  osm.addTo(map);
+
+  L.control.layers(
+    {
+      "OpenStreetMap": osm,
+      "Light": positron,
+      "Satellite": satellite
+    },
+    null,
+    {
+      collapsed: false
+    }
+  ).addTo(map);
+
+</script>
+{% endif %}
 {% endblock %}

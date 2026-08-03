@@ -161,8 +161,8 @@
   });
 </script>
 
-    <div class="bg" style="background-image:url(/media/bg2.jpg)">
-      <div class="overlay pb-64">
+    <div class="bg" style="background-image:url({% if bg_image %}{{ bg_image }}{% else %}/media/bg2.jpg{% endif %})">
+      <div class="overlay {% if bg_image %}pb-128{% else %}pb-64{% endif %}">
         <header class="py-10">
           <hgroup class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {% if project %}
@@ -185,7 +185,7 @@
       </div>
     </div>
 
-    <main class="-mt-64">
+    <main class="{% if bg_imag %}-mt-128{% else %}-mt-64{% endif %}">
       <div class="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
         <div class="rounded-lg bg-white {% if not remove_padding_main_container %}px-5 py-10 sm:px-6{% endif %} shadow-sm relative">
           <div class="ml-10 mr-10">
