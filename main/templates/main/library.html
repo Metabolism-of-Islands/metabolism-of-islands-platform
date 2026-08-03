@@ -18,10 +18,12 @@
   </div>
 
   <div class="relative w-full">
-    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 z-10">
       <i class="fa fa-search text-base"></i>
     </div>
-    <input type="text" id="search" style="padding-left:40px" placeholder="Search by publication title" class="w-full rounded-xl bg-white border border-slate-200 py-3.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
+    <input type="text" id="search" style="padding-left:40px" autocomplete="off" placeholder="Search by publication title" class="w-full rounded-xl bg-white border border-slate-200 py-3.5 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all relative z-0">
+    
+    <div id="search-results-dropdown" class="hidden absolute left-0 right-0 mt-1 max-h-80 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg z-50 divide-y divide-slate-100"></div>
   </div>
 
   <div class="space-y-4">
@@ -67,6 +69,113 @@
   </div>
 </div>
 
+{% endblock %}
 
+{% block js %}
+<script type="text/javascript">
+$(document).ready(function() {
+  var $search = $("#search");
+  var $dropdown = $("#search-results-dropdown");
+  var searchTimeout = null;
 
+  $search.on("input", function() {
+    clearTimeout(searchTimeout);
+    var query = $(this).val().trim();
+
+    if (query.length < 2) {
+      $dropdown.empty().addClass("hidden");
+      return;
+    }
+
+    // Debounce to prevent server flooding
+    searchTimeout = setTimeout(function() {
+      $.ajax({
+        url: "/library/ajax/search/",
+        type: "GET",
+        data: { "q": query },
+        dataType: "json",
+        success: function(data) {
+          $dropdown.empty();
+
+          if (data.length === 0) {
+            $dropdown.append("<div class='p-4 text-xs text-slate-400 italic'>No titles found</div>").removeClass("hidden");
+            return;
+          }
+
+          $.each(data, function(index, item) {
+            var metaText = item.type;
+            if (item.year) {
+              metaText += " • " + item.year;
+            }
+
+            var $row = $("<a>", {
+              "href": item.absolute_url,
+              "class": "block p-3 text-sm text-slate-700 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none !no-underline transition-colors"
+            }).append(
+              $("<div>", { "class": "font-medium truncate text-slate-900", "text": item.name }),
+              $("<div>", { "class": "text-xs text-slate-400 mt-0.5", "text": metaText })
+            );
+
+            $dropdown.append($row);
+          });
+
+          $dropdown.removeClass("hidden");
+        }
+      });
+    }, 250);
+  });
+
+  // Handle keyboard interaction and escape conditions
+  $search.on("keydown", function(e) {
+    var $items = $dropdown.find("a");
+    if (!$items.length) return;
+
+    var $active = $dropdown.find("a.bg-slate-50");
+    var index = $items.index($active);
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      $items.removeClass("bg-slate-50");
+      var $next = $items.eq((index + 1) % $items.length);
+      $next.addClass("bg-slate-50");
+      ensureVisible($next);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      $items.removeClass("bg-slate-50");
+      var $prev = $items.eq((index - 1 + $items.length) % $items.length);
+      $prev.addClass("bg-slate-50");
+      ensureVisible($prev);
+    } else if (e.key === "Enter") {
+      if ($active.length) {
+        e.preventDefault();
+        window.location.href = $active.attr("href");
+      }
+    } else if (e.key === "Escape") {
+      $dropdown.addClass("hidden");
+    }
+  });
+
+  // Sync scroll position with key highlighted elements
+  function ensureVisible($elem) {
+    var containerTop = $dropdown.scrollTop();
+    var containerBottom = containerTop + $dropdown.height();
+    var elemTop = $elem.position().top + containerTop;
+    var elemBottom = elemTop + $elem.outerHeight();
+
+    if (elemBottom > containerBottom) {
+      $dropdown.scrollTop(elemBottom - $dropdown.height());
+    } else if (elemTop < containerTop) {
+      $dropdown.scrollTop(elemTop);
+    }
+  }
+
+  // Dismiss dropdown when clicking out of context boundaries
+  $(document).on("click", function(e) {
+    if (!$(e.target).closest(".relative").length) {
+      $dropdown.addClass("hidden");
+    }
+  });
+});
+</script>
+  
 {% endblock %}

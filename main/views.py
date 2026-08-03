@@ -363,6 +363,36 @@ def library_ajax(request):
         "has_previous": page_obj.has_previous(),
     })
 
+def library_ajax_search(request):
+    """
+    AJAX endpoint for searching LibraryItem records by name/title.
+    URL: /ajax/library/titles/
+    Expected Query Parameter: ?q=search_term
+    """
+    # Grab the 'q' parameter from the GET request, defaulting to an empty string
+    search_query = request.GET.get("q", "").strip()
+    
+    # Initialize an empty results list
+    results = []
+    
+    if search_query:
+        # Filter: Exclude type_id 38 (images) AND case-insensitively match the name string.
+        # Limits the evaluation row layer to 15 records maximum.
+        items = LibraryItem.objects.exclude(type_id=38).filter(
+            name__icontains=search_query
+        ).select_related("type")[:15]
+        
+        for item in items:
+            results.append({
+                "id": item.id,
+                "name": item.name,
+                "year": item.year if item.year else "",
+                "type": item.type.name,
+                "absolute_url": item.get_absolute_url(),
+            })
+            
+    return JsonResponse(results, safe=False)
+
 def about_overview(request):
     islands = Island.objects.filter(region=region)
     context = {

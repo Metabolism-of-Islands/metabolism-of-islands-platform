@@ -17,6 +17,7 @@ urlpatterns = [
     path("library/", views.library, name="library"),
     path("library/browse/", views.library_list, name="library_list"),
     path("library/ajax/", views.library_ajax, name="library_ajax"),
+    path("library/ajax/search/", views.library_ajax_search, name="library_ajax_search"),
 
     path("controlpanel/", views.controlpanel, name="controlpanel"),
     path("controlpanel/webpages/", views.controlpanel_webpages, name="controlpanel_webpages"),
