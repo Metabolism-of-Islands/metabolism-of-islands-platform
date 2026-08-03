@@ -26,14 +26,24 @@ urlpatterns = [
     path("library/ajax/search/", views.library_ajax_search, name="library_ajax_search"),
     path("library/<int:id>/", views.library_item, name="library_item"),
 
+    #################
+    # CONTROL PANEL #
+    #################
     path("controlpanel/", views.controlpanel, name="controlpanel"),
+
     path("controlpanel/webpages/", views.controlpanel_webpages, name="controlpanel_webpages"),
     path("controlpanel/webpages/<int:id>/", views.controlpanel_webpage, name="controlpanel_webpage"),
     path("controlpanel/webpages/create/", views.controlpanel_webpage, name="controlpanel_webpage"),
-    path("controlpanel/tags/", views.controlpanel_tags, name="controlpanel_webpages"),
+
+    path("controlpanel/tags/", views.controlpanel_tags, name="controlpanel_tags"),
     path("controlpanel/tags/<int:id>/", views.controlpanel_tag, name="controlpanel_tag"),
     path("controlpanel/tags/create/", views.controlpanel_tag, name="controlpanel_tag"),
+
     path("controlpanel/research/", views.controlpanel_research_list, name="controlpanel_research_list"),
     path("controlpanel/research/<int:id>/", views.controlpanel_research, name="controlpanel_research"),
     path("controlpanel/research/create/", views.controlpanel_research, name="controlpanel_research"),
+
+    path("controlpanel/islands/", views.controlpanel_islands, name="controlpanel_islands"),
+    path("controlpanel/islands/<int:id>/", views.controlpanel_island, name="controlpanel_island"),
+    path("controlpanel/islands/create/", views.controlpanel_island, name="controlpanel_island"),
 ]

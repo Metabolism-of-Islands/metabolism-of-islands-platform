@@ -1,0 +1,34 @@
+{% extends "main/_base.html" %}
+
+{% block content %}
+
+<h1>
+{% block title %}
+  Islands
+{% endblock %}
+</h1>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Region</th>
+      <th>Location</th>
+      <th>Photo</th>
+      <th>Created</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for each in pages %}
+    <tr>
+      <td><a href="{% url "controlpanel_island" each.id %}">{{ each }}</a></td>
+      <td>{{ each.region }}</td>
+      <td>{% if each.geometry %}<i class="fa fa-check text-green-500"></i>{% else %}<i class="fa fa-exclamation-triangle text-red-500"></i>{% endif %}</td>
+      <td>{% if each.photo.id != 1278693 %}<i class="fa fa-check text-green-500"></i>{% else %}<i class="fa fa-exclamation-triangle text-red-500"></i>{% endif %}</td>
+      <td class="whitespace-nowrap">{{ each.date_created|date:"M d, Y" }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

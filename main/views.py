@@ -5,6 +5,8 @@ from django.db.models import Count #, Q, Subquery, OuterRef, CharField, Avg
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.gis.geos import GEOSGeometry
+from django.core.serializers import serialize
 from itertools import groupby
 import json
 
@@ -580,6 +582,69 @@ def controlpanel(request):
     context = {
     }
     return render(request, "main/controlpanel/index.html", context)
+
+def controlpanel_islands(request):
+    context = {
+        "pages": Island.objects.all(),
+    }
+    return render(request, "main/controlpanel/islands.html", context)
+
+def controlpanel_island(request, id=None):
+
+    if id:
+        info = get_object_or_404(Island, pk=id)
+    else:
+        info = None
+
+    if request.method == "POST":
+        # Extract plain parameters from text form bindings
+        name = request.POST.get("name", "").strip()
+        region_id = request.POST.get("region")
+        wkt_geometry = request.POST.get("geometry")
+        
+        # Instantiate instance parameters
+        if not info:
+            info = Island()
+        
+        info.name = name
+        info.region = get_object_or_404(Region, pk=region_id) if region_id else None
+        
+        # Handle standard map input conversion to Point geometries safely
+        if wkt_geometry:
+            try:
+                info.geometry = GEOSGeometry(wkt_geometry)
+            except (ValueError, TypeError):
+                messages.error(request, "Invalid spatial coordinate data schema submitted.")
+        
+        # Save media files if newly supplied, preserving fallback paths if blank
+        if "primary_image" in request.FILES:
+            info.primary_image = request.FILES["primary_image"]
+        if "secondary_image" in request.FILES:
+            info.secondary_image = request.FILES["secondary_image"]
+            
+        info.save()
+        messages.success(request, f"Successfully saved profile for {info.name}.")
+        return redirect("/controlpanel/islands/")
+
+    # Compile a GeoJSON payload if a non-Point geometry (like a structural shapefile outline) exists
+    geojson_payload = "{}"
+    if info and info.geometry:
+        if info.geometry.geom_type != "Point":
+            geojson_payload = serialize("geojson", [info], geometry_field="geometry")
+            # Unpack feature array wrapper string to match leaflet inline initialization parameters
+            try:
+                features_list = json.loads(geojson_payload).get("features", [])
+                if features_list:
+                    geojson_payload = json.dumps(features_list[0].get("geometry", {}))
+            except json.JSONDecodeError:
+                geojson_payload = "{}"
+
+    context = {
+        "info": info,
+        "regions": Region.objects.all(),
+        "geojson": geojson_payload,
+    }
+    return render(request, "main/controlpanel/island.html", context)
 
 def controlpanel_webpages(request):
     context = {

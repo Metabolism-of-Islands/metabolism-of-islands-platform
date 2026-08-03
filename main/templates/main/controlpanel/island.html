@@ -1,0 +1,158 @@
+{% extends "main/_base.html" %}
+
+{% block css %}
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet.fullscreen@3.0.0/Control.FullScreen.css"
+/>
+
+  
+{% endblock %}
+
+{% block content %}
+
+<div class="max-w-4xl mx-auto py-6 space-y-6">
+  
+  <!-- Content Header Block -->
+  <div class="border-b border-slate-200 pb-4">
+    <h1 class="text-xl font-bold tracking-tight text-slate-900">
+      {% block title %}
+        {% if info %}Modify Island: {{ info.name }}{% else %}Register New Island{% endif %}
+      {% endblock %}
+    </h1>
+  </div>
+
+  <!-- Main System Action Form Framework -->
+  <form method="POST" enctype="multipart/form-data" class="space-y-6">
+    {% csrf_token %}
+    
+    <!-- Hidden input parameter capturing coordinates for python processing -->
+    <input type="hidden" id="geometry-wkt-input" name="geometry" value="{% if info.geometry.geom_type == 'Point' %}{{ info.geometry.wkt }}{% endif %}">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      <!-- Left Column Fields Panel -->
+      <div class="space-y-4">
+        
+        <div class="space-y-1">
+          <label for="id_name" class="block text-xs font-bold uppercase tracking-wider text-slate-500">Island Name</label>
+          <input type="text" id="id_name" name="name" value="{{ info.name|default:'' }}" required class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
+        </div>
+
+        <!-- Regional Dropdown Option Picker Selection -->
+        <div class="space-y-1">
+          <label for="id_region" class="block text-xs font-bold uppercase tracking-wider text-slate-500">Region</label>
+          <select id="id_region" name="region" required class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
+            <option value="">-- Select region --</option>
+            {% for region in regions %}
+              <option value="{{ region.id }}" {% if info.region.id == region.id %}selected{% endif %}>{{ region.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Primary Image Upload Module -->
+        <div class="space-y-1 border border-slate-200 p-4 rounded-xl bg-white space-y-3">
+          <div>
+            <span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Primary Photo</span>
+            <span class="text-2xs text-slate-400 block mt-0.5">This should be an attractive photo that is used as a thumbnail</span>
+          </div>
+          {% if info.primary_image %}
+            <div class="w-32 h-20 rounded-lg overflow-hidden border border-slate-100 bg-slate-50">
+              <img src="{{ info.primary_image.thumbnail.url }}" class="w-full h-full object-cover" alt="Primary Thumbnail Preview">
+            </div>
+          {% endif %}
+          <input type="file" name="primary_image" accept=".jpg,.jpeg,.png" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-brand file:cursor-pointer transition-all">
+        </div>
+
+        <!-- Secondary Image Upload Module -->
+        <div class="space-y-1 border border-slate-200 p-4 rounded-xl bg-white space-y-3">
+          <div>
+            <span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Landscape background photo</span>
+            <span class="text-2xs text-slate-400 block mt-0.5">An alternative landscape image used for the background</span>
+          </div>
+          {% if info.secondary_image %}
+            <div class="w-32 h-20 rounded-lg overflow-hidden border border-slate-100 bg-slate-50">
+              <img src="{{ info.secondary_image.thumbnail.url }}" class="w-full h-full object-cover" alt="Secondary Thumbnail Preview">
+            </div>
+          {% endif %}
+          <input type="file" name="secondary_image" accept=".jpg,.jpeg,.png" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-brand file:cursor-pointer transition-all">
+        </div>
+      </div>
+
+      <!-- Right Column Spatial Positioning Leaflet Map Frame Well -->
+      <div class="space-y-2 flex flex-col">
+        <span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Location</span>
+        <span class="text-2xs text-slate-400 block">Click anywhere on the map to set that as the center of the island when showing pins or displaying the map.</span>
+        
+        <div class="flex-1 min-h-[340px] border border-slate-200 bg-slate-50 rounded-xl overflow-hidden relative z-0">
+          <div id="map" class="w-full h-full"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Submission Buttons Row -->
+    <div class="border-t border-slate-200 pt-5 flex items-center justify-end gap-3">
+      <button type="submit" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-brand text-xs font-bold text-white transition-all shadow-none">Save</button>
+    </div>
+  </form>
+</div>
+
+{% endblock %}
+
+{% block js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.fullscreen@3.0.0/Control.FullScreen.js"></script>
+
+<script>
+  // Initialize baseline world configuration rules
+  var map = L.map("map", {
+    fullscreenControl: true,
+    fullscreenControlOptions: { position: "topleft" }
+  }).setView([0, 0], 2);
+
+  // Bind baseline map background canvas vector tile sheets
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+      referrerPolicy: "strict-origin-when-cross-origin"
+  }).addTo(map);
+
+  var activeMarker = null;
+  var $wktInput = document.getElementById("geometry-wkt-input");
+
+  // Functional callback dropping coordinates string into form data inputs
+  function setPointGeometry(lat, lng) {
+    if (activeMarker) {
+      map.removeLayer(activeMarker);
+    }
+    activeMarker = L.marker([lat, lng]).addTo(map);
+    // Write spatial tracking structures matching Django input validation syntax rules
+    $wktInput.value = "POINT (" + lng + " " + lat + ")";
+  }
+
+  // Load existing database layers cleanly
+  {% if info.geometry and info.geometry.geom_type == "Point" %}
+    var lat = {{ info.geometry.y }};
+    var lng = {{ info.geometry.x }};
+    map.setView([lat, lng], 7);
+    setPointGeometry(lat, lng);
+  {% elif info.geometry %}
+    // If complex shapes exist, overlay geojson boundaries and zoom map canvas over them
+    var layer = L.geoJSON({{ geojson|safe }}, {
+      style: { opacity: 0.6, fillOpacity: 0.2, weight: 2, color: "#3b82f6" }
+    }).addTo(map);
+    map.fitBounds(layer.getBounds());
+  {% endif %}
+
+  // Map user cursor click captures to dynamically reassign field records
+  map.on("click", function(e) {
+    setPointGeometry(e.latlng.lat, e.latlng.lng);
+  });
+</script>
+  
+{% endblock %}
