@@ -14,7 +14,7 @@
     {% for each in types %}
       <li>
         <a
-          href="/controlpanel/library/item?id={{ each.id }}/"
+          href="{% url "controlpanel_library_items" each.id %}"
           class="group flex items-center justify-between px-5 py-3 text-slate-700 hover:bg-slate-50 hover:text-brand transition-colors no-underline">
 
           <span class="flex items-center gap-3">

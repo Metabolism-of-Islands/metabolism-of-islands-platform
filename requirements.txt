@@ -20,3 +20,5 @@ bleach
 python-dateutil
 pandas
 geopandas
+
+yt-dlp

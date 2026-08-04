@@ -53,7 +53,10 @@ urlpatterns = [
     path("controlpanel/islands/create/", views.controlpanel_island, name="controlpanel_island"),
 
     path("controlpanel/library/", views.controlpanel_library, name="controlpanel_library"),
-    path("controlpanel/library/item/", views.controlpanel_library_item, name="controlpanel_library"),
+    path("controlpanel/library/<int:id>/", views.controlpanel_library_item, name="controlpanel_library_item"),
+    path("controlpanel/library/items/<int:id>/", views.controlpanel_library_items, name="controlpanel_library_items"),
+
+    path("controlpanel/videos/", views.controlpanel_videos, name="controlpanel_videos"),
 
     path("controlpanel/users/", views.controlpanel_users, name="controlpanel_users"),
     path("controlpanel/users/<int:id>/", views.controlpanel_user, name="controlpanel_user"),

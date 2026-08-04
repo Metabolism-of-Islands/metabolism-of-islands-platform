@@ -980,8 +980,6 @@ class LibraryItem(Record):
                     f'</iframe>'
                 )
 
-            return None
-
         elif "ted" in self.url:
             try:
                 url = self.url
@@ -990,8 +988,18 @@ class LibraryItem(Record):
                 return f'<iframe class="video-embed video-ted" src="https://embed.ted.com/talks/{url}" frameborder="0" scrolling="no" allowfullscreen></iframe>'
             except:
                 return "<div class='alert alert-warning'>Embedded video unavailable. <a href='" + self.url + "'>Click here to view the video</a></div>"
-        else:
-            return None
+        elif "vimeo" in self.url:
+            return f'<iframe class="video-embed vimeo-video" title="vimeo-player" src="https://player.vimeo.com/video/{self.embed_code}" frameborder="0" allowfullscreen></iframe>'
+        elif self.attachments.all():
+            try:
+                file = self.meta_data["video_settings"]["compiled_video"]
+                file = settings.MEDIA_URL + file
+            except:
+                file = self.attachments.all()[0]
+                file = file.file.url
+            return mark_safe(f'<video src="{file}" controls preload="metadata" style="height:30vh;width:100vw;max-width:100%"></video><br><a href="{file}">Download video</a>')
+
+        return None
 
     def get_size(self):
         try:
@@ -1633,58 +1641,19 @@ class Video(LibraryItem):
     embed_code = models.CharField(max_length=20, null=True, blank=True)
     date = models.DateField(blank=True, null=True)
     duration = models.PositiveSmallIntegerField(null=True, blank=True, help_text="Duration in minutes")
-    VIDEO_SITES = [
-        ("youtube", "Youtube"),
-        ("vimeo", "Vimeo"),
-        ("ted", "TED"),
-        ("other", "Other"),
-    ]
-    video_site = models.CharField(max_length=14, choices=VIDEO_SITES)
+
+    def video_site(self):
+        if "youtu" in self.url:
+            return "Youtube"
+        elif "vimeo" in self.url:
+            return "Vimeo"
+        elif "ted" in self.url:
+            return "Ted.com"
+        else:
+            return "Other"
+
     def get_absolute_url(self):
-        return reverse("multimedia:video", args=[self.id])
-
-    def get_embed_code(self):
-        url = self.url
-        if not url:
-            # This is for ascus only, we should fix / remove later
-            url = self.file_url
-        if url:
-            # Thank you https://stackoverflow.com/questions/4356538/how-can-i-extract-video-id-from-youtubes-link-in-python
-            # Examples:
-            # - http://youtu.be/SA2iWivDJiE
-            # - http://www.youtube.com/watch?v=_oPAwA_Udwc&feature=feedu
-            # - http://www.youtube.com/embed/SA2iWivDJiE
-            # - http://www.youtube.com/v/SA2iWivDJiE?version=3&amp;hl=en_US
-            query = urlparse(url)
-            if query.hostname == "youtu.be": return query.path[1:]
-            if query.hostname in ("www.youtube.com", "youtube.com"):
-                if query.path == "/watch": return parse_qs(query.query)["v"][0]
-                if query.path[:7] == "/embed/": return query.path.split("/")[2]
-                if query.path[:3] == "/v/": return query.path.split("/")[2]
-                return None
-
-    def embed(self):
-        if self.video_site == "youtube":
-            code = self.get_embed_code()
-            return f'<iframe class="video-embed youtube-video" src="https://www.youtube.com/embed/{code}?rel=0" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
-        elif self.url and "ted.com" in self.url:
-            try:
-                url = self.url
-                url = url.split("/")
-                url = url[-1]
-                return f'<iframe class="video-embed ted-video" title="ted-player" src="https://embed.ted.com/talks/{url}" frameborder="0" allowfullscreen></iframe>'
-            except:
-                return "<div class='alert alert-warning'>Embedded video unavailable. <a href='" + self.url + "'>Click here to view the video</a></div>"
-        elif self.video_site == "vimeo":
-            return f'<iframe class="video-embed vimeo-video" title="vimeo-player" src="https://player.vimeo.com/video/{self.embed_code}" frameborder="0" allowfullscreen></iframe>'
-        elif self.attachments.all():
-            try:
-                file = self.meta_data["video_settings"]["compiled_video"]
-                file = settings.MEDIA_URL + file
-            except:
-                file = self.attachments.all()[0]
-                file = file.file.url
-            return mark_safe(f'<video src="{file}" controls preload="metadata" style="height:30vh;width:100vw;max-width:100%"></video><br><a href="{file}">Download video</a>')
+        return reverse("video", args=[self.id])
 
     objects = PublicActiveRecordManager()
     objects_unfiltered = models.Manager()

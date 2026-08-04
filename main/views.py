@@ -9,6 +9,8 @@ from django.contrib.gis.geos import GEOSGeometry
 from django.core.serializers import serialize
 from itertools import groupby
 import json
+import requests
+from django.core.files.base import ContentFile
 
 def index(request):
 
@@ -707,6 +709,15 @@ def controlpanel_library(request):
     }
     return render(request, "main/controlpanel/library.html", context)
 
+def controlpanel_library_items(request, id):
+    item_type = LibraryItemType.objects.get(pk=id)
+    items = LibraryItem.objects.filter(type=item_type)
+    context = {
+        "info": item_type,
+        "items": items,
+    }
+    return render(request, "main/controlpanel/library.items.html", context)
+
 def controlpanel_library_item(request):
     context = {
         "types": LibraryItemType.objects.all(),
@@ -715,6 +726,61 @@ def controlpanel_library_item(request):
         "islands": Island.objects.all(),
     }
     return render(request, "main/controlpanel/library.item.html", context)
+
+def controlpanel_videos(request):
+
+    # Temp code until we finish migration
+    for each in LibraryItem.objects.filter(type_id=31):
+        if not hasattr(each, "video"):
+            sql = f"INSERT INTO main_video (libraryitem_ptr_id) VALUES ({each.pk});"
+            messages.warning(request, sql)
+    # end temp code
+
+
+    if request.method == "POST":
+
+        url = request.POST["url"]
+
+        ydl_opts = {
+            "quiet": True,
+            "skip_download": True,
+            "extract_flat": False,
+        }
+
+        from yt_dlp import YoutubeDL
+        with YoutubeDL(ydl_opts) as ydl:
+            data = ydl.extract_info(url, download=False)
+
+        video = Video.objects.create(
+            name=data.get("title", ""),
+            description=data.get("description", ""),
+            duration=int((data.get("duration") or 0) / 60),
+            author_list=data.get("uploader", ""),
+            url=url,
+            date=data.get("upload_date"),
+            type_id=31,
+        )
+
+        thumbnail = data.get("thumbnail")
+
+        if thumbnail:
+            response = requests.get(thumbnail, timeout=20)
+
+            if response.status_code == 200:
+                filename = f"{video.pk}.jpg"
+                video.image.save(
+                    filename,
+                    ContentFile(response.content),
+                    save=True,
+                )
+
+        messages.success(request, "The video has been added. You can review it below.")
+        return redirect(video.get_absolute_url())
+
+    context = {
+        "videos": Video.objects.all(),
+    }
+    return render(request, "main/controlpanel/videos.html", context)
 
 def controlpanel_webpages(request):
     context = {
