@@ -11,6 +11,9 @@ urlpatterns = [
     path("about/", views.about_overview, name="about_overview"),
     path("about/<slug:slug>/", views.about, name="about"),
 
+    path("resources/", views.resources_overview, name="resources_overview"),
+    path("resources/<slug:slug>/", views.resources, name="resources"),
+
     path("news/", views.news_overview, name="news"),
     path("news/<slug:slug>/", views.news, name="news"),
 

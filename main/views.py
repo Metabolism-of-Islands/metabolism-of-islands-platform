@@ -155,10 +155,22 @@ def index(request):
             research.section = "research"
             research.slug = "/research/theses/"
             research.save()
+
             research = Webpage.objects.get(pk=31885)
             research.section = "research"
             research.slug = "/research/projects/"
             research.save()
+
+            research = Webpage.objects.get(pk=31888)
+            research.section = "resources"
+            research.slug = "/resources/links/"
+            research.save()
+
+            research = Webpage.objects.get(pk=1280158)
+            research.section = "resources"
+            research.slug = "/resources/hub-of-island-innovation/"
+            research.save()
+
             messages.success(request, "Research & about sections configured")
         elif migrate == "6":
             PublicProject.objects.filter(part_of_project_id=1).delete()
@@ -224,7 +236,6 @@ def index(request):
 
     islands = Island.objects.all()
     regions = Region.objects.all().order_by("position").annotate(island_count=Count("islands"))
-
     context = {
         "islands": islands,
         "regions": regions,
@@ -517,13 +528,10 @@ def library_ajax_search(request):
     return JsonResponse(results, safe=False)
 
 def about_overview(request):
-    islands = Island.objects.filter(region=region)
     context = {
-        "islands": islands,
-        "region": Island.Regions(region).label,
         "menu": "about",
     }
-    return render(request, "main/islands.html", context)
+    return render(request, "main/about.overview.html", context)
 
 def about(request, slug):
     slug = f"/about/{slug}/"
@@ -533,6 +541,21 @@ def about(request, slug):
         "menu": "about",
     }
     return render(request, "main/about.html", context)
+
+def resources_overview(request):
+    context = {
+        "menu": "resources",
+    }
+    return render(request, "main/resourceresources.overview.html", context)
+
+def resources(request, slug):
+    slug = f"/resources/{slug}/"
+    info = Webpage.objects.get(slug=slug)
+    context = {
+        "info": info,
+        "menu": "resources",
+    }
+    return render(request, "main/resources.html", context)
 
 def news_overview(request):
     news = News.objects.all()

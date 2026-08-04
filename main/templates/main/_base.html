@@ -106,6 +106,22 @@
                 </a>
               </li>
 
+              <li class="group relative py-6">
+                <a class="flex items-center gap-1 hover:text-brand focus:outline-none {% if menu == "resources" %}active{% endif %}" href="/resources/">
+                  Resources
+                  <svg class="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </a>
+                <div class="absolute left-0 top-full z-50 mt-0 hidden w-48 rounded-md bg-white py-2 shadow-lg group-hover:block">
+                  <a href="/resources/links/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Links</a>
+                  <a href="/resources/videos/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Videos</a>
+                  <a href="/optamos/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">OPTamos decision-making tool</a>
+                  <a href="/resources/hub-of-island-innovation/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Hubs of Island Innovation</a>
+                </div>
+              </li>
+
+
               <li>
                 <a href="/news/" class="block hover:text-brand {% if menu == "news" %}active{% endif %}">News</a>
               </li>

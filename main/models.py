@@ -609,6 +609,7 @@ class Webpage(Record):
     SECTION = [
         ("about", "About"),
         ("research", "Research"),
+        ("resources", "Resources"),
         ("other", "Other"),
     ]
     section = models.CharField(max_length=13, choices=SECTION, default="other")
