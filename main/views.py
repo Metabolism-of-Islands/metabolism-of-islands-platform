@@ -223,8 +223,12 @@ def index(request):
     # END OF MIGRATION CODE
 
     islands = Island.objects.all()
+    regions = Region.objects.all().order_by("position").annotate(island_count=Count("islands"))
+
     context = {
         "islands": islands,
+        "regions": regions,
+        "news": News.objects.all()[:3],
     }
     return render(request, "main/index.html", context)
 
@@ -597,6 +601,12 @@ def controlpanel_island(request, id=None):
         info = None
 
     if request.method == "POST":
+        if "deactivate" in request.POST:
+            info.is_deleted = True
+            info.save()
+            messages.success(request, f"{info.name} was deactivated.")
+            return redirect("/controlpanel/islands/")
+
         # Extract plain parameters from text form bindings
         name = request.POST.get("name", "").strip()
         region_id = request.POST.get("region")

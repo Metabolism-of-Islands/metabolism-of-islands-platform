@@ -1,43 +1,252 @@
 {% extends "main/_base.html" %}
+{% load extras %}
+
+{% block title %}
+  {% if region %}{{ region }}{% else %}Islands{% endif %}
+{% endblock %}
+
+{% block css %}
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet.fullscreen@3.0.0/Control.FullScreen.css"
+/>
+
+<style>
+  #map {
+    height: 600px;
+  }
+  #islands a:hover h1{text-decoration:underline}
+
+  .map-popup-thumb {
+    width: 120px;
+    height: 80px;
+    object-fit: cover;
+    display: block;
+    margin-top: 5px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+  }
+
+  .map-popup-btn {
+    display: inline-block;
+    padding: 4px 8px;
+    background-color: #007bff;
+    color: white !important;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+</style>
+
+  
+{% endblock %}
 
 {% block content %}
 
+  <header class="mb-5">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+      
+      <div class="lg:col-span-3 space-y-4">
+        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+          Metabolism of Islands
+        </h1>
 
-<h2>Initial setup</h2>
+          <p class="text-base sm:text-lg text-slate-500 font-normal leading-relaxed antialiased border-l border-slate-200 pl-4">
+            MoI is a network of scholars conducting policy-relevant research to support island economies achieve resource security and self-reliance, and build resilience to the impacts of climate change.
+          </p>
 
-<ol>
-  <li>Load db</li>
-  <li>Make media/models01.py the temp new model</li>
-  <li>Load very first migration but fake</li>
-  <li>Fix the stdimage models.py file<br>
-cp media/stdimagemodel.py /usr/local/lib/python3.13/site-packages/stdimage/models.py
-  </li>
-  <li>Run renamedb.py - SQL commands to rename tables</li>
-  <li>Run migration 0002</li>
-  <li>Drop all the reference spaces that are not active islands <a href="./?migrate=1">here</a></li>
-  <li>Make media/models02.py the new model</li>
-  <li>Run migration 0003-0008</li>
-  <li>Assign islands to regions <a href="./?migrate=2">here</a></li>
-  <li>Add a random 'space' field to referencespaces db</li>
-  <li>Now run migration 0009 and 0010 and 0011 and 0012</li>
-  <li>Now <a href="./?migrate=4">fix island gps</a></li>
-  <li>Now <a href="./?migrate=5">fix island categorization</a></li>
-  <li>FAKE run migration 0013 and 0014</li>
-  <li>Fix <a href="./?migrate=6">public projects</a></li>
-  <li>Run migration 0015</li>
-  <li>Remove <a href="./?migrate=7">unused tags</a></li>
-  <li>Apply migration 16 and 17 and then load models03.py and then <a href="./?migrate=8">load the new regions here</a></li>
-  <li>Apply migration 18 and load models04.py</li>
-  <li>Apply migration 19</li>
-  <li>FAKE migration 20 and work on manually fixing events</li>
-</ol>
+          <div>
+            <span class="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 group-hover/blog:bg-brand/10 group-hover/blog:text-brand transition-colors tracking-wide uppercase">
+              <i class="fa fa-check text-lime-500 fa-fw mr-1"></i>
+              Launched in 2018
+            </span>
 
-<pre>
-sudo docker exec -it metabolismofislands_web python manage.py migrate --fake
-</pre>
+            <span class="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 group-hover/blog:bg-brand/10 group-hover/blog:text-brand transition-colors tracking-wide uppercase">
+              <i class="fa fa-check text-lime-500 fa-fw mr-1"></i>
+              Open source
+            </span>
 
-<pre>
-sudo docker exec -it metabolismofislands_web python manage.py migrate
-</pre>
+            <span class="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 group-hover/blog:bg-brand/10 group-hover/blog:text-brand transition-colors tracking-wide uppercase">
+              <i class="fa fa-check text-lime-500 fa-fw mr-1"></i>
+              Academic &amp; practitioner community
+            </span>
+          </div>
+
+      </div>
+
+      <div class="lg:col-span-1 border border-slate-700 rounded-2xl bg-slate-800 p-8 flex flex-col items-center justify-center text-center gap-1.5">
+        <span class="text-6xl font-black text-white tracking-tighter font-mono leading-none">{{ islands.count }}</span>
+        <span class="text-[10px] font-bold text-slate-300 uppercase tracking-widest block">Island profiles</span>
+      </div>
+
+    </div>
+  </header>
+
+  <div class="w-full h-full rounded-xl overflow-hidden bg-slate-50 relative z-0">
+    <div id="map" class="w-full h-full flex items-center justify-center text-sm text-slate-400">
+      <i class="fa fa-map-o mr-2"></i>
+    </div>
+  </div>
+
+  <h2 class="mt-10">Browse by region</h2>
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    
+    {% for each in regions %}
+      <a href="{{ each.get_absolute_url }}" class="no-underline">
+        <div class="border border-slate-200 bg-white rounded-2xl overflow-hidden flex flex-col justify-between">
+          <div>
+
+            <img src="{{ each.photo_island.photo.image.thumbnail.url }}" alt="{{ each.name }}" class="w-full h-40 object-cover border-b border-slate-100">
+            
+            <div class="p-5 space-y-1">
+              <h1 class="text-xl font-bold text-slate-900 tracking-tight !mb-1">{{ each.name }}</h1>
+              <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                {{ each.island_count }} islands
+              </p>
+            </div>
+          </div>
+          
+        </div>
+      </a>
+    {% endfor %}
+
+  </div>
+
+  <h2 class="mt-10">Latest news</h2>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    {% for each in news %}
+      <a class="news no-underline block group/blog border border-slate-200 bg-white rounded-2xl overflow-hidden flex flex-col justify-between hover:border-brand transition-all duration-150" href="{{ each.slug }}/" data-year="{{ each.date|date:"Y" }}">
+        
+        <div>
+          {% if each.image %}
+            <div class="w-full h-48 bg-slate-100 overflow-hidden relative border-b border-slate-100">
+              <img src="{{ each.image.large.url }}" class="w-full h-full object-cover transition-transform duration-200 group-hover/blog:scale-105" alt="">
+            </div>
+            {% endif %}
+
+          <div class="p-5 space-y-2">
+            <h5 class="text-lg font-bold text-slate-900 group-hover/blog:text-brand transition-colors tracking-tight leading-snug line-clamp-2">
+              {{ each }}
+            </h5>
+            <p class="text-sm text-slate-600 font-normal leading-relaxed line-clamp-3 pt-1">
+              <span>
+                {{ each.description|striptags|truncatewords:20 }}
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <div class="p-5 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
+          <span class="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 group-hover/blog:bg-brand/10 group-hover/blog:text-brand transition-colors tracking-wide uppercase">
+            {{ each.date|date:"M d, Y" }}
+          </span>
+        </div>
+
+      </a>
+    {% endfor %}
+  </div>
+
+{% endblock %}
+
+{% block js %}
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.fullscreen@3.0.0/Control.FullScreen.js"></script>
+<script>
+  map = L.map("map", {
+    fullscreenControl: true,
+    fullscreenControlOptions: {
+      position: "topleft"
+    }
+  }).setView([0, 0], 2);
+
+  bounds = [];
+
+  {% for each in islands %}
+    {% if each.geometry %}
+
+      {% if each.geometry.geom_type == "Point" %}
+        lat = {{ each.geometry.y }};
+        lng = {{ each.geometry.x }};
+      {% else %}
+        lat = {{ each.geometry.centroid.y }};
+        lng = {{ each.geometry.centroid.x }};
+      {% endif %}
+
+      {% if region_selected.name == "Pacific Ocean" %}
+        // We don't want the Pacific Ocean split in two halves on the map; this fixes that
+        if (lng < 0) {
+          lng += 360;
+        }
+      {% endif %}
+
+      markerLatLng = [lat, lng];
+      bounds.push(markerLatLng);
+
+      popupContent = `
+        <div>
+          <strong>{{ each|escapejs }}</strong>
+          {% if each.photo %}
+            <img src="/media/{{ each.photo.image.thumbnail }}" class="map-popup-thumb" alt="{{ each.title|escapejs }}">
+          {% endif %}
+          <a href="{{ each.get_absolute_url }}" class="map-popup-btn">Read more</a>
+        </div>
+      `;
+
+      L.marker(markerLatLng)
+        .bindPopup(popupContent)
+        .addTo(map);
+
+    {% endif %}
+  {% endfor %}
+
+  const osm = L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      attribution: "&copy; OpenStreetMap contributors",
+      referrerPolicy: "strict-origin-when-cross-origin"
+    }
+  );
+
+  const positron = L.tileLayer(
+    "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+    {
+      attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
+      referrerPolicy: "strict-origin-when-cross-origin"
+    }
+  );
+
+  const satellite = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    {
+      attribution: "Tiles © Esri",
+      referrerPolicy: "strict-origin-when-cross-origin"
+    }
+  );
+
+  osm.addTo(map);
+
+  L.control.layers(
+    {
+      "OpenStreetMap": osm,
+      "Light": positron,
+      "Satellite": satellite
+    },
+    null,
+    {
+      collapsed: false
+    }
+  ).addTo(map);
+
+  map.fitBounds(bounds, {
+    padding: [1, 1]
+  });
+
+</script>
 
 {% endblock %}
