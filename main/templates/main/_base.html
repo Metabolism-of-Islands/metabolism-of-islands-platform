@@ -1,6 +1,6 @@
 {% load static %}
 <!doctype html>
-<html lang="en" class="h-full" style="background:#ddd8e1">
+<html lang="en" class="h-full" style="background:#f0f0f0">
 
 <head>
   <meta charset="utf-8">
@@ -33,161 +33,152 @@
 <body class="h-full">
   <div class="min-h-full">
 
-
-
-<nav class="mainnav relative isolate z-50 border-b-[5px] border-brand bg-white shadow-sm py-5">
-  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div class="flex h-20 items-center justify-between">
-      
-      <div class="flex items-center space-x-4 lg:space-x-8">
-        <a class="flex items-center font-bold" aria-current="page" href="{% url 'index' %}">
-          <span {% if menu == 'index' %}class="active"{% endif %}>
-            <img src="{% static 'img/logo.svg' %}" alt="Metabolism of Islands" class="h-10 w-auto" />
-          </span>
-        </a>
-
-        <ul class="hidden items-center text-sm font-medium text-gray-700 md:flex md:space-x-4 lg:space-x-6">
-          <li class="group relative py-6">
-            <a class="flex items-center gap-1 hover:text-brand focus:outline-none {% if menu == "about" %}active{% endif %}" href="/about/">
-              About us
-              <svg class="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
+    <nav class="mainnav relative isolate z-50 border-b-[5px] border-brand bg-white shadow-sm py-5">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="flex h-20 items-center justify-between">
+          
+          <div class="flex items-center space-x-4 lg:space-x-8">
+            <a class="flex items-center font-bold" aria-current="page" href="{% url 'index' %}">
+              <span {% if menu == 'index' %}class="active"{% endif %}>
+                <img src="{% static 'img/logo.svg' %}" alt="Metabolism of Islands" class="h-10 w-auto" />
+              </span>
             </a>
-            <div class="absolute left-0 top-full z-50 mt-0 hidden w-48 rounded-md bg-white py-2 shadow-lg group-hover:block">
-              <a href="/about/purpose/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Purpose</a>
-              <a href="/about/what-is-island-metabolism/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">What is island metabolism?</a>
-              <a href="/about/community/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Community</a>
-              <a href="/about/join/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Join us</a>
-              <a href="/about/subscribe/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Subscribe</a>
-              <a href="/about/contact/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Contact us</a>
-            </div>
-          </li>
 
-          <li class="group relative py-6">
-            <a class="flex items-center gap-1 hover:text-brand focus:outline-none {% if menu == "research" %}active{% endif %}" href="/research/">
-              Research
-              <svg class="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </a>
-            <div class="absolute left-0 top-full z-50 mt-0 hidden w-48 rounded-md bg-white py-2 shadow-lg group-hover:block">
-              <a href="/research/theses/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Theses</a>
-              <a href="/research/projects/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Research projects</a>
-            </div>
-          </li>
-
-          <li class="group static py-8">
-            <a class="flex items-center gap-1 hover:text-brand focus:outline-none {% if menu == "islands" %}active{% endif %}" href="/islands/">
-              Islands
-              <svg class="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </a>
-            <div class="absolute left-0 right-0 mt-7 z-50 mt-0 hidden w-full bg-white shadow-xl group-hover:block">
-              <div class="mx-auto max-w-7xl px-8 py-6">
-                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                  {% for region, islands in REGIONS %} 
-                  <div>
-                    <p class="mb-2 border-b pb-2 text-xs font-bold tracking-wider text-gray-900"><a href="/islands/regions/{{ region|slugify }}/">{{ region }}</a></p>
-                    <ul class="space-y-2 text-xs text-gray-600">
-                      {% for each in islands %}
-                        <li><a href="/islands/{{ each.slug }}/" class="block hover:text-brand">{{ each }}</a></li>
-                      {% endfor %}
-                    </ul>
-                  </div>
-                  {% endfor %}
+            <ul class="hidden items-center text-sm font-medium text-gray-700 md:flex md:space-x-4 lg:space-x-6">
+              <li class="group relative py-6">
+                <a class="flex items-center gap-1 hover:text-brand focus:outline-none {% if menu == "about" %}active{% endif %}" href="/about/">
+                  About us
+                  <svg class="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </a>
+                <div class="absolute left-0 top-full z-50 mt-0 hidden w-48 rounded-md bg-white py-2 shadow-lg group-hover:block">
+                  <a href="/about/purpose/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Purpose</a>
+                  <a href="/about/what-is-island-metabolism/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">What is island metabolism?</a>
+                  <a href="/about/community/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Community</a>
+                  <a href="/about/join/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Join us</a>
+                  <a href="/about/subscribe/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Subscribe</a>
+                  <a href="/about/contact/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Contact us</a>
                 </div>
-              </div>
-            </div>
-          </li>
+              </li>
 
-          <li class="group relative py-6">
-            <a class="flex items-center gap-1 hover:text-brand focus:outline-none {% if menu == "library" %}active{% endif %}" href="/library/">
-              Library
-            </a>
-          </li>
+              <li class="group relative py-6">
+                <a class="flex items-center gap-1 hover:text-brand focus:outline-none {% if menu == "research" %}active{% endif %}" href="/research/">
+                  Research
+                  <svg class="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </a>
+                <div class="absolute left-0 top-full z-50 mt-0 hidden w-48 rounded-md bg-white py-2 shadow-lg group-hover:block">
+                  <a href="/research/theses/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Theses</a>
+                  <a href="/research/projects/" class="block px-4 py-2 hover:bg-gray-100 hover:text-brand">Research projects</a>
+                </div>
+              </li>
 
-          <li>
-            <a href="/news/" class="block hover:text-brand {% if menu == "news" %}active{% endif %}">News</a>
-          </li>
+              <li class="group static py-8">
+                <a class="flex items-center gap-1 hover:text-brand focus:outline-none {% if menu == "islands" %}active{% endif %}" href="/islands/">
+                  Islands
+                  <svg class="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </a>
+                <div class="absolute left-0 right-0 mt-7 z-50 mt-0 hidden w-full bg-white shadow-xl group-hover:block">
+                  <div class="mx-auto max-w-7xl px-8 py-6">
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                      {% for region, islands in REGIONS %} 
+                      <div>
+                        <p class="mb-2 border-b pb-2 text-xs font-bold tracking-wider text-gray-900"><a href="/islands/regions/{{ region|slugify }}/">{{ region }}</a></p>
+                        <ul class="space-y-2 text-xs text-gray-600">
+                          {% for each in islands %}
+                            <li><a href="/islands/{{ each.slug }}/" class="block hover:text-brand">{{ each }}</a></li>
+                          {% endfor %}
+                        </ul>
+                      </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+              </li>
 
-          <li>
-            <a href="/events/" class="block hover:text-brand {% if menu == "events" %}active{% endif %}">Events</a>
-          </li>
-        </ul>
+              <li class="group relative py-6">
+                <a class="flex items-center gap-1 hover:text-brand focus:outline-none {% if menu == "library" %}active{% endif %}" href="/library/">
+                  Library
+                </a>
+              </li>
+
+              <li>
+                <a href="/news/" class="block hover:text-brand {% if menu == "news" %}active{% endif %}">News</a>
+              </li>
+
+              <li>
+                <a href="/events/" class="block hover:text-brand {% if menu == "events" %}active{% endif %}">Events</a>
+              </li>
+            </ul>
+          </div>
+
+          <div class="hidden items-center text-sm font-medium text-gray-700 md:flex">
+            {% if request.user.is_authenticated %}
+              <a href="{% url 'optamos:logout' %}" class="py-6 hover:text-brand">Log out</a>
+            {% else %}
+              <a {% if menu == 'login' %}class="active text-brand font-bold py-6"{% endif %} href="{% url 'optamos:login' %}" class="py-6 hover:text-brand">Log in</a>
+            {% endif %}
+          </div>
+
+          <div class="flex items-center md:hidden">
+            <button id="mobile-menu-button" class="inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 hover:text-brand focus:outline-none">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
+            </button>
+          </div>
+
+        </div>
       </div>
 
-      <div class="hidden items-center text-sm font-medium text-gray-700 md:flex">
-        {% if request.user.is_authenticated %}
-          <a href="{% url 'optamos:logout' %}" class="py-6 hover:text-brand">Log out</a>
-        {% else %}
-          <a {% if menu == 'login' %}class="active text-brand font-bold py-6"{% endif %} href="{% url 'optamos:login' %}" class="py-6 hover:text-brand">Log in</a>
-        {% endif %}
+      <div id="mobile-menu" class="hidden border-t border-gray-200 bg-white md:hidden">
+        <div class="space-y-1 px-4 pb-4 pt-2 text-base font-medium text-gray-700">
+          <a href="#" class="block rounded-md px-3 py-2 hover:bg-gray-50 hover:text-brand">About us</a>
+          <a href="#" class="block rounded-md px-3 py-2 hover:bg-gray-50 hover:text-brand">Research</a>
+          <a href="#" class="block rounded-md px-3 py-2 hover:bg-gray-50 hover:text-brand">Islands</a>
+          <a href="#" class="block rounded-md px-3 py-2 hover:bg-gray-50 hover:text-brand">Library</a>
+          <a href="#" class="block rounded-md px-3 py-2 hover:bg-gray-50 hover:text-brand">News & blogs</a>
+          <a href="#" class="block rounded-md px-3 py-2 hover:bg-gray-50 hover:text-brand">Events</a>
+          <div class="mt-4 border-t border-gray-200 pt-4">
+            {% if request.user.is_authenticated %}
+              <a href="{% url 'optamos:logout' %}" class="block rounded-md px-3 py-2 hover:bg-gray-50 hover:text-brand">Log out</a>
+            {% else %}
+              <a {% if menu == 'login' %}class="active text-brand font-bold"{% endif %} href="{% url 'optamos:login' %}" class="block rounded-md px-3 py-2 hover:bg-gray-50 hover:text-brand">Log in</a>
+            {% endif %}
+          </div>
+        </div>
       </div>
+    </nav>
 
-      <div class="flex items-center md:hidden">
-        <button id="mobile-menu-button" class="inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 hover:text-brand focus:outline-none">
-          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-          </svg>
-        </button>
-      </div>
-
-    </div>
-  </div>
-
-  <div id="mobile-menu" class="hidden border-t border-gray-200 bg-white md:hidden">
-    <div class="space-y-1 px-4 pb-4 pt-2 text-base font-medium text-gray-700">
-      <a href="#" class="block rounded-md px-3 py-2 hover:bg-gray-50 hover:text-brand">About us</a>
-      <a href="#" class="block rounded-md px-3 py-2 hover:bg-gray-50 hover:text-brand">Research</a>
-      <a href="#" class="block rounded-md px-3 py-2 hover:bg-gray-50 hover:text-brand">Islands</a>
-      <a href="#" class="block rounded-md px-3 py-2 hover:bg-gray-50 hover:text-brand">Library</a>
-      <a href="#" class="block rounded-md px-3 py-2 hover:bg-gray-50 hover:text-brand">News & blogs</a>
-      <a href="#" class="block rounded-md px-3 py-2 hover:bg-gray-50 hover:text-brand">Events</a>
-      <div class="mt-4 border-t border-gray-200 pt-4">
-        {% if request.user.is_authenticated %}
-          <a href="{% url 'optamos:logout' %}" class="block rounded-md px-3 py-2 hover:bg-gray-50 hover:text-brand">Log out</a>
-        {% else %}
-          <a {% if menu == 'login' %}class="active text-brand font-bold"{% endif %} href="{% url 'optamos:login' %}" class="block rounded-md px-3 py-2 hover:bg-gray-50 hover:text-brand">Log in</a>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-</nav>
-
-<script>
-  document.getElementById('mobile-menu-button').addEventListener('click', function() {
-    var menu = document.getElementById('mobile-menu');
-    menu.classList.toggle('hidden');
-  });
-</script>
+    <script>
+      document.getElementById('mobile-menu-button').addEventListener('click', function() {
+        var menu = document.getElementById('mobile-menu');
+        menu.classList.toggle('hidden');
+      });
+    </script>
 
     <div class="bg" style="background-image:url({% if bg_image %}{{ bg_image }}{% else %}/media/bg2.jpg{% endif %})">
-      <div class="overlay {% if bg_image %}pb-128{% else %}pb-64{% endif %}">
+      <div class="overlay {% if bg_image %}pb-100{% else %}pb-64{% endif %}">
         <header class="py-10">
-          <hgroup class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            {% if project %}
-              <div class="flex justify-between">
-                <a href="{% url "optamos:project" project.uid %}" class="hover:underline text-3xl font-bold tracking-tight text-white text-shadow-md text-shadow-stone-700">
-                  {{ project }}
-                </a>
-                <div>
-                {% for tag in project.tag_list.all %}
-                  <span class="mt-2 badge">{{ tag }}</span>
-                {% endfor %}
-                </div>
-              </div>
-              <h2 class="text-shadow-sm text-shadow-stone-700 text-white">
-                {{ project.goal }}
-              </h2>
+          <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            {% if bg_image %}
+              <a href="{{ info.region.get_absolute_url }}" class="inline-flex items-center text-xs font-semibold uppercase tracking-wider text-slate-400 hover:text-brand !no-underline transition-colors" style="position:absolute;top:18px">
+                <i class="fa fa-arrow-left mr-2"></i> {{ info.region }} overview
+              </a>
+              <h1 class="text-3xl font-bold tracking-tight text-white text-shadow-md text-shadow-stone-700" style="position:relative;top:390px">
+                {{ info }}
+              </h1>
             {% endif %}
-          </hgroup>
+          </div>
         </header>
       </div>
     </div>
 
-    <main class="{% if bg_imag %}-mt-128{% else %}-mt-64{% endif %}">
+    <main class="{% if bg_image %}-mt-10{% else %}-mt-64{% endif %}">
       <div class="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
         <div class="rounded-lg bg-white {% if not remove_padding_main_container %}px-5 py-10 sm:px-6{% endif %} shadow-sm relative">
           <div class="ml-10 mr-10">
@@ -213,6 +204,7 @@
   </div>
 
 <script type="text/javascript" src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
 {% block js %}
 
 {% endblock %}

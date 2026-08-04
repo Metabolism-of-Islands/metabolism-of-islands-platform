@@ -304,8 +304,8 @@ def island(request, slug):
         "tags": tags,
         "menu": "islands",
         "geojson": json.loads(info.geometry.geojson) if info.geometry else None,
-        #"bg_image": info.photo.image.large.url,
-        "second_photo": info,
+        "bg_image": info.photo.image.large.url,
+        "second_photo": second_photo,
     }
 
     return render(request, "main/island.html", context)
@@ -645,6 +645,12 @@ def controlpanel_island(request, id=None):
         "geojson": geojson_payload,
     }
     return render(request, "main/controlpanel/island.html", context)
+
+def controlpanel_library(request):
+    context = {
+        "types": LibraryItemType.objects.all(),
+    }
+    return render(request, "main/controlpanel/library.html", context)
 
 def controlpanel_webpages(request):
     context = {

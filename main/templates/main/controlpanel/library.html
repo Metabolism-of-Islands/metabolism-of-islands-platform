@@ -1,0 +1,15 @@
+{% extends "main/_base.html" %}
+
+{% block content %}
+
+  <h1>{% block title %}Library{% endblock %}</h1>
+
+  <p><em>Select the type of documents you want to manage.</em></p>
+
+  <ul>
+    {% for each in types %}
+      <li><i class="fa fa-{{ each.icon }}"></i> <a href="/controlpanel/library/types/{{ each.id }}/">{{ each }}</a></li>
+    {% endfor %}
+  </ul>
+
+{% endblock %}

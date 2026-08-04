@@ -46,4 +46,6 @@ urlpatterns = [
     path("controlpanel/islands/", views.controlpanel_islands, name="controlpanel_islands"),
     path("controlpanel/islands/<int:id>/", views.controlpanel_island, name="controlpanel_island"),
     path("controlpanel/islands/create/", views.controlpanel_island, name="controlpanel_island"),
+
+    path("controlpanel/library/", views.controlpanel_library, name="controlpanel_library"),
 ]
