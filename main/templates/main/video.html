@@ -1,0 +1,90 @@
+{% extends "main/_base.html" %}
+{% load static %}
+
+{% block title %}
+  {{ info }}
+{% endblock %}
+
+{% block css %}
+  <link rel="canonical" href="{{ info.get_absolute_url }}" />
+  <meta property="og:title" content="{{ info }}">
+  <meta property="og:description" content="{{ info.get_description|striptags|truncatechars:200 }}">
+  {% if info.image %}
+    <meta property="og:image" content="https://metabolismofislands.org{{ info.image.url }}">
+  {% endif %}
+  <meta property="og:url" content="https://metabolismofislands.org{{ request.get_full_path }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start py-4">
+  
+  <!-- Left Side: Primary Reading Pane -->
+  <article class="lg:col-span-2 space-y-6">
+
+    <!-- Top Feature Image Block -->
+    <div class="w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 aspect-video">
+      {{ info.embed|safe }}
+    </div>
+
+    <!-- Main Title Heading -->
+    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
+      {{ info }}
+    </h1>
+
+    <!-- Rich Text Content Body Rendering -->
+    <div class="prose prose-slate max-w-none text-slate-600 font-normal leading-relaxed space-y-4 text-justify">
+      {{ info.get_description }}
+    </div>
+
+  </article>
+
+  <!-- Right Side: Metadata Parameters & Quick Links Sidebar -->
+  <div class="space-y-6">
+    
+    {% if info.authors %}
+      <div class="border border-slate-200 rounded-xl bg-white overflow-hidden text-sm divide-y divide-slate-100">
+        
+          <div class="p-4 flex items-start gap-3">
+            <i class="fa fa-user text-slate-400 mt-0.5 w-4 text-center" aria-hidden="true"></i>
+            <div class="text-slate-700 font-normal">
+              {% if info.authors.count == 1 %}
+                <span class="font-medium text-slate-900">{{ info.authors.0 }}</span>
+              {% else %}
+                <span class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Authors</span>
+                <div class="space-y-1 font-medium text-slate-900">
+                  {% for each in info.authors %}
+                    <div>{{ each }}</div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+    <div class="space-y-3">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">Latest Videos</h3>
+      
+      <div class="border border-slate-200 rounded-xl bg-white overflow-hidden divide-y divide-slate-100 text-sm">
+        {% for each in videos %}
+          <a href="/resources/videos/{{ each.id }}/" class="block p-3.5 hover:bg-slate-50 transition-colors group no-underline {% if each == info %}bg-slate-100{% endif %}">
+            <div class="font-medium text-slate-800 group-hover:text-brand transition-colors line-clamp-2 leading-snug">
+              {{ each }}
+            </div>
+            <div class="text-xs font-mono text-slate-400 mt-1">
+              {{ each.date }}
+            </div>
+          </a>
+        {% endfor %}
+        
+        <a href="/resources/videos/" class="block p-3.5 bg-slate-50/50 hover:bg-slate-50 text-center font-bold text-slate-700 hover:text-brand transition-colors !no-underline text-xs uppercase tracking-wider">
+          View Video Archive <i class="fa fa-chevron-right ml-1 text-[10px]"></i>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

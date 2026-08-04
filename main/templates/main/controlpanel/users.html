@@ -1,0 +1,30 @@
+{% extends "main/_base.html" %}
+
+{% block content %}
+
+<h1>
+{% block title %}
+  Users
+{% endblock %}
+</h1>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>E-mail</th>
+      <th>Name</th>
+      <th>Last login</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for each in users %}
+    <tr>
+      <td><a href="{% url "controlpanel_user" each.id %}">{{ each }}</a></td>
+      <td>{{ each.first_name }} {{ each.last_name }}</td>
+      <td class="whitespace-nowrap">{{ each.last_login|date:"M d, Y" }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

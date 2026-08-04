@@ -944,25 +944,44 @@ class LibraryItem(Record):
         return citation
 
     def embed(self):
+
         if "youtu" in self.url:
             url = self.url
-            # Thank you https://stackoverflow.com/questions/4356538/how-can-i-extract-video-id-from-youtubes-link-in-python
-            # Examples:
-            # - http://youtu.be/SA2iWivDJiE
-            # - http://www.youtube.com/watch?v=_oPAwA_Udwc&feature=feedu
-            # - http://www.youtube.com/embed/SA2iWivDJiE
-            # - http://www.youtube.com/v/SA2iWivDJiE?version=3&amp;hl=en_US
             query = urlparse(url)
             video = None
-            if query.hostname == "youtu.be": video = query.path[1:]
-            if query.hostname in ("www.youtube.com", "youtube.com"):
-                if query.path == "/watch": video = parse_qs(query.query)["v"][0]
-                if query.path[:7] == "/embed/": video = query.path.split("/")[2]
-                if query.path[:3] == "/v/": video = query.path.split("/")[2]
+
+            if query.hostname == "youtu.be":
+                video = query.path.lstrip("/")
+
+            elif query.hostname in (
+                "youtube.com",
+                "www.youtube.com",
+                "m.youtube.com",
+            ):
+                if query.path == "/watch":
+                    video = parse_qs(query.query).get("v", [None])[0]
+                elif query.path.startswith("/embed/"):
+                    video = query.path.split("/")[2]
+                elif query.path.startswith("/v/"):
+                    video = query.path.split("/")[2]
+                elif query.path.startswith("/shorts/"):
+                    video = query.path.split("/")[2]
+
             if video:
-                return f'<iframe class="video-embed youtube-video" src="https://www.youtube.com/embed/{video}?rel=0" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
-            else:
-                return None
+                return (
+                    f'<iframe '
+                    f'class="w-full h-full aspect-video youtube-video" '
+                    f'src="https://www.youtube.com/embed/{video}?rel=0" '
+                    f'title="YouTube video player" '
+                    f'loading="lazy" '
+                    f'referrerpolicy="strict-origin-when-cross-origin" '
+                    f'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" '
+                    f'allowfullscreen>'
+                    f'</iframe>'
+                )
+
+            return None
+
         elif "ted" in self.url:
             try:
                 url = self.url
@@ -1599,8 +1618,6 @@ class LibraryItem(Record):
 
         # If there are linked Reference Spaces, Documents, or Data points then these need to have the same public status as their parent document
         if self.id:
-            Island.objects_unfiltered.filter(source_id=self.id).update(is_public=self.is_public)
-            Data.objects_include_private.filter(source_id=self.id).update(is_public=self.is_public)
             Document.objects_include_private.filter(attached_to=self.id).update(is_public=self.is_public)
 
         super(LibraryItem, self).save(*args, **kwargs)
@@ -1647,7 +1664,6 @@ class Video(LibraryItem):
                 return None
 
     def embed(self):
-        # Should be properly merged with libraryitem embed stuff
         if self.video_site == "youtube":
             code = self.get_embed_code()
             return f'<iframe class="video-embed youtube-video" src="https://www.youtube.com/embed/{code}?rel=0" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'

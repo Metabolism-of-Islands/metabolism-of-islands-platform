@@ -2,14 +2,33 @@
 
 {% block content %}
 
-  <h1>{% block title %}Library{% endblock %}</h1>
+<h1>{% block title %}Library{% endblock %}</h1>
 
-  <p><em>Select the type of documents you want to manage.</em></p>
+<p class="mt-2 text-slate-500 italic">
+  Select the type of documents you want to manage.
+</p>
 
-  <ul>
+<div class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+  <ul class="divide-y divide-slate-200">
+
     {% for each in types %}
-      <li><i class="fa fa-{{ each.icon }}"></i> <a href="/controlpanel/library/types/{{ each.id }}/">{{ each }}</a></li>
+      <li>
+        <a
+          href="/controlpanel/library/item?id={{ each.id }}/"
+          class="group flex items-center justify-between px-5 py-3 text-slate-700 hover:bg-slate-50 hover:text-brand transition-colors no-underline">
+
+          <span class="flex items-center gap-3">
+            <i class="fal fa-{{ each.icon }} fa-fw text-slate-400 group-hover:text-brand"></i>
+            <span class="font-medium">{{ each }}</span>
+          </span>
+
+          <i class="fal fa-chevron-right text-xs text-slate-300 group-hover:text-brand"></i>
+
+        </a>
+      </li>
     {% endfor %}
+
   </ul>
+</div>
 
 {% endblock %}

@@ -12,6 +12,8 @@ urlpatterns = [
     path("about/<slug:slug>/", views.about, name="about"),
 
     path("resources/", views.resources_overview, name="resources_overview"),
+    path("resources/videos/", views.videos, name="videos"),
+    path("resources/videos/<int:id>/", views.video, name="video"),
     path("resources/<slug:slug>/", views.resources, name="resources"),
 
     path("news/", views.news_overview, name="news"),
@@ -51,4 +53,9 @@ urlpatterns = [
     path("controlpanel/islands/create/", views.controlpanel_island, name="controlpanel_island"),
 
     path("controlpanel/library/", views.controlpanel_library, name="controlpanel_library"),
+    path("controlpanel/library/item/", views.controlpanel_library_item, name="controlpanel_library"),
+
+    path("controlpanel/users/", views.controlpanel_users, name="controlpanel_users"),
+    path("controlpanel/users/<int:id>/", views.controlpanel_user, name="controlpanel_user"),
+    path("controlpanel/users/create/", views.controlpanel_user, name="controlpanel_user"),
 ]

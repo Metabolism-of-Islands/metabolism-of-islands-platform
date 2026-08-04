@@ -2,13 +2,212 @@
 
 {% block content %}
 
-  <ul>
-    <li><a href="/controlpanel/webpages/">Web pages</a></li>
-    <li><a href="/controlpanel/research/">Research</a></li>
-    <li><a href="/controlpanel/islands/">Islands</a></li>
-    <li><a href="/controlpanel/library/">Library</a></li>
-    <li><a href="/controlpanel/people/">People</a></li>
-    <li><a href="/controlpanel/tags/">Tags</a></li>
-  </ul>
+<header class="mb-8">
+  <div class="flex items-center justify-between gap-6">
+    <div>
+      <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">
+        Control Panel
+      </h1>
+      <p class="mt-2 max-w-2xl text-slate-500 leading-relaxed">
+        Manage website content, research outputs, island profiles, news, events, and other resources.
+      </p>
+    </div>
+
+    <div class="hidden lg:flex h-24 w-24 items-center justify-center rounded-2xl border border-slate-700 bg-slate-800">
+      <i class="fal fa-cog text-4xl text-white"></i>
+    </div>
+  </div>
+</header>
+
+<div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+
+  <a href="/controlpanel/webpages/" class="group no-underline">
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-brand">
+      <div class="flex items-center justify-between">
+        <i class="fal fa-file-alt text-2xl text-brand"></i>
+        <i class="fal fa-arrow-right text-slate-300 group-hover:text-brand"></i>
+      </div>
+
+      <h2 class="mt-6 text-xl font-bold tracking-tight text-slate-900">
+        Web pages
+      </h2>
+
+      <p class="mt-2 text-sm leading-relaxed text-slate-500">
+        Edit static pages and website content.
+      </p>
+    </div>
+  </a>
+
+  <a href="/controlpanel/research/" class="group no-underline">
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-brand">
+      <div class="flex items-center justify-between">
+        <i class="fal fa-flask text-2xl text-brand"></i>
+        <i class="fal fa-arrow-right text-slate-300 group-hover:text-brand"></i>
+      </div>
+
+      <h2 class="mt-6 text-xl font-bold tracking-tight text-slate-900">
+        Research
+      </h2>
+
+      <p class="mt-2 text-sm leading-relaxed text-slate-500">
+        Manage research projects and related information.
+      </p>
+    </div>
+  </a>
+
+  <a href="/controlpanel/islands/" class="group no-underline">
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-brand">
+      <div class="flex items-center justify-between">
+        <i class="fal fa-island-tropical text-2xl text-brand"></i>
+        <i class="fal fa-arrow-right text-slate-300 group-hover:text-brand"></i>
+      </div>
+
+      <h2 class="mt-6 text-xl font-bold tracking-tight text-slate-900">
+        Islands
+      </h2>
+
+      <p class="mt-2 text-sm leading-relaxed text-slate-500">
+        Update island profiles and related information.
+      </p>
+    </div>
+  </a>
+
+  <a href="/controlpanel/library/" class="group no-underline">
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-brand">
+      <div class="flex items-center justify-between">
+        <i class="fal fa-books text-2xl text-brand"></i>
+        <i class="fal fa-arrow-right text-slate-300 group-hover:text-brand"></i>
+      </div>
+
+      <h2 class="mt-6 text-xl font-bold tracking-tight text-slate-900">
+        Library
+      </h2>
+
+      <p class="mt-2 text-sm leading-relaxed text-slate-500">
+        Manage publications, reports, datasets, and other records.
+      </p>
+    </div>
+  </a>
+
+  <a href="/controlpanel/people/" class="group no-underline">
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-brand">
+      <div class="flex items-center justify-between">
+        <i class="fal fa-users text-2xl text-brand"></i>
+        <i class="fal fa-arrow-right text-slate-300 group-hover:text-brand"></i>
+      </div>
+
+      <h2 class="mt-6 text-xl font-bold tracking-tight text-slate-900">
+        People
+      </h2>
+
+      <p class="mt-2 text-sm leading-relaxed text-slate-500">
+        Edit researchers, contributors, and profiles.
+      </p>
+    </div>
+  </a>
+
+  <a href="/controlpanel/users/" class="group no-underline">
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-brand">
+      <div class="flex items-center justify-between">
+        <i class="fal fa-users text-2xl text-brand"></i>
+        <i class="fal fa-arrow-right text-slate-300 group-hover:text-brand"></i>
+      </div>
+
+      <h2 class="mt-6 text-xl font-bold tracking-tight text-slate-900">
+        Users
+      </h2>
+
+      <p class="mt-2 text-sm leading-relaxed text-slate-500">
+        Edit access options of the site's users.
+      </p>
+    </div>
+  </a>
+
+  <a href="/controlpanel/regions/" class="group no-underline">
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-brand">
+      <div class="flex items-center justify-between">
+        <i class="fal fa-globe-americas text-2xl text-brand"></i>
+        <i class="fal fa-arrow-right text-slate-300 group-hover:text-brand"></i>
+      </div>
+
+      <h2 class="mt-6 text-xl font-bold tracking-tight text-slate-900">
+        Regions
+      </h2>
+
+      <p class="mt-2 text-sm leading-relaxed text-slate-500">
+        Manage regional groupings and metadata.
+      </p>
+    </div>
+  </a>
+
+  <a href="/controlpanel/news/" class="group no-underline">
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-brand">
+      <div class="flex items-center justify-between">
+        <i class="fal fa-newspaper text-2xl text-brand"></i>
+        <i class="fal fa-arrow-right text-slate-300 group-hover:text-brand"></i>
+      </div>
+
+      <h2 class="mt-6 text-xl font-bold tracking-tight text-slate-900">
+        News
+      </h2>
+
+      <p class="mt-2 text-sm leading-relaxed text-slate-500">
+        Publish and edit news articles.
+      </p>
+    </div>
+  </a>
+
+  <a href="/controlpanel/events/" class="group no-underline">
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-brand">
+      <div class="flex items-center justify-between">
+        <i class="fal fa-calendar-alt text-2xl text-brand"></i>
+        <i class="fal fa-arrow-right text-slate-300 group-hover:text-brand"></i>
+      </div>
+
+      <h2 class="mt-6 text-xl font-bold tracking-tight text-slate-900">
+        Events
+      </h2>
+
+      <p class="mt-2 text-sm leading-relaxed text-slate-500">
+        Manage conferences, workshops, and meetings.
+      </p>
+    </div>
+  </a>
+
+  <a href="/controlpanel/videos/" class="group no-underline">
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-brand">
+      <div class="flex items-center justify-between">
+        <i class="fal fa-video text-2xl text-brand"></i>
+        <i class="fal fa-arrow-right text-slate-300 group-hover:text-brand"></i>
+      </div>
+
+      <h2 class="mt-6 text-xl font-bold tracking-tight text-slate-900">
+        Videos
+      </h2>
+
+      <p class="mt-2 text-sm leading-relaxed text-slate-500">
+        Maintain the video collection and featured media.
+      </p>
+    </div>
+  </a>
+
+  <a href="/controlpanel/tags/" class="group no-underline">
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-brand">
+      <div class="flex items-center justify-between">
+        <i class="fal fa-tags text-2xl text-brand"></i>
+        <i class="fal fa-arrow-right text-slate-300 group-hover:text-brand"></i>
+      </div>
+
+      <h2 class="mt-6 text-xl font-bold tracking-tight text-slate-900">
+        Tags
+      </h2>
+
+      <p class="mt-2 text-sm leading-relaxed text-slate-500">
+        Organize content using shared tags and topics.
+      </p>
+    </div>
+  </a>
+
+</div>
 
 {% endblock %}

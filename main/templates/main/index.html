@@ -1,4 +1,5 @@
 {% extends "main/_base.html" %}
+{% load humanize %}
 {% load extras %}
 
 {% block title %}
@@ -61,14 +62,15 @@
           </p>
 
           <div>
-            <span class="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 group-hover/blog:bg-brand/10 group-hover/blog:text-brand transition-colors tracking-wide uppercase">
-              <i class="fa fa-check text-lime-500 fa-fw mr-1"></i>
-              Launched in 2018
-            </span>
 
             <span class="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 group-hover/blog:bg-brand/10 group-hover/blog:text-brand transition-colors tracking-wide uppercase">
               <i class="fa fa-check text-lime-500 fa-fw mr-1"></i>
               Global research program
+            </span>
+
+            <span class="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 group-hover/blog:bg-brand/10 group-hover/blog:text-brand transition-colors tracking-wide uppercase">
+              <i class="fa fa-check text-lime-500 fa-fw mr-1"></i>
+              Launched in 2018
             </span>
 
             <span class="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 group-hover/blog:bg-brand/10 group-hover/blog:text-brand transition-colors tracking-wide uppercase">
@@ -117,6 +119,51 @@
     {% endfor %}
 
   </div>
+
+  <h2 class="mt-10">Our library</h2>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+    {% for each in library %}
+
+      <a href="/library/browse/?item_types={{ each.id }}" class="group block no-underline">
+        <div class="h-full rounded-2xl border border-slate-200 bg-white p-6 hover:border-brand transition-colors">
+          <div class="flex items-center justify-between">
+            <i class="fal fa-{{ each.icon }} text-2xl text-brand"></i>
+            <span hidden class="text-xs uppercase tracking-widest font-semibold text-slate-400">{{ each }}</span>
+          </div>
+
+          <div class="mt-6">
+            <div class="text-4xl font-black tracking-tight text-slate-900">{{ each.total }}</div>
+            <p class="mt-1 text-sm text-slate-500">
+              {{ each }}s
+            </p>
+          </div>
+        </div>
+      </a>
+
+    {% endfor %}
+
+    <a href="/library/" class="group block no-underline">
+      <div class="h-full rounded-2xl border border-slate-900 bg-slate-800 p-6 text-white hover:bg-slate-900 transition-colors">
+
+        <div class="flex items-center justify-between">
+          <i class="fal fa-books text-2xl"></i>
+          <span class="text-xs uppercase tracking-widest font-semibold text-slate-300">Entire library</span>
+        </div>
+
+        <div class="mt-6">
+          <div class="text-4xl font-black tracking-tight">{{ library_size|intcomma }}</div>
+          <p class="mt-1 text-sm text-slate-300">
+            Browse all research resources
+          </p>
+        </div>
+
+      </div>
+    </a>
+
+</div>
+
 
   <h2 class="mt-10">Latest news</h2>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">

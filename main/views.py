@@ -171,6 +171,10 @@ def index(request):
             research.slug = "/resources/hub-of-island-innovation/"
             research.save()
 
+            # Data harvester session
+            research = LibraryItem.objects.get(pk=586720)
+            research.delete()
+
             messages.success(request, "Research & about sections configured")
         elif migrate == "6":
             PublicProject.objects.filter(part_of_project_id=1).delete()
@@ -240,6 +244,8 @@ def index(request):
         "islands": islands,
         "regions": regions,
         "news": News.objects.all()[:3],
+        "library": LibraryItemType.objects.exclude(pk=38).annotate(total=Count("items")).filter(total__gt=0).order_by("-total")[:3],
+        "library_size": LibraryItem.objects.exclude(type__id=38).count(),
     }
     return render(request, "main/index.html", context)
 
@@ -546,7 +552,23 @@ def resources_overview(request):
     context = {
         "menu": "resources",
     }
-    return render(request, "main/resourceresources.overview.html", context)
+    return render(request, "main/resources.overview.html", context)
+
+def videos(request):
+
+    context = {
+        "menu": "resources",
+        "videos": LibraryItem.objects.filter(type__name="Video Recording"),
+    }
+    return render(request, "main/videos.html", context)
+
+def video(request, id):
+    context = {
+        "menu": "resources",
+        "info": LibraryItem.objects.get(pk=id),
+        "videos": LibraryItem.objects.filter(type__name="Video Recording").order_by("-date_created")[:5],
+    }
+    return render(request, "main/video.html", context)
 
 def resources(request, slug):
     slug = f"/resources/{slug}/"
@@ -685,6 +707,15 @@ def controlpanel_library(request):
     }
     return render(request, "main/controlpanel/library.html", context)
 
+def controlpanel_library_item(request):
+    context = {
+        "types": LibraryItemType.objects.all(),
+        "tags": Tag.objects.all(),
+        "licenses": License.objects.all(),
+        "islands": Island.objects.all(),
+    }
+    return render(request, "main/controlpanel/library.item.html", context)
+
 def controlpanel_webpages(request):
     context = {
         "pages": Webpage.objects.all(),
@@ -732,3 +763,21 @@ def controlpanel_tag(request, id=None):
         "info": info,
     }
     return render(request, "main/controlpanel/tag.html", context)
+
+def controlpanel_users(request):
+    context = {
+        "users": User.objects.filter(last_login__isnull=False).order_by("-last_login"),
+    }
+    return render(request, "main/controlpanel/users.html", context)
+
+def controlpanel_user(request, id=None):
+    if id:
+        user = User.objects.get(pk=id)
+    else:
+        user = User()
+    context = {
+        "user": user,
+        "islands": Island.objects.all(),
+    }
+    return render(request, "main/controlpanel/user.html", context)
+
