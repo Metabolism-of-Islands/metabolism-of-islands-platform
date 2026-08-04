@@ -82,7 +82,7 @@
 
       </div>
 
-      <div class="lg:col-span-1 border border-slate-700 rounded-2xl bg-slate-800 p-8 flex flex-col items-center justify-center text-center gap-1.5">
+      <div class="lg:col-span-1 rounded-2xl bg-brand p-8 flex flex-col items-center justify-center text-center gap-1.5">
         <span class="text-6xl font-black text-white tracking-tighter font-mono leading-none">{{ islands.count }}</span>
         <span class="text-[10px] font-bold text-slate-300 uppercase tracking-widest block">Island profiles</span>
       </div>
@@ -101,7 +101,7 @@
     
     {% for each in regions %}
       <a href="{{ each.get_absolute_url }}" class="no-underline">
-        <div class="border border-slate-200 bg-white rounded-2xl overflow-hidden flex flex-col justify-between">
+        <div class="border border-slate-200 bg-white rounded-2xl overflow-hidden flex flex-col justify-between hover:border-brand">
           <div>
 
             <img src="{{ each.photo_island.photo.image.thumbnail.url }}" alt="{{ each.name }}" class="w-full h-40 object-cover border-b border-slate-100">
@@ -162,13 +162,94 @@
       </div>
     </a>
 
+  </div>
+
+  <h2 class="mt-10">Our video collection</h2>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+    <div class="lg:col-span-2">
+      <div class="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 aspect-video">
+        {{ video.embed|safe }}
+      </div>
+
+      <div class="mt-4">
+        <h3 class="text-2xl font-bold tracking-tight text-slate-900">
+          <a href="{{ video.get_absolute_url }}" class="hover:text-brand transition-colors no-underline">
+            {{ video }}
+          </a>
+        </h3>
+
+        {% if video.description %}
+          <p class="mt-2 text-slate-600 leading-relaxed line-clamp-3">
+            {{ video.description|truncatewords:35 }}
+          </p>
+        {% endif %}
+      </div>
+    </div>
+
+<div class="rounded-2xl border border-slate-200 bg-white divide-y divide-slate-200 overflow-hidden">
+
+  {% for each in video_highlights %}
+
+    <a
+      href="{{ each.get_absolute_url }}"
+      class="group flex gap-4 p-4 hover:bg-slate-50 transition-colors no-underline">
+
+      <img
+        src="{{ each.image.thumbnail.url }}"
+        class="w-28 aspect-video rounded-lg object-cover flex-shrink-0"
+        alt="{{ each }}">
+
+      <div class="min-w-0 flex-1">
+
+        <h4 class="font-semibold leading-snug tracking-tight text-slate-900 group-hover:text-brand line-clamp-3 transition-colors">
+          {{ each }}
+        </h4>
+
+        {% if each.duration %}
+          <p class="mt-2 text-xs uppercase tracking-wide text-slate-400">
+            {{ each.duration }} min
+          </p>
+        {% endif %}
+
+      </div>
+
+    </a>
+
+  {% endfor %}
+
+<a
+  href="/resources/videos/"
+  class="group flex gap-4 p-4 hover:bg-slate-50 transition-colors no-underline">
+
+  <div class="w-28 aspect-video rounded-lg flex-shrink-0 bg-slate-800 flex items-center justify-center">
+    <i class="fal fa-film text-4xl text-white"></i>
+  </div>
+
+  <div class="min-w-0 flex-1 flex flex-col justify-center">
+
+    <h4 class="font-semibold leading-snug tracking-tight text-slate-900 group-hover:text-brand transition-colors">
+      Browse our video collection
+    </h4>
+
+    <p class="mt-2 text-xs uppercase tracking-wide text-slate-400">
+      {{ video_library_size }} videos
+    </p>
+
+  </div>
+
+</a>
+
 </div>
+
+  </div>
 
 
   <h2 class="mt-10">Latest news</h2>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     {% for each in news %}
-      <a class="news no-underline block group/blog border border-slate-200 bg-white rounded-2xl overflow-hidden flex flex-col justify-between hover:border-brand transition-all duration-150" href="{{ each.slug }}/" data-year="{{ each.date|date:"Y" }}">
+      <a class="news no-underline block group/blog border border-slate-200 bg-white rounded-2xl overflow-hidden flex flex-col justify-between hover:border-brand transition-all duration-150" href="{{ each.get_absolute_url }}" data-year="{{ each.date|date:"Y" }}">
         
         <div>
           {% if each.image %}
@@ -183,7 +264,7 @@
             </h5>
             <p class="text-sm text-slate-600 font-normal leading-relaxed line-clamp-3 pt-1">
               <span>
-                {{ each.description|striptags|truncatewords:20 }}
+                {{ each.get_description|striptags|truncatewords:20 }}
               </span>
             </p>
           </div>

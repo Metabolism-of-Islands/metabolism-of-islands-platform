@@ -248,6 +248,9 @@ def index(request):
         "news": News.objects.all()[:3],
         "library": LibraryItemType.objects.exclude(pk=38).annotate(total=Count("items")).filter(total__gt=0).order_by("-total")[:3],
         "library_size": LibraryItem.objects.exclude(type__id=38).count(),
+        "video": Video.objects.get(pk=1280307),
+        "video_highlights": Video.objects.filter(pk__in=[1280309,642031,1280308]),
+        "video_library_size": Video.objects.all().count(),
     }
     return render(request, "main/index.html", context)
 
@@ -560,7 +563,7 @@ def videos(request):
 
     context = {
         "menu": "resources",
-        "videos": LibraryItem.objects.filter(type__name="Video Recording"),
+        "videos": Video.objects.all(),
     }
     return render(request, "main/videos.html", context)
 
@@ -718,12 +721,16 @@ def controlpanel_library_items(request, id):
     }
     return render(request, "main/controlpanel/library.items.html", context)
 
-def controlpanel_library_item(request):
+def controlpanel_library_item(request, id):
+    if id:
+        info = LibraryItem.objects.get(pk=id)
     context = {
         "types": LibraryItemType.objects.all(),
         "tags": Tag.objects.all(),
         "licenses": License.objects.all(),
         "islands": Island.objects.all(),
+        "info": info,
+        "languages": LibraryItem.LANGUAGES,
     }
     return render(request, "main/controlpanel/library.item.html", context)
 

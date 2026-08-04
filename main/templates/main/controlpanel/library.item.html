@@ -31,16 +31,16 @@
 
       <div>
         <label class="block mb-2 text-sm font-semibold text-slate-700">Language</label>
-        <select name="language" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+        <select id="language" name="language" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
           {% for value,label in info.LANGUAGES %}
             <option value="{{ value }}"{% if value == info.language %} selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
       </div>
 
-      <div class="lg:col-span-2">
+      <div class="lg:col-span-2" id="title_original">
         <label class="block mb-2 text-sm font-semibold text-slate-700">Title in original language</label>
-        <input type="text" name="title_original_language" value="{{ info.title_original_language }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+        <input type="text" id="language" name="title_original_language" value="{{ info.title_original_language }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
       </div>
 
       <div class="lg:col-span-2">
@@ -78,12 +78,12 @@
         </select>
       </div>
 
-      <div>
+      <div id="field-doi">
         <label class="block mb-2 text-sm font-semibold text-slate-700">DOI</label>
         <input type="text" name="doi" value="{{ info.doi }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
       </div>
 
-      <div>
+      <div id="field-isbn">
         <label class="block mb-2 text-sm font-semibold text-slate-700">ISBN</label>
         <input type="text" name="isbn" value="{{ info.isbn }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
       </div>
@@ -93,12 +93,12 @@
         <input type="url" name="url" value="{{ info.url }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
       </div>
 
-      <div class="lg:col-span-2">
+      <div class="lg:col-span-2" id="field-file_url">
         <label class="block mb-2 text-sm font-semibold text-slate-700">File download URL</label>
         <input type="url" name="file_url" value="{{ info.file_url }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
       </div>
 
-      <div class="lg:col-span-2">
+      <div class="lg:col-span-2" id="field-open_access">
         <label class="inline-flex items-center gap-3">
           <input type="checkbox" name="open_access" {% if info.open_access %}checked{% endif %} class="rounded border-slate-300 text-brand focus:ring-brand">
           <span class="text-sm font-medium text-slate-700">Open access publication</span>
@@ -115,7 +115,7 @@
 
     <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-      <div>
+      <div id="field-image">
         <label class="block mb-2 text-sm font-semibold text-slate-700">Featured image</label>
 
         {% if info.image %}
@@ -125,7 +125,7 @@
         <input type="file" name="image" class="block w-full text-sm">
       </div>
 
-      <div>
+      <div id="field-file">
         <label class="block mb-2 text-sm font-semibold text-slate-700">Document file</label>
 
         {% if info.file %}
@@ -167,9 +167,15 @@
   </div>
 
   <div class="flex items-center justify-between">
-    <a href="/controlpanel/library/" class="rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 no-underline">
-      Cancel
-    </a>
+
+    <button
+      type="button"
+      id="delete-record"
+      tabindex="-1"
+      class="btn-red">
+      <i class="fal fa-trash-alt mr-2"></i>
+      Delete
+    </button>
 
     <button type="submit" class="rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white hover:opacity-90">
       <i class="fal fa-save mr-2"></i>
@@ -178,4 +184,67 @@
   </div>
 
 </form>
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript">
+  $(function(){
+    const hiddenFields = {
+      // Video
+      31: [
+        "doi",
+        "isbn",
+        "file_url",
+        "open_access",
+        "image",
+        "file"
+      ],
+
+      // Dataset
+      9: [
+        "isbn"
+      ],
+
+      // Report
+      5: [
+        "doi"
+      ]
+
+    };
+
+    const optionalFields = [
+      "doi",
+      "isbn",
+      "file_url",
+      "open_access",
+      "image",
+      "file"
+    ];
+
+    function updateLanguageFields() {
+      $("#title_original").toggle($("#language").val() !== "EN");
+    }
+
+    function updateTypeFields() {
+
+      const typeId = $("select[name=type]").val();
+
+      $.each(optionalFields, function(_, field) {
+        $("#field-" + field).removeClass("hidden");
+      });
+
+      $.each(hiddenFields[typeId] || [], function(_, field) {
+        $("#field-" + field).addClass("hidden");
+      });
+
+    }
+
+    $("#language").on("change", updateLanguageFields);
+    $("select[name=type]").on("change", updateTypeFields);
+
+    updateLanguageFields();
+    updateTypeFields();
+  });
+</script>
+
 {% endblock %}
