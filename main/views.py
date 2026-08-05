@@ -390,8 +390,8 @@ def event(request, slug):
     info = get_object_or_404(Event, slug=slug)
     context = {
         "info": info,
-        "menu": "news",
-        "latest": Event.objects.all()[:5],
+        "menu": "events",
+        "latest": Event.objects.all().order_by("start_date")[:5],
     }
     return render(request, "main/event.html", context)
 
@@ -611,6 +611,22 @@ def controlpanel_tag(request, id=None):
         "info": info,
     }
     return render(request, "main/controlpanel/tag.html", context)
+
+def controlpanel_events(request):
+    context = {
+        "events": Event.objects.all(),
+    }
+    return render(request, "main/controlpanel/events.html", context)
+
+def controlpanel_event(request, id=None):
+
+    if id:
+        info = Event.objects.get(pk=id)
+
+    context = {
+        "info": info,
+    }
+    return render(request, "main/controlpanel/event.html", context)
 
 def controlpanel_users(request):
     context = {

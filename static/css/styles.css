@@ -27,7 +27,6 @@
     --color-lime-700: oklch(53.2% 0.157 131.589);
     --color-green-500: oklch(72.3% 0.219 149.579);
     --color-emerald-50: oklch(97.9% 0.021 166.113);
-    --color-emerald-400: oklch(76.5% 0.177 163.223);
     --color-emerald-600: oklch(59.6% 0.145 163.225);
     --color-emerald-700: oklch(50.8% 0.118 165.612);
     --color-cyan-100: oklch(95.6% 0.045 203.388);
@@ -1539,6 +1538,9 @@
   }
   .break-all {
     word-break: break-all;
+  }
+  .text-ellipsis {
+    text-overflow: ellipsis;
   }
   .whitespace-normal {
     white-space: normal;

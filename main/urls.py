@@ -42,6 +42,10 @@ urlpatterns = [
     path("controlpanel/webpages/<int:id>/", views.controlpanel_webpage, name="controlpanel_webpage"),
     path("controlpanel/webpages/create/", views.controlpanel_webpage, name="controlpanel_webpage"),
 
+    path("controlpanel/events/", views.controlpanel_events, name="controlpanel_events"),
+    path("controlpanel/events/<int:id>/", views.controlpanel_event, name="controlpanel_event"),
+    path("controlpanel/events/create/", views.controlpanel_event, name="controlpanel_event"),
+
     path("controlpanel/tags/", views.controlpanel_tags, name="controlpanel_tags"),
     path("controlpanel/tags/<int:id>/", views.controlpanel_tag, name="controlpanel_tag"),
     path("controlpanel/tags/create/", views.controlpanel_tag, name="controlpanel_tag"),

@@ -110,14 +110,14 @@ def get_date_range(start, end, months_only=False):
             return start_date + " " + start_time + " - " + end_time
     else:
         if start.strftime("%Y%m") == end.strftime("%Y%m"):
-            return start.strftime("%b") + " " + start.strftime("%d") + " - " + end.strftime("%d") + ", " + start.strftime("%Y")
+            return start.strftime("%b") + " " + start.strftime("%d") + "-" + end.strftime("%d") + ", " + start.strftime("%Y")
         elif start_time != "00:00" and end_time != "00:00":
-            return start.strftime("%b %d, %Y %H:%M") + " - " + end.strftime("%b %d, %Y %H:%M")
+            return start.strftime("%b %d, %Y %H:%M") + "-" + end.strftime("%b %d, %Y %H:%M")
         elif start.strftime("%Y") == end.strftime("%Y"):
             if months_only:
-                return start.strftime("%b") + " - " + end_date
+                return start.strftime("%b") + "-" + end_date
             else:
-                return start.strftime("%b %d") + " - " + end_date
+                return start.strftime("%b %d") + "-" + end_date
         else:
             return start_date + " - " + end_date
 
@@ -1964,14 +1964,13 @@ class PublicProject(Record):
 class Event(Record):
     EVENT_TYPE = [
         ("conference", "Conference"),
-        ("hackathon", "Hackathon"),
         ("workshop", "Workshop"),
         ("seminar", "Seminar"),
         ("summerschool", "Summer School"),
         ("other", "Other"),
         ("training_outreach", "Training and Outreach"),
     ]
-    type = models.CharField(max_length=20, blank=True, null=True, choices=EVENT_TYPE)
+    event_type = models.CharField(max_length=20, blank=True, null=True, choices=EVENT_TYPE)
     url = models.URLField(max_length=255, null=True, blank=True)
     location = models.CharField(max_length=255, null=True, blank=True)
     start_date = models.DateTimeField(null=True, blank=True)
@@ -1982,10 +1981,7 @@ class Event(Record):
         ordering = ["-start_date", "-id"]
 
     def get_absolute_url(self):
-        if self.projects.count() > 0:
-            return self.projects.all()[0].get_website() + "events/" + str(self.id) + "/" + self.slug + "/"
-        else:
-            return reverse("core:event", args=[self.id, self.slug])
+        return reverse("event", args=[self.slug])
 
     def get_dates(self):
         return get_date_range(self.start_date, self.end_date)

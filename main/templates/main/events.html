@@ -39,7 +39,7 @@
               </h5>
               <p class="text-sm text-slate-600 font-normal leading-relaxed line-clamp-3 pt-1">
                 <span>
-                  {{ each.description|striptags|truncatewords:20 }}
+                  {{ each.get_description|striptags|truncatewords:20 }}
                 </span>
               </p>
             </div>

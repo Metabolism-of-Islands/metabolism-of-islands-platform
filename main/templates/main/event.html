@@ -53,39 +53,38 @@
   <!-- Right Side: Metadata Parameters & Quick Links Sidebar -->
   <div class="space-y-6">
     
-    <!-- Meta Parameter Listing Box (Replacing basic-info card) -->
     <div class="border border-slate-200 rounded-xl bg-white overflow-hidden text-sm divide-y divide-slate-100">
-      
-      <!-- Authors Condition Section -->
-      {% if info.authors %}
-        <div class="p-4 flex items-start gap-3">
-          <i class="fa fa-user text-slate-400 mt-0.5 w-4 text-center" aria-hidden="true"></i>
-          <div class="text-slate-700 font-normal">
-            {% if info.authors.count == 1 %}
-              <span class="font-medium text-slate-900">{{ info.authors.0 }}</span>
-            {% else %}
-              <span class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Authors</span>
-              <div class="space-y-1 font-medium text-slate-900">
-                {% for each in info.authors %}
-                  <div>{{ each }}</div>
-                {% endfor %}
-              </div>
-            {% endif %}
-          </div>
+
+      {% if info.event_type %}
+        <div class="p-4 flex items-center gap-3">
+          <i class="fa fa-info-circle text-slate-400 w-4 text-center" aria-hidden="true"></i>
+          <span class="text-slate-600 font-medium">{{ info.get_event_type_display }}</span>
         </div>
       {% endif %}
 
-      <!-- Date Section -->
+      {% if info.location %}
+        <div class="p-4 flex items-center gap-3">
+          <i class="fa fa-map text-slate-400 w-4 text-center" aria-hidden="true"></i>
+          <span class="text-slate-600 font-medium">{{ info.location }}</span>
+        </div>
+      {% endif %}
+
+      {% if info.url %}
+        <div class="p-4 flex items-center gap-3">
+          <i class="fa fa-link text-slate-400 w-4 text-center" aria-hidden="true"></i>
+          <a href="{{ info.url }}" class="text-slate-600 font-medium whitespace-nowrap overflow-hidden text-ellipsis">{{ info.url|cut:"https://"|cut:"http://" }}</a>
+        </div>
+      {% endif %}
+
       <div class="p-4 flex items-center gap-3">
         <i class="fa fa-calendar text-slate-400 w-4 text-center" aria-hidden="true"></i>
-        <span class="font-mono text-slate-600 font-medium">{{ info.date }}</span>
+        <span class="font-mono text-slate-600 font-medium">{{ info.get_dates }}</span>
       </div>
 
     </div>
 
-    <!-- Latest News Links Directory Box (Replacing list-group card) -->
     <div class="space-y-3">
-      <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">Latest News</h3>
+      <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">Latest Events</h3>
       
       <div class="border border-slate-200 rounded-xl bg-white overflow-hidden divide-y divide-slate-100 text-sm">
         {% for each in latest %}
@@ -100,7 +99,7 @@
         {% endfor %}
         
         <a href="/events/" class="block p-3.5 bg-slate-50/50 hover:bg-slate-50 text-center font-bold text-slate-700 hover:text-brand transition-colors !no-underline text-xs uppercase tracking-wider">
-          View News Archive <i class="fa fa-chevron-right ml-1 text-[10px]"></i>
+          View Events Archive <i class="fa fa-chevron-right ml-1 text-[10px]"></i>
         </a>
       </div>
     </div>
