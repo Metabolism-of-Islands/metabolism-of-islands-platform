@@ -1,0 +1,28 @@
+{% extends "main/_base.html" %}
+
+{% block content %}
+
+<h1>
+{% block title %}
+  Regions
+{% endblock %}
+</h1>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for each in regions %}
+    <tr>
+      <td class="font-mono text-slate-700">{{ each.id }}</td>
+      <td><a href="{% url "controlpanel_region" each.id %}">{{ each }}</a></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

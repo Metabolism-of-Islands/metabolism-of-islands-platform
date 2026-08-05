@@ -507,7 +507,7 @@ class People(Record):
     lastname = models.CharField(max_length=255, null=True, blank=True)
     affiliation = models.CharField(max_length=255,null=True, blank=True)
     email = models.EmailField(max_length=255, null=True, blank=True)
-    email_public = models.BooleanField(default=False)
+    is_team = models.BooleanField(default=False)
     website = models.CharField(max_length=255, null=True, blank=True)
     twitter = models.CharField(max_length=255, null=True, blank=True)
     google_scholar = models.CharField(max_length=255, null=True, blank=True)
@@ -515,14 +515,6 @@ class People(Record):
     researchgate = models.CharField(max_length=255, null=True, blank=True)
     linkedin = models.CharField(max_length=255, null=True, blank=True)
     research_interests = models.TextField(null=True, blank=True)
-    PEOPLE_STATUS = (
-        ("active", "Active"),
-        ("retired", "Retired"),
-        ("deceased", "Deceased"),
-        ("inactive", "Inactive"),
-        ("pending", "Pending Review"),
-    )
-    status = models.CharField(max_length=8, choices=PEOPLE_STATUS, default="active")
     user = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -530,11 +522,6 @@ class People(Record):
 
     def get_absolute_url(self):
         return reverse("islands:user", args=[self.id])
-
-    @property
-    def points(self):
-        points = Work.objects_unfiltered.filter(assigned_to=self, status=Work.WorkStatus.COMPLETED).aggregate(total=Sum("workactivity__points"))
-        return points["total"]
 
     @property
     def avatar(self):
@@ -550,29 +537,6 @@ class People(Record):
         else:
             photo = Photo.objects.get(pk=1278693)
             return photo.image
-
-    @property
-    def get_my_space(self):
-        if self.spaces.all():
-            return self.spaces.all()[0]
-        else:
-            return None
-
-    @property
-    def my_voted_work_items(self):
-        return Work.objects.filter(child_list__record_parent=self, child_list__relationship__id=36, status__in=[1,4,5])
-
-    @property
-    def can_vote(self):
-        return True if self.my_voted_work_items.count() < 10 else False
-
-    @property
-    def name_and_link(self):
-        # If the user exists, then we must link it to a profile; if not, just show the name
-        if self.user:
-            return mark_safe(f'<a href="/hub/users/{self.id}/">{self.name}</a>')
-        else:
-            return self.name
 
     class Meta:
         verbose_name_plural = "people"

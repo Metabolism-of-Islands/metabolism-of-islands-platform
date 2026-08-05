@@ -20,10 +20,10 @@
               </svg>
             </a>
             <div class="absolute left-0 top-full z-50 mt-0 hidden w-48 rounded-md bg-white py-2 shadow-lg group-hover:block">
-              <a href="/about/purpose/">Purpose</a>
-              <a href="/about/what-is-island-metabolism/">What is island metabolism?</a>
+              <a href="/about/purpose/" {% if menu == "about" and slug == "purpose" %}class="active"{% endif %}>Purpose</a>
+              <a href="/about/what-is-island-metabolism/" {% if menu == "about" and slug == "what-is-island-metabolism" %}class="active"{% endif %}>What is island metabolism?</a>
               <a href="/about/community/">Community</a>
-              <a href="/about/join/">Join us</a>
+              <a href="/about/join/" {% if menu == "about" and slug == "join" %}class="active"{% endif %}>Join us</a>
               <a href="/about/subscribe/">Subscribe</a>
               <a href="/about/contact/">Contact us</a>
             </div>
@@ -37,8 +37,8 @@
               </svg>
             </a>
             <div class="absolute left-0 top-full z-50 mt-0 hidden w-48 rounded-md bg-white py-2 shadow-lg group-hover:block">
-              <a href="/research/theses/">Theses</a>
-              <a href="/research/projects/">Research projects</a>
+              <a href="/research/theses/" {% if menu == "research" and slug == "theses" %}class="active"{% endif %}>Theses</a>
+              <a href="/research/projects/" {% if menu == "research" and slug == "projects" %}class="active"{% endif %}>Research projects</a>
             </div>
           </li>
 

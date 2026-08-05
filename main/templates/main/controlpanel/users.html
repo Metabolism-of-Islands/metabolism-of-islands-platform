@@ -20,7 +20,15 @@
   {% for each in users %}
     <tr>
       <td><a href="{% url "controlpanel_user" each.id %}">{{ each }}</a></td>
-      <td>{{ each.first_name }} {{ each.last_name }}</td>
+      <td>
+        {{ each.first_name }} {{ each.last_name }}
+        {% if each.people.meta_data.optamos %}
+          <span class="badge">OPTamos invitee</span>
+        {% endif %}
+        {% if not each.is_active %}
+          <span class="badge badge-danger">User deactivated</span>
+        {% endif %}
+      </td>
       <td class="whitespace-nowrap">{{ each.last_login|date:"M d, Y" }}</td>
     </tr>
   {% endfor %}

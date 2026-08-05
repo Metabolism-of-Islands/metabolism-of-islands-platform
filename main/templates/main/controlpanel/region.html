@@ -1,0 +1,41 @@
+{% extends "main/_base.html" %}
+
+{% block content %}
+
+<h1>
+{% block title %}
+  Region
+{% endblock %}
+</h1>
+
+<form method="post">
+  {% csrf_token %}
+
+  <div class="flex flex-col gap-4 sm:flex-row">
+    <input
+      type="text"
+      name="name"
+      value="{{ info }}"
+      required
+      class="flex-1 rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+
+    <select
+      name="photo_island"
+      required
+      class="flex-1 rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+      <option value="">---- SELECT THUMBNAIL PHOTO ----</option>
+      {% for each in islands %}
+        <option value="{{ each.id }}" {% if each == info.photo_island %}selected{% endif %}>{{ each }}</option>
+      {% endfor %}
+    </select>
+
+    <button
+      type="submit"
+      class="inline-flex items-center justify-center rounded-xl bg-brand px-5 py-3 font-semibold text-white hover:opacity-90 transition-opacity">
+      Save
+    </button>
+  </div>
+
+</form>
+
+{% endblock %}

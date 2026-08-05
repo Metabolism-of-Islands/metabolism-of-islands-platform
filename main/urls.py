@@ -11,6 +11,7 @@ urlpatterns = [
     path("islands/regions/<slug:region>/", views.islands, name="region"),
 
     path("about/", views.about_overview, name="about_overview"),
+    path("about/community/", views.community, name="community"),
     path("about/<slug:slug>/", views.about, name="about"),
 
     path("resources/", views.resources_overview, name="resources_overview"),
@@ -45,6 +46,9 @@ urlpatterns = [
     path("controlpanel/events/", views.controlpanel_events, name="controlpanel_events"),
     path("controlpanel/events/<int:id>/", views.controlpanel_event, name="controlpanel_event"),
     path("controlpanel/events/create/", views.controlpanel_event, name="controlpanel_event"),
+
+    path("controlpanel/regions/", views.controlpanel_regions, name="controlpanel_regions"),
+    path("controlpanel/regions/<int:id>/", views.controlpanel_region, name="controlpanel_region"),
 
     path("controlpanel/tags/", views.controlpanel_tags, name="controlpanel_tags"),
     path("controlpanel/tags/<int:id>/", views.controlpanel_tag, name="controlpanel_tag"),

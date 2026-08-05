@@ -318,13 +318,23 @@ def about_overview(request):
     return render(request, "main/about.overview.html", context)
 
 def about(request, slug):
-    slug = f"/about/{slug}/"
-    info = Webpage.objects.get(slug=slug)
+    info = Webpage.objects.get(slug=f"/about/{slug}/")
     context = {
         "info": info,
         "menu": "about",
+        "slug": slug,
     }
     return render(request, "main/about.html", context)
+
+def community(request):
+    info = Webpage.objects.get(slug="community")
+    context = {
+        "menu": "about",
+        "slug": "community",
+        "info": info,
+        "people": People.objects.filter(is_team=True),
+    }
+    return render(request, "main/community.html", context)
 
 def resources_overview(request):
     context = {
@@ -397,12 +407,12 @@ def event(request, slug):
 
 def research(request, slug):
     project_type = "thesis" if slug == "theses" else "research"
-    slug = f"/research/{slug}/"
-    info = Webpage.objects.get(slug=slug)
+    info = Webpage.objects.get(slug=f"/research/{slug}/")
     context = {
         "info": info,
         "projects": PublicProject.objects.filter(project_type=project_type),
         "menu": "research",
+        "slug": slug,
     }
     return render(request, "main/research.html", context)
 
@@ -596,6 +606,28 @@ def controlpanel_research(request, id=None):
     }
     return render(request, "main/controlpanel/research.html", context)
 
+def controlpanel_regions(request):
+    context = {
+        "regions": Region.objects.all(),
+    }
+    return render(request, "main/controlpanel/regions.html", context)
+
+def controlpanel_region(request, id):
+
+    info = Region.objects.get(pk=id)
+    if request.method == "POST":
+        info.name = request.POST["name"]
+        info.photo_island_id = request.POST["photo_island"]
+        info.save()
+        messages.success(request, "Information was saved.")
+        return redirect("/controlpanel/regions/")
+
+    context = {
+        "info": info,
+        "islands": Island.objects.filter(region=info),
+    }
+    return render(request, "main/controlpanel/region.html", context)
+
 def controlpanel_tags(request):
     context = {
         "tags": Tag.objects.all(),
@@ -629,6 +661,16 @@ def controlpanel_event(request, id=None):
     return render(request, "main/controlpanel/event.html", context)
 
 def controlpanel_users(request):
+    for each in User.objects.all():
+        print(each, each.people.meta_data)
+        if each.people.meta_data and "optamos" in each.people.meta_data:
+            print("OPTAMOS", each)
+        elif each.id != 1 and each.id != 50:
+            print("DELETE!", each)
+            each.is_active = False
+            each.save()
+        else:
+            print("KEEEEEP", each)
     context = {
         "users": User.objects.filter(last_login__isnull=False).order_by("-last_login"),
     }
