@@ -34,6 +34,9 @@ urlpatterns = [
     path("library/ajax/search/", views.library_ajax_search, name="library_ajax_search"),
     path("library/<int:id>/", views.library_item, name="library_item"),
 
+    path("accounts/login/", views.account_login, name="login"),
+    path("accounts/logout/", views.account_logout, name="logout"),
+
     #################
     # CONTROL PANEL #
     #################
@@ -71,4 +74,8 @@ urlpatterns = [
     path("controlpanel/users/", views.controlpanel_users, name="controlpanel_users"),
     path("controlpanel/users/<int:id>/", views.controlpanel_user, name="controlpanel_user"),
     path("controlpanel/users/create/", views.controlpanel_user, name="controlpanel_user"),
+
+    path("controlpanel/people/", views.controlpanel_people_list, name="controlpanel_people_list"),
+    path("controlpanel/people/<int:id>/", views.controlpanel_people, name="controlpanel_people"),
+    path("controlpanel/people/create/", views.controlpanel_people, name="controlpanel_people"),
 ]

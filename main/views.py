@@ -1,16 +1,21 @@
 from main.models import *
 from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import user_passes_test
+from django.contrib.gis.geos import GEOSGeometry
+from django.core.files.base import ContentFile
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.serializers import serialize
 from django.db.models import Count #, Q, Subquery, OuterRef, CharField, Avg
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.gis.geos import GEOSGeometry
-from django.core.serializers import serialize
 from itertools import groupby
 import json
 import requests
-from django.core.files.base import ContentFile
+
+# This is an alternative to staff_member_required in order not to require the admin module
+staff_required = user_passes_test(lambda u: u.is_staff)
 
 def index(request):
     islands = Island.objects.all()
@@ -416,18 +421,104 @@ def research(request, slug):
     }
     return render(request, "main/research.html", context)
 
+# Account functions
+
+def account_login(request):
+
+    if request.method == "POST":
+        email = request.POST.get("email").lower()
+
+        password = request.POST.get("password")
+        user = authenticate(request, username=email.strip(), password=password.strip())
+        redirect_url = request.GET.get("redirect", "optamos:projects")
+
+        if user is not None:
+            login(request, user)
+            people = People.objects.get(user=user)
+            if people.meta_data and "temporary_password" in people.meta_data:
+                messages.success(request, "Please change your temporary pin. You can set your own password here:" + "<br><a href='/hub/profile/edit/?shortened=true'>" + "Edit my profile" + "</a>")
+            elif people.meta_data and "pending_activation" in people.meta_data:
+                messages.success(request, "Welcome to OPTamos! Please finish setting up your account here:" + "<br><a href='/account/?activation=true'>" + "Edit my account" + "</a>")
+            return redirect(redirect_url)
+        else:
+            messages.error(request, "We could not authenticate you, please try again.")
+
+    context = {
+        "menu": "optamos_login",
+    }
+    return render(request, "main/login.html", context)
+
+def account_logout(request):
+    logout(request)
+    messages.success(request, "You are now logged out")
+    return redirect("index")
+
+def account(request):
+    if not request.user.is_authenticated:
+        return redirect(f"{reverse("login")}?redirect={request.path}")
+
+    if request.method == "POST":
+        user = request.user
+        people = user.people
+        name = request.POST.get("name")
+        email = request.POST.get("email")
+
+        if email != user.email and User.objects.filter(email = email).exists():
+            messages.error(request, "E-mail already in use; cannot change this e-mail address")
+            return redirect(request.path)
+
+        people.name = name
+        user.first_name = name
+        people.email = email
+        user.username = email
+        user.email = email
+
+        if "password" in request.POST and request.POST["password"]:
+            user.set_password(request.POST["password"])
+        user.save();
+
+        if people.meta_data and "pending_activation" in people.meta_data:
+            del(people.meta_data["pending_activation"])
+
+        if not people.meta_data:
+            people.meta_data = {}
+
+        if "institution" in request.POST:
+            people.meta_data["institution"] = request.POST.get("institution")
+        if "location" in request.POST:
+            people.meta_data["location"] = request.POST.get("location")
+        if "how" in request.POST:
+            people.meta_data["how"] = request.POST.get("how")
+        people.save()
+
+        login(request, user)
+        messages.success(request, "Changes have been saved.")
+        return redirect(request.path)
+
+    context = {
+        "menu": "account",
+    }
+    return render(request, "main/account.settings.html", context)
+
+
 # Control Panel section
+
+@staff_required
 def controlpanel(request):
     context = {
+        "controlpanel": True,
     }
     return render(request, "main/controlpanel/index.html", context)
 
+@staff_required
 def controlpanel_islands(request):
     context = {
         "pages": Island.objects.all(),
+        "controlpanel": True,
     }
     return render(request, "main/controlpanel/islands.html", context)
 
+@staff_required
 def controlpanel_island(request, id=None):
 
     if id:
@@ -488,24 +579,30 @@ def controlpanel_island(request, id=None):
         "info": info,
         "regions": Region.objects.all(),
         "geojson": geojson_payload,
+        "controlpanel": True,
     }
     return render(request, "main/controlpanel/island.html", context)
 
+@staff_required
 def controlpanel_library(request):
     context = {
         "types": LibraryItemType.objects.all(),
+        "controlpanel": True,
     }
     return render(request, "main/controlpanel/library.html", context)
 
+@staff_required
 def controlpanel_library_items(request, id):
     item_type = LibraryItemType.objects.get(pk=id)
     items = LibraryItem.objects.filter(type=item_type)
     context = {
         "info": item_type,
         "items": items,
+        "controlpanel": True,
     }
     return render(request, "main/controlpanel/library.items.html", context)
 
+@staff_required
 def controlpanel_library_item(request, id):
     if id:
         info = LibraryItem.objects.get(pk=id)
@@ -516,9 +613,11 @@ def controlpanel_library_item(request, id):
         "islands": Island.objects.all(),
         "info": info,
         "languages": LibraryItem.LANGUAGES,
+        "controlpanel": True,
     }
     return render(request, "main/controlpanel/library.item.html", context)
 
+@staff_required
 def controlpanel_videos(request):
 
     # Temp code until we finish migration
@@ -571,15 +670,19 @@ def controlpanel_videos(request):
 
     context = {
         "videos": Video.objects.all(),
+        "controlpanel": True,
     }
     return render(request, "main/controlpanel/videos.html", context)
 
+@staff_required
 def controlpanel_webpages(request):
     context = {
         "pages": Webpage.objects.all(),
+        "controlpanel": True,
     }
     return render(request, "main/controlpanel/pages.html", context)
 
+@staff_required
 def controlpanel_webpage(request, id=None):
 
     if id:
@@ -587,15 +690,19 @@ def controlpanel_webpage(request, id=None):
 
     context = {
         "info": info,
+        "controlpanel": True,
     }
     return render(request, "main/controlpanel/page.html", context)
 
+@staff_required
 def controlpanel_research_list(request):
     context = {
         "research": PublicProject.objects.all(),
+        "controlpanel": True,
     }
     return render(request, "main/controlpanel/research.list.html", context)
 
+@staff_required
 def controlpanel_research(request, id=None):
 
     if id:
@@ -603,15 +710,19 @@ def controlpanel_research(request, id=None):
 
     context = {
         "info": info,
+        "controlpanel": True,
     }
     return render(request, "main/controlpanel/research.html", context)
 
+@staff_required
 def controlpanel_regions(request):
     context = {
         "regions": Region.objects.all(),
+        "controlpanel": True,
     }
     return render(request, "main/controlpanel/regions.html", context)
 
+@staff_required
 def controlpanel_region(request, id):
 
     info = Region.objects.get(pk=id)
@@ -625,15 +736,19 @@ def controlpanel_region(request, id):
     context = {
         "info": info,
         "islands": Island.objects.filter(region=info),
+        "controlpanel": True,
     }
     return render(request, "main/controlpanel/region.html", context)
 
+@staff_required
 def controlpanel_tags(request):
     context = {
         "tags": Tag.objects.all(),
+        "controlpanel": True,
     }
     return render(request, "main/controlpanel/tags.html", context)
 
+@staff_required
 def controlpanel_tag(request, id=None):
 
     if id:
@@ -641,15 +756,19 @@ def controlpanel_tag(request, id=None):
 
     context = {
         "info": info,
+        "controlpanel": True,
     }
     return render(request, "main/controlpanel/tag.html", context)
 
+@staff_required
 def controlpanel_events(request):
     context = {
         "events": Event.objects.all(),
+        "controlpanel": True,
     }
     return render(request, "main/controlpanel/events.html", context)
 
+@staff_required
 def controlpanel_event(request, id=None):
 
     if id:
@@ -657,25 +776,19 @@ def controlpanel_event(request, id=None):
 
     context = {
         "info": info,
+        "controlpanel": True,
     }
     return render(request, "main/controlpanel/event.html", context)
 
+@staff_required
 def controlpanel_users(request):
-    for each in User.objects.all():
-        print(each, each.people.meta_data)
-        if each.people.meta_data and "optamos" in each.people.meta_data:
-            print("OPTAMOS", each)
-        elif each.id != 1 and each.id != 50:
-            print("DELETE!", each)
-            each.is_active = False
-            each.save()
-        else:
-            print("KEEEEEP", each)
     context = {
         "users": User.objects.filter(last_login__isnull=False).order_by("-last_login"),
+        "controlpanel": True,
     }
     return render(request, "main/controlpanel/users.html", context)
 
+@staff_required
 def controlpanel_user(request, id=None):
     if id:
         user = User.objects.get(pk=id)
@@ -684,6 +797,27 @@ def controlpanel_user(request, id=None):
     context = {
         "user": user,
         "islands": Island.objects.all(),
+        "controlpanel": True,
     }
     return render(request, "main/controlpanel/user.html", context)
+
+@staff_required
+def controlpanel_people_list(request):
+    context = {
+        "people": People.objects.filter(is_team=True),
+        "controlpanel": True,
+    }
+    return render(request, "main/controlpanel/people.list.html", context)
+
+@staff_required
+def controlpanel_people(request, id=None):
+    if id:
+        info = People.objects.get(pk=id)
+    else:
+        info = People()
+    context = {
+        "info": info,
+        "controlpanel": True,
+    }
+    return render(request, "main/controlpanel/people.html", context)
 

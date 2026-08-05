@@ -22,10 +22,10 @@
             <div class="absolute left-0 top-full z-50 mt-0 hidden w-48 rounded-md bg-white py-2 shadow-lg group-hover:block">
               <a href="/about/purpose/" {% if menu == "about" and slug == "purpose" %}class="active"{% endif %}>Purpose</a>
               <a href="/about/what-is-island-metabolism/" {% if menu == "about" and slug == "what-is-island-metabolism" %}class="active"{% endif %}>What is island metabolism?</a>
-              <a href="/about/community/">Community</a>
+              <a href="/about/community/" {% if menu == "about" and slug == "community" %}class="active"{% endif %}>Community</a>
               <a href="/about/join/" {% if menu == "about" and slug == "join" %}class="active"{% endif %}>Join us</a>
               <a href="/about/subscribe/">Subscribe</a>
-              <a href="/about/contact/">Contact us</a>
+              <a href="/about/contact/" {% if menu == "about" and slug == "contact" %}class="active"{% endif %}>Contact us</a>
             </div>
           </li>
 
@@ -99,13 +99,15 @@
         </ul>
       </div>
 
-      <div class="hidden items-center text-sm font-medium text-gray-700 md:flex">
-        {% if request.user.is_authenticated %}
-          <a href="{% url 'optamos:logout' %}" class="py-6 hover:text-brand">Log out</a>
-        {% else %}
-          <a {% if menu == 'login' %}class="active text-brand font-bold py-6"{% endif %} href="{% url 'optamos:login' %}" class="py-6 hover:text-brand">Log in</a>
-        {% endif %}
-      </div>
+      {% if not request.user.is_staff %}
+        <div class="hidden items-center text-sm font-medium text-gray-700 md:flex">
+          {% if request.user.is_authenticated %}
+            <a href="{% url 'optamos:logout' %}" class="py-6 hover:text-brand">Log out</a>
+          {% else %}
+            <a {% if menu == 'login' %}class="active text-brand font-bold py-6"{% endif %} href="{% url 'optamos:login' %}" class="py-6 hover:text-brand">Log in</a>
+          {% endif %}
+        </div>
+      {% endif %}
 
       <div class="flex items-center md:hidden">
         <button id="mobile-menu-button" class="inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 hover:text-brand focus:outline-none">

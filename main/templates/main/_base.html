@@ -30,6 +30,18 @@
 <body class="h-full">
   <div class="min-h-full">
 
+    {% if request.user.is_authenticated and request.user.is_staff %}
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between">
+          <div>
+            <a class="mr-3 inline-block p-2 {% if controlpanel %}bg-white{% endif %}" href="{% url "controlpanel" %}"><strong><i class="fal fa-cog fa-fw mr-1"></i> Control panel</strong></a> 
+            <a href="{% url "controlpanel" %}"><i class="fal fa-pencil fa-fw mr-1"></i> Edit content</a> 
+          </div>
+          <a href="{% url "logout" %}" class="inline-block p-2">Log out</a>
+        </div>
+      </div>
+    {% endif %}
+
     {% include "main/_nav.html" %}
 
     <div class="bg" style="background-image:url({% if bg_image %}{{ bg_image }}{% else %}/media/bg2.jpg{% endif %})">

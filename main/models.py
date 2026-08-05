@@ -719,13 +719,6 @@ class LibraryItem(Record):
         else:
             return self.get_canonical_website() + url
 
-    def get_edit_link(self):
-        if self.type_id == 31:
-            # Videos are opened in the multimedia library
-            return "/admin/core/video/" + str(self.id) + "/change/"
-        else:
-            return "/admin/core/libraryitem/" + str(self.id) + "/change/"
-
     # The 'author_list' part will be highly varied... some contain Firstname Lastname, Firstname Lastname
     # others contain Lastname, Firstname and Lastname, Firstname
     # others contain Firstname Lastname; Firstname Lastname; etc.
