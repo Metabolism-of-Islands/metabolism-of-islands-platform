@@ -563,6 +563,7 @@ def videos(request):
 
     context = {
         "menu": "resources",
+        "page": "videos",
         "videos": Video.objects.all(),
     }
     return render(request, "main/videos.html", context)
@@ -570,6 +571,7 @@ def videos(request):
 def video(request, id):
     context = {
         "menu": "resources",
+        "page": "videos",
         "info": LibraryItem.objects.get(pk=id),
         "videos": LibraryItem.objects.filter(type__name="Video Recording").order_by("-date_created")[:5],
     }

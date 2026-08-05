@@ -9,7 +9,7 @@
     {% block title %}{% endblock %} - 
     OPTamos
   </title>
-  <link href="{% static "css/optamos.css" %}?id=1920-2805" rel="stylesheet">
+  <link href="{% static "css/styles.css" %}?id=1111-0108" rel="stylesheet">
   <link class="favicon" rel="shortcut icon" sizes="126x126" href="/media/optamos/favicon.jpg">
 
   <meta property="og:title" content="Options for Participatory Transformation and Sustainability Management" />
@@ -20,36 +20,38 @@
   <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}" />
   <meta property="og:site_name" content="OPTamos" />
 
+  <style type="text/css">
+  .optamos-nav{background: #7c658f}
+  .optamos-nav a{color:white}
+  </style>
+
   {% block css %}{% endblock %}
 </head>
 
 <body class="h-full">
   <div class="min-h-full">
-    <nav class="mainnav relative isolate z-10 shadow-sm">
-      <div class="bg-white py-5">
+
+    {% include "main/_nav.html" %}
+
+    <nav class="optamos-nav relative isolate z-10 shadow-sm drop-shadow-md">
+      <div class="py-5">
         <div class="mx-auto max-w-7xl px-6 lg:px-8 z-10001 relative flex justify-between">
           <ul> 
             <li class="mr-3"> 
-              <a class="font-bold nav-link" aria-current="page" href="{% url "optamos:index" %}">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M341.8 72.6C329.5 61.2 310.5 61.2 298.3 72.6L74.3 280.6C64.7 289.6 61.5 303.5 66.3 315.7C71.1 327.9 82.8 336 96 336L112 336L112 512C112 547.3 140.7 576 176 576L464 576C499.3 576 528 547.3 528 512L528 336L544 336C557.2 336 569 327.9 573.8 315.7C578.6 303.5 575.4 289.5 565.8 280.6L341.8 72.6zM304 384L336 384C362.5 384 384 405.5 384 432L384 528L256 528L256 432C256 405.5 277.5 384 304 384z"/></svg>
-                <span {% if menu == "index" %}class="active"{% endif %}>
+              <a class="font-bold nav-link text-white" aria-current="page" href="{% url "optamos:index" %}">
+                <span {% if menu == "optamos_index" %}class="active"{% endif %}>
                 OPTamos
                 </span>
               </a>
             </li> 
             {% if request.user.is_authenticated %}
-              <li class="mr-3"><a {% if menu == "projects" %}class="active"{% endif %} href="{% url "optamos:projects" %}">Projects</a></li>
-              <li class="mr-3"><a {% if menu == "account" %}class="active"{% endif %} href="{% url "optamos:account" %}">My Account</a></li>
+              <li class="mr-3"><a {% if menu == "optamos_projects" %}class="active"{% endif %} href="{% url "optamos:projects" %}">Projects</a></li>
+              <li class="mr-3"><a {% if menu == "optamos_account" %}class="active"{% endif %} href="{% url "optamos:account" %}">My Account</a></li>
             {% endif %}
-              <li class="mr-3"><a {% if menu == "about" %}class="active"{% endif %} href="{% url "optamos:about" %}">Methodology</a></li>
-              <li class="mr-3"><a {% if menu == "resources" %}class="active"{% endif %} href="{% url "optamos:resources" %}">Resources</a></li>
-              <li><a {% if menu == "manual" %}class="active"{% endif %} href="{% url "optamos:manual" %}">User manual</a></li>
+              <li class="mr-3"><a {% if menu == "optamos_about" %}class="active"{% endif %} href="{% url "optamos:about" %}">Methodology</a></li>
+              <li class="mr-3"><a {% if menu == "optamos_resources" %}class="active"{% endif %} href="{% url "optamos:resources" %}">Resources</a></li>
+              <li><a {% if menu == "optamos_manual" %}class="active"{% endif %} href="{% url "optamos:manual" %}">User manual</a></li>
           </ul>  
-          {% if request.user.is_authenticated %}
-            <a href="{% url "optamos:logout" %}">Log out</a>
-          {% else %}
-            <a {% if menu == "login" %}class="active"{% endif %} href="{% url "optamos:login" %}">Log in</a>
-          {% endif %}
         </div> 
       </div> 
     </nav>

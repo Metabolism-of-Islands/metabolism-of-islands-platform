@@ -53,11 +53,11 @@
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
       
       <div class="lg:col-span-3 space-y-4">
-        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl ">
           Metabolism of Islands
         </h1>
 
-          <p class="text-base sm:text-lg text-slate-500 font-normal leading-relaxed antialiased border-l border-slate-200 pl-4">
+          <p class="text-base sm:text-xl text-slate-500 font-normal leading-relaxed antialiased pl-3 border-l-3 border-brand">
             MoI is a network of scholars conducting policy-relevant research to support island economies achieve resource security and self-reliance, and build resilience to the impacts of climate change.
           </p>
 
@@ -291,7 +291,8 @@
     fullscreenControl: true,
     fullscreenControlOptions: {
       position: "topleft"
-    }
+    },
+    minZoom: 2
   }).setView([0, 0], 2);
 
   bounds = [];

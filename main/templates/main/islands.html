@@ -19,7 +19,6 @@
   #map {
     height: 600px;
   }
-  #islands a:hover h1{text-decoration:underline}
 
   .map-popup-thumb {
     width: 120px;
@@ -78,7 +77,7 @@
     
     {% for each in islands %}
       <a href="{{ each.get_absolute_url }}" class="no-underline">
-        <div class="border border-slate-200 bg-white rounded-2xl overflow-hidden flex flex-col justify-between">
+        <div class="border border-slate-200 bg-white rounded-2xl overflow-hidden flex flex-col justify-between hover:border-brand">
           <div>
             {% if each.photo.image.thumbnail.url %}
               <img src="{{ each.photo.image.thumbnail.url }}" alt="{{ each.name }}" class="w-full h-40 object-cover border-b border-slate-100">
@@ -98,7 +97,7 @@
           
           <div class="p-5 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center text-xs">
             <span class="text-slate-500 font-medium">Repository:</span>
-            <span class="font-mono font-bold text-slate-900">{{ each.item_count }} items</span>
+            <span class="font-mono font-bold text-slate-900">{{ each.item_count }} {% if each.item_count == 1 %}record{% else %}records{% endif %}</span>
           </div>
         </div>
       </a>
@@ -120,7 +119,8 @@
     fullscreenControl: true,
     fullscreenControlOptions: {
       position: "topleft"
-    }
+    },
+    minZoom: 2
   }).setView([0, 0], 2);
 
   bounds = [];

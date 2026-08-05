@@ -137,28 +137,28 @@ def create_matrix(project, request):
 def index(request):
     context = {
         "bg": random.choice(OPTAMOS_BG),
-        "menu": "index",
+        "menu": "optamos_index",
     }
     return render(request, "optamos/index.html", context)
 
 def about(request):
     context = {
         "bg": random.choice(OPTAMOS_BG),
-        "menu": "about",
+        "menu": "optamos_about",
     }
     return render(request, "optamos/about.html", context)
 
 def resources(request):
     context = {
         "bg": random.choice(OPTAMOS_BG),
-        "menu": "resources",
+        "menu": "optamos_resources",
     }
     return render(request, "optamos/resources.html", context)
 
 def manual(request):
     context = {
         "bg": random.choice(OPTAMOS_BG),
-        "menu": "manual",
+        "menu": "optamos_manual",
     }
     return render(request, "optamos/manual.html", context)
 
@@ -180,7 +180,7 @@ def projects(request):
     context = {
         "bg": random.choice(OPTAMOS_BG),
         "projects": projects,
-        "menu": "projects",
+        "menu": "optamos_projects",
     }
     return render(request, "optamos/projects.html", context)
 
@@ -284,7 +284,7 @@ def project_create(request):
 
     context = {
         "bg": random.choice(OPTAMOS_BG),
-        "menu": "projects",
+        "menu": "optamos_projects",
     }
     return render(request, "optamos/project.create.html", context)
 
@@ -372,7 +372,7 @@ def project_settings(request, id):
     context = {
         "bg": random.choice(OPTAMOS_BG),
         "projects": project,
-        "menu": "projects",
+        "menu": "optamos_projects",
         "project": project,
         "has_descriptions": OptamosCriteria.objects.filter(project=project, description__isnull=False).exists(),
     }
@@ -392,7 +392,7 @@ def project_overview(request, id):
     context = {
         "bg": random.choice(OPTAMOS_BG),
         "projects": project,
-        "menu": "projects",
+        "menu": "optamos_projects",
         "project": project,
     }
     return render(request, "optamos/project.overview.html", context)
@@ -458,7 +458,7 @@ def project_team_results(request, id, page="rank_all_criteria"):
 
     context = {
         "bg": random.choice(OPTAMOS_BG),
-        "menu": "projects",
+        "menu": "optamos_projects",
         "project": project,
         "criteria_list": project.criteria.all().annotate(has_children=Count("children")).order_by("position"),
         "remove_padding_main_container": True,
@@ -567,7 +567,7 @@ def project_team(request, id):
     context = {
         "bg": random.choice(OPTAMOS_BG),
         "projects": project,
-        "menu": "projects",
+        "menu": "optamos_projects",
         "project": project,
         "team": OptamosUser.objects.filter(project=project, level="regular"),
     }
@@ -695,7 +695,7 @@ def project(request, id, page="home"):
         # Count how many there theoretically are, so that we can verify that all are saved -- this is particularly 
         # relevant in case people edit the project and add criteria in which case we need to show an error
         "total_required_criteria_values": len(list(combinations(project.criteria.filter(parent__isnull=True), 2))) + sub_criteria_pairs,
-        "menu": "projects",
+        "menu": "optamos_projects",
         "cr": calculate_consistency_ratio(list(project.criteria.all()), OptamosCriteriaValue.objects.filter(criteria1__project=project, user=request.user)).cr,
         "next_criteria": project.criteria.filter(pk__gt=criteria.pk).order_by("id").first() if criteria else None,
         "criteria_descriptions": OptamosCriteria.objects.filter(project=project, description__isnull=False),
@@ -1424,7 +1424,7 @@ def project_results(request, id, page="results", team=False):
         # Count how many there theoretically are, so that we can verify that all are saved -- this is particularly 
         # relevant in case people edit the project and add criteria in which case we need to show an error
         "total_required_criteria_values": len(list(combinations(project.criteria.filter(parent__isnull=True), 2))) + sub_criteria_pairs, 
-        "menu": "projects",
+        "menu": "optamos_projects",
 
         "criteria": criteria,
         "alternatives": alternatives,
@@ -1484,7 +1484,7 @@ def account_login(request):
 
     context = {
         "bg": random.choice(OPTAMOS_BG),
-        "menu": "login",
+        "menu": "optamos_login",
     }
     return render(request, "optamos/login.html", context)
 
@@ -1537,7 +1537,7 @@ def account(request):
 
     context = {
         "bg": random.choice(OPTAMOS_BG),
-        "menu": "account",
+        "menu": "optamos_account",
     }
     return render(request, "optamos/account.settings.html", context)
 

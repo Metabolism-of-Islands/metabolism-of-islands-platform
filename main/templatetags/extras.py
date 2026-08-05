@@ -14,3 +14,17 @@ def get_item(dictionary, key):
             return ""
     except:
         return ""
+
+# For OPTamos
+@register.filter
+def concat(value1, value2):
+    return f"{value1}{value2}"
+
+# Also for OPTamos
+@register.filter
+def multiply(value, arg):
+    try:
+        return float(value) * float(arg)
+    except (ValueError, TypeError):
+        return 0
+

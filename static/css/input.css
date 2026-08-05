@@ -36,6 +36,16 @@
   nav .active {
     @apply border-brand border-b-3 text-brand;
   }
+  nav li.group div a.active {
+    @apply bg-gray-100 text-brand border-none;
+  }
+  nav li.group:not(.island-subnav) div a {
+    @apply block px-4 py-2 hover:bg-gray-100 hover:text-brand;
+  }
+  nav.optamos-nav .active {
+    @apply border-[#d8cde1] border-b-3 text-white;
+    
+  }
   .item.child {
     @apply pl-4 border-l-2 border-sky-200;
   }
@@ -142,3 +152,4 @@ div.overlay {
   position: relative;
   top:20px;
 }
+.mainnav img{height:5em}

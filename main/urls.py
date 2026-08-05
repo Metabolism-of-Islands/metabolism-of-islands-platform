@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 
+#app_name = "main" I did not use main:linkname syntax so we deactivate this. Maybe use in the future but no clear benefit now. Let's give any additional app an app_name so we just preface THOSE links, just not the main app's links
+
 urlpatterns = [
     path("", views.index, name="index"),
     path("islands/<slug:slug>/", views.island, name="island"),
