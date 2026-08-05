@@ -14,9 +14,6 @@ from itertools import groupby
 import json
 import requests
 
-# This is an alternative to staff_member_required in order not to require the admin module
-staff_required = user_passes_test(lambda u: u.is_staff)
-
 def index(request):
     islands = Island.objects.all()
     regions = Region.objects.all().order_by("position").annotate(island_count=Count("islands"))
@@ -26,8 +23,8 @@ def index(request):
         "news": News.objects.all()[:3],
         "library": LibraryItemType.objects.exclude(pk=38).annotate(total=Count("items")).filter(total__gt=0).order_by("-total")[:3],
         "library_size": LibraryItem.objects.exclude(type__id=38).count(),
-        #"video": Video.objects.get(pk=1280307),
-        #"video_highlights": Video.objects.filter(pk__in=[1280309,642031,1280308]),
+        "video": Video.objects.filter(is_highlight=True).first(),
+        "video_highlights": Video.objects.filter(is_highlight=False).order_by("date")[:2],
         "video_library_size": Video.objects.all().count(),
     }
     return render(request, "main/index.html", context)
@@ -501,7 +498,14 @@ def account(request):
     return render(request, "main/account.settings.html", context)
 
 
+#############################
 # Control Panel section
+#############################
+#
+# This is an alternative to staff_member_required in order not to require the admin module
+# Every function below should be decorated with this:
+
+staff_required = user_passes_test(lambda u: u.is_staff)
 
 @staff_required
 def controlpanel(request):
@@ -620,13 +624,13 @@ def controlpanel_library_item(request, id):
 @staff_required
 def controlpanel_videos(request):
 
-    # Temp code until we finish migration
-    for each in LibraryItem.objects.filter(type_id=31):
-        if not hasattr(each, "video"):
-            sql = f"INSERT INTO main_video (libraryitem_ptr_id) VALUES ({each.pk});"
-            messages.warning(request, sql)
-    # end temp code
-
+    if "highlight" in request.GET:
+        Video.objects.filter(is_highlight=True).update(is_highlight=False)
+        video = Video.objects.get(pk=request.GET["highlight"])
+        video.is_highlight=True
+        video.save()
+        messages.success(request, f"<strong>{video}</strong> is now featured on the homepage.")
+        return redirect(request.path)
 
     if request.method == "POST":
 

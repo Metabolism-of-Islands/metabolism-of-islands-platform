@@ -1598,6 +1598,7 @@ class Video(LibraryItem):
     embed_code = models.CharField(max_length=20, null=True, blank=True)
     date = models.DateField(blank=True, null=True)
     duration = models.PositiveSmallIntegerField(null=True, blank=True, help_text="Duration in minutes")
+    is_highlight = models.BooleanField(db_index=True, default=False)
 
     def video_site(self):
         if "youtu" in self.url:
