@@ -82,10 +82,13 @@
 
       </div>
 
-      <div class="lg:col-span-1 rounded-2xl bg-brand p-8 flex flex-col items-center justify-center text-center gap-1.5">
-        <span class="text-6xl font-black text-white tracking-tighter font-mono leading-none">{{ islands.count }}</span>
-        <span class="text-[10px] font-bold text-slate-300 uppercase tracking-widest block">Island profiles</span>
-      </div>
+
+      <a href="/islands/" class="group block no-underline">
+        <div class="lg:col-span-1 rounded-2xl bg-darkbrand p-8 flex flex-col items-center justify-center text-center gap-1.5 hover:bg-brand transition-colors">
+          <span class="text-6xl font-black text-white tracking-tighter font-mono leading-none">{{ islands.count }}</span>
+          <span class="text-[10px] font-bold text-slate-300 uppercase tracking-widest block">Island profiles</span>
+        </div>
+      </a>
 
     </div>
   </header>
@@ -145,7 +148,7 @@
     {% endfor %}
 
     <a href="/library/" class="group block no-underline">
-      <div class="h-full rounded-2xl border border-slate-900 bg-slate-800 p-6 text-white hover:bg-slate-900 transition-colors">
+      <div class="h-full rounded-2xl bg-darkbrand p-6 text-white hover:bg-brand transition-colors">
 
         <div class="flex items-center justify-between">
           <i class="fal fa-books text-2xl"></i>
@@ -223,7 +226,7 @@
   href="/resources/videos/"
   class="group flex gap-4 p-4 hover:bg-slate-50 transition-colors no-underline">
 
-  <div class="w-28 aspect-video rounded-lg flex-shrink-0 bg-slate-800 flex items-center justify-center">
+  <div class="w-28 aspect-video rounded-lg flex-shrink-0 bg-darkbrand flex items-center justify-center">
     <i class="fal fa-film text-4xl text-white"></i>
   </div>
 
