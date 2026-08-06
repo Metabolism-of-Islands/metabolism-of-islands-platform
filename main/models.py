@@ -521,7 +521,7 @@ class People(Record):
         return self.name
 
     def get_absolute_url(self):
-        return reverse("islands:user", args=[self.id])
+        return reverse("people", args=[self.id])
 
     @property
     def avatar(self):
@@ -1889,19 +1889,12 @@ class ZoteroItem(models.Model):
                 hits.append(each)
         return hits
 
-class PublicProject(Record):
+class Research(Record):
     email = models.EmailField(null=True, blank=True)
     url = models.URLField(max_length=255, null=True, blank=True)
     target_finish_date = models.CharField(max_length=255, null=True, blank=True)
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
-    STATUS = (
-        ("planned", "Planned"),
-        ("ongoing", "Ongoing"),
-        ("finished", "Finished"),
-        ("cancelled", "Cancelled"),
-    )
-    status = models.CharField(max_length=20, choices=STATUS, default="ongoing")
     PROJECT_TYPES = (
         ("thesis", "Thesis project"),
         ("research", "Research project"),
@@ -1913,6 +1906,10 @@ class PublicProject(Record):
 
     def get_dates_months(self):
         return get_date_range(self.start_date, self.end_date, True)
+
+    def get_absolute_url(self):
+        link_slug = "theses" if self.project_type == "thesis" else "project"
+        return reverse("research_details", args=[link_slug, self.id])
 
     objects = PublicActiveRecordManager()
     objects_unfiltered = models.Manager()

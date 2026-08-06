@@ -12,6 +12,7 @@ urlpatterns = [
 
     path("about/", views.about_overview, name="about_overview"),
     path("about/community/", views.community, name="community"),
+    path("about/community/<int:id>/", views.people, name="people"),
     path("about/<slug:slug>/", views.about, name="about"),
 
     path("resources/", views.resources_overview, name="resources_overview"),
@@ -27,6 +28,7 @@ urlpatterns = [
 
     path("research/", views.research, {"slug": "projects"}, name="research"),
     path("research/<slug:slug>/", views.research, name="research"),
+    path("research/<slug:slug>/<int:id>/", views.research_details, name="research_details"),
 
     path("library/", views.library, name="library"),
     path("library/browse/", views.library_list, name="library_list"),

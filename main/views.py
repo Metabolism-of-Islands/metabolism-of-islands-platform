@@ -338,6 +338,14 @@ def community(request):
     }
     return render(request, "main/community.html", context)
 
+def people(request, id):
+    context = {
+        "menu": "about",
+        "slug": "community",
+        "info": People.objects.get(pk=id),
+    }
+    return render(request, "main/people.html", context)
+
 def resources_overview(request):
     context = {
         "menu": "resources",
@@ -412,11 +420,22 @@ def research(request, slug):
     info = Webpage.objects.get(slug=f"/research/{slug}/")
     context = {
         "info": info,
-        "projects": PublicProject.objects.filter(project_type=project_type),
+        "projects": Research.objects.filter(project_type=project_type),
         "menu": "research",
         "slug": slug,
     }
     return render(request, "main/research.html", context)
+
+def research_details(request, slug, id):
+    project_type = "thesis" if slug == "theses" else "research"
+    info = get_object_or_404(Research, pk=id)
+    context = {
+        "info": info,
+        "menu": "research",
+        "slug": slug,
+        "latest_research": Research.objects.filter(project_type=project_type).order_by("-start_date")[:5],
+    }
+    return render(request, "main/research.details.html", context)
 
 # Account functions
 
@@ -701,7 +720,7 @@ def controlpanel_webpage(request, id=None):
 @staff_required
 def controlpanel_research_list(request):
     context = {
-        "research": PublicProject.objects.all(),
+        "research": Research.objects.all(),
         "controlpanel": True,
     }
     return render(request, "main/controlpanel/research.list.html", context)
@@ -710,7 +729,7 @@ def controlpanel_research_list(request):
 def controlpanel_research(request, id=None):
 
     if id:
-        info = PublicProject.objects.get(pk=id)
+        info = Research.objects.get(pk=id)
 
     context = {
         "info": info,
