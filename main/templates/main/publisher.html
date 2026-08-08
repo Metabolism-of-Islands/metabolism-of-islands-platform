@@ -1,0 +1,58 @@
+{% extends "main/_base.html" %}
+{% load static %}
+
+{% block title %}
+  {{ info }}
+{% endblock %}
+
+{% block css %}
+  <link rel="canonical" href="{{ info.get_absolute_url }}" />
+  <meta property="og:title" content="{{ info }}">
+  <meta property="og:description" content="{{ info.get_description|striptags|truncatechars:200 }}">
+  {% if info.image %}
+    <meta property="og:image" content="https://metabolismofislands.org{{ info.image.url }}">
+  {% endif %}
+  <meta property="og:url" content="https://metabolismofislands.org{{ request.get_full_path }}">
+{% endblock %}
+
+{% block content %}
+
+<a href="{% url "library" %}" class="inline-flex items-center text-xs font-semibold uppercase tracking-wider text-slate-400 hover:text-brand !no-underline transition-colors">
+  <i class="fa fa-arrow-left mr-2"></i> Back to library
+</a>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start py-4">
+  
+  <article class="lg:col-span-2 space-y-6">
+
+    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
+      {{ info }}
+    </h1>
+
+    {% if info.introduction %}
+      <div class="border-l-4 border-brand bg-slate-50 px-5 py-4 rounded-r-xl">
+        <p class="text-sm font-medium text-slate-700 leading-relaxed italic">
+          {{ info.introduction }}
+        </p>
+      </div>
+    {% endif %}
+
+    <div class="prose prose-slate max-w-none text-slate-600 font-normal leading-relaxed space-y-4 text-justify">
+      {{ info.get_description }}
+    </div>
+
+  </article>
+
+  <div class="space-y-6">
+    <div class="border border-slate-200 rounded-xl bg-white overflow-hidden text-sm divide-y divide-slate-100">
+      <div class="w-full max-h-[400px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+        {% if info.image %}
+          <img class="w-full h-full object-cover" src="{{ info.image.url }}" alt="{{ info }}">
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

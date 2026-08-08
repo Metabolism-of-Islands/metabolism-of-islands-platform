@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from django.views.generic.base import RedirectView
 
 #app_name = "main" I did not use main:linkname syntax so we deactivate this. Maybe use in the future but no clear benefit now. Let's give any additional app an app_name so we just preface THOSE links, just not the main app's links
 
@@ -35,6 +36,7 @@ urlpatterns = [
     path("library/ajax/", views.library_ajax, name="library_ajax"),
     path("library/ajax/search/", views.library_ajax_search, name="library_ajax_search"),
     path("library/<int:id>/", views.library_item, name="library_item"),
+    path("publishers/<int:id>/", views.publisher, name="publisher"),
 
     path("accounts/login/", views.account_login, name="login"),
     path("accounts/logout/", views.account_logout, name="logout"),
@@ -73,6 +75,10 @@ urlpatterns = [
 
     path("controlpanel/videos/", views.controlpanel_videos, name="controlpanel_videos"),
 
+    path("controlpanel/publishers/", views.controlpanel_publishers, name="controlpanel_publishers"),
+    path("controlpanel/publishers/<int:id>/", views.controlpanel_publisher, name="controlpanel_publisher"),
+    path("controlpanel/publishers/create/", views.controlpanel_publisher, name="controlpanel_publisher"),
+
     path("controlpanel/users/", views.controlpanel_users, name="controlpanel_users"),
     path("controlpanel/users/<int:id>/", views.controlpanel_user, name="controlpanel_user"),
     path("controlpanel/users/create/", views.controlpanel_user, name="controlpanel_user"),
@@ -80,4 +86,7 @@ urlpatterns = [
     path("controlpanel/people/", views.controlpanel_people_list, name="controlpanel_people_list"),
     path("controlpanel/people/<int:id>/", views.controlpanel_people, name="controlpanel_people"),
     path("controlpanel/people/create/", views.controlpanel_people, name="controlpanel_people"),
+
+    # Migration redirects
+    path("community/", RedirectView.as_view(url="/about/community", permanent=True)),
 ]

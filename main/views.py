@@ -175,14 +175,14 @@ def library_list(request, item_type=None):
 
 def library_item(request, id):
     # Fetch the main item
-    item = LibraryItem.objects.select_related("type", "license").get(pk=id)
-    
+    info = LibraryItem.objects.select_related("type", "license").get(pk=id)
+
     # Extract IDs to compare against
-    island_ids = list(item.spaces.values_list("id", flat=True))
-    tag_ids = list(item.tags.values_list("id", flat=True))
+    island_ids = list(info.spaces.values_list("id", flat=True))
+    tag_ids = list(info.tags.values_list("id", flat=True))
     
     # 1. Base filter: Exclude current item and type 38
-    related_qs = LibraryItem.objects.exclude(pk=item.pk).exclude(type_id=38)
+    related_qs = LibraryItem.objects.exclude(pk=info.pk).exclude(type_id=38)
     
     # 2. Match at least one common island or tag
     related_qs = related_qs.filter(
@@ -210,9 +210,10 @@ def library_item(request, id):
     )[:3]                       # Limit results strictly to 3
     
     context = {
-        "item": item,
+        "info": info,
         "related_items": related_items,
         "menu": "library",
+        "edit_link": reverse("controlpanel_library_item", args=[info.id]),
     }
     return render(request, "main/library.item.html", context)
 
@@ -314,6 +315,7 @@ def library_ajax_search(request):
     return JsonResponse(results, safe=False)
 
 def about_overview(request):
+    return redirect("/about/purpose")
     context = {
         "menu": "about",
     }
@@ -346,7 +348,16 @@ def people(request, id):
     }
     return render(request, "main/people.html", context)
 
+def publisher(request, id):
+    context = {
+        "menu": "library",
+        "slug": "publishers",
+        "info": Publisher.objects.get(uid=id),
+    }
+    return render(request, "main/publisher.html", context)
+
 def resources_overview(request):
+    return redirect("/resources/links/")
     context = {
         "menu": "resources",
     }
@@ -446,7 +457,7 @@ def account_login(request):
 
         password = request.POST.get("password")
         user = authenticate(request, username=email.strip(), password=password.strip())
-        redirect_url = request.GET.get("redirect", "optamos:projects")
+        redirect_url = request.GET.get("redirect", "index")
 
         if user is not None:
             login(request, user)
@@ -629,6 +640,14 @@ def controlpanel_library_items(request, id):
 def controlpanel_library_item(request, id):
     if id:
         info = LibraryItem.objects.get(pk=id)
+
+    if request.method == "POST":
+        if "delete" in request.POST:
+            info.is_deleted = True
+            info.save()
+            messages.success(request, f"<strong>{info}</strong> was deleted")
+            return redirect("controlpanel")
+    
     context = {
         "types": LibraryItemType.objects.all(),
         "tags": Tag.objects.all(),
@@ -843,4 +862,25 @@ def controlpanel_people(request, id=None):
         "controlpanel": True,
     }
     return render(request, "main/controlpanel/people.html", context)
+
+@staff_required
+def controlpanel_publishers(request):
+
+    context = {
+        "publishers": Publisher.objects.all(),
+        "controlpanel": True,
+    }
+    return render(request, "main/controlpanel/publishers.html", context)
+
+@staff_required
+def controlpanel_publisher(request, id=None):
+    if id:
+        info = Publisher.objects.get(pk=id)
+    else:
+        info = Publisher()
+    context = {
+        "info": info,
+        "controlpanel": True,
+    }
+    return render(request, "main/controlpanel/publisher.html", context)
 

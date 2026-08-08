@@ -35,7 +35,9 @@
         <div class="flex justify-between">
           <div>
             <a class="mr-3 inline-block p-2 {% if controlpanel %}bg-white{% endif %}" href="{% url "controlpanel" %}"><strong><i class="fal fa-cog fa-fw mr-1"></i> Control panel</strong></a> 
-            <a href="{% url "controlpanel" %}"><i class="fal fa-pencil fa-fw mr-1"></i> Edit content</a> 
+            {% if edit_link %}
+            <a href="{{ edit_link }}"><i class="fal fa-pencil fa-fw mr-1"></i> Edit</a> 
+            {% endif %}
           </div>
           <a href="{% url "logout" %}" class="inline-block p-2">Log out</a>
         </div>

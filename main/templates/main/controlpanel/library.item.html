@@ -2,7 +2,12 @@
 
 {% block content %}
 
-<h1>{% block title %}Library{% endblock %}</h1>
+<div class="flex justify-between">
+  <h1>{% block title %}{% if info.id %}Edit library record{% else %}Add library record{% endif %}{% endblock %}</h1>
+  {% if info.id %}
+    <a href="{{ info.get_absolute_url }}">View on website</a>
+  {% endif %}
+</div>
 
 <form method="post" enctype="multipart/form-data" class="space-y-8">
 
@@ -80,22 +85,22 @@
 
       <div id="field-doi">
         <label class="block mb-2 text-sm font-semibold text-slate-700">DOI</label>
-        <input type="text" name="doi" value="{{ info.doi }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+        <input type="text" name="doi" value="{{ info.doi|default_if_none:"" }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
       </div>
 
       <div id="field-isbn">
         <label class="block mb-2 text-sm font-semibold text-slate-700">ISBN</label>
-        <input type="text" name="isbn" value="{{ info.isbn }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+        <input type="text" name="isbn" value="{{ info.isbn|default_if_none:"" }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
       </div>
 
       <div class="lg:col-span-2">
         <label class="block mb-2 text-sm font-semibold text-slate-700">Metadata URL</label>
-        <input type="url" name="url" value="{{ info.url }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+        <input type="url" name="url" value="{{ info.url|default_if_none:"" }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
       </div>
 
       <div class="lg:col-span-2" id="field-file_url">
         <label class="block mb-2 text-sm font-semibold text-slate-700">File download URL</label>
-        <input type="url" name="file_url" value="{{ info.file_url }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+        <input type="url" name="file_url" value="{{ info.file_url|default_if_none:"" }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
       </div>
 
       <div class="lg:col-span-2" id="field-open_access">
@@ -160,7 +165,7 @@
 
       <div class="lg:col-span-2">
         <label class="block mb-2 text-sm font-semibold text-slate-700">Internal comments</label>
-        <textarea name="comments" rows="5" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">{{ info.comments }}</textarea>
+        <textarea name="comments" rows="5" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">{{ info.comments|default_if_none:"" }}</textarea>
       </div>
 
     </div>
@@ -169,9 +174,11 @@
   <div class="flex items-center justify-between">
 
     <button
-      type="button"
-      id="delete-record"
       tabindex="-1"
+      name="delete"
+      value="true"
+      type="submit"
+      onclick="javascript:return confirm('Are you sure you want to remove this record?')"
       class="btn-red">
       <i class="fal fa-trash-alt mr-2"></i>
       Delete

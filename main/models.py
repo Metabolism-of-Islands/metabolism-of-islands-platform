@@ -314,11 +314,6 @@ class Record(models.Model):
         return People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=36)
 
     @property
-    def publisher(self):
-        list = Organization.objects.filter(parent_list__record_child=self, parent_list__relationship__id=2)
-        return list[0] if list else None
-
-    @property
     def producer(self):
         list = Organization.objects.filter(parent_list__record_child=self, parent_list__relationship__id=3)
         return list[0] if list else None
@@ -607,6 +602,21 @@ class License(models.Model):
     class Meta:
         ordering = ["name"]
 
+class Publisher(Record):
+    uid = models.AutoField(primary_key=True)
+    record_id = models.OneToOneField(
+        Record, on_delete=models.CASCADE,
+        parent_link=True,
+        primary_key=False,
+    )
+    objects = PublicActiveRecordManager()
+    objects_unfiltered = models.Manager()
+    objects_include_private = PrivateRecordManager()
+    objects_include_deleted = PublicRecordManager()
+
+    def get_absolute_url(self):
+        return f"/publishers/{self.uid}/"
+
 class LibraryItemType(models.Model):
     name = models.CharField(max_length=255)
     icon = models.CharField(max_length=255, null=True, blank=True)
@@ -659,10 +669,9 @@ class LibraryItem(Record):
     isbn = models.CharField(max_length=255, null=True, blank=True)
     comments = models.TextField(null=True, blank=True)
     license = models.ForeignKey(License, on_delete=models.CASCADE, null=True, blank=True)
-    #geocodes = models.ManyToManyField("Geocode", blank=True)
+    published_by = models.ForeignKey(Publisher, on_delete=models.SET_NULL, null=True, blank=True, related_name="publications")
 
     # Many-to-Many Relationship with the User model to let user saved the library items
-    saved_by_users = models.ManyToManyField(User, related_name="saved_library_items", blank=True)
     contact_email = models.EmailField(max_length=255, null=True, blank=True) # this is a method for the MOI to contact the uploader directly regarding their publications upload
 
     STATUS = (
@@ -670,10 +679,6 @@ class LibraryItem(Record):
         ("active", "Active"),
         ("deleted", "Deleted"),
     )
-    # We will delete this after we inserted appropriate work tickets
-    status = models.CharField(max_length=8, choices=STATUS, db_index=True, null=True, blank=True, help_text="Old field, do not use")
-    #processes = models.ManyToManyField("staf.Process", blank=True, limit_choices_to={"slug__isnull": False})
-    #materials = models.ManyToManyField("staf.Material", blank=True)
 
     def __str__(self):
         return self.name if self.name else "Untitled " + self.type.name
@@ -682,42 +687,10 @@ class LibraryItem(Record):
         ordering = ["-year", "name"]
 
     def get_absolute_url(self):
-        return f"/library/{self.id}/"
         if self.type_id == 31:
             # Videos are opened in the multimedia library
-            return reverse("multimedia:video", args=[self.id])
-        elif self.type_id == 33:
-            # Data viz are opened in the multimedia library
-            return reverse("multimedia:dataviz", args=[self.id])
-        elif self.type_id == 24:
-            # Podcasts are opened in the multimedia library
-            return reverse("multimedia:podcast", args=[self.id])
-        elif self.type_id == 10 or self.type_id == 40:
-            # Datasets and shapefiles are opened in the data hub
-            return reverse("data:dataset", args=[self.id])
-        else:
-            return reverse("library:item", args=[self.id])
-
-    def get_canonical_website(self):
-        if self.type_id == 31 or self.type_id == 33 or self.type_id == 24:
-            return "https://multimedia.metabolismofcities.org"
-        elif self.type_id == 10 or self.type_id == 40:
-            return "https://data.metabolismofcities.org"
-        else:
-            return "https://library.metabolismofcities.org"
-
-    def get_full_url(self):
-        # Depending on which subsite we are on, the absolute url may
-        # already or may not yet include the HTTP part, so here we try to
-        # make sure we always have the full URL
-        url = self.get_absolute_url()
-        first_chars = url[:4]
-        if first_chars == "/htt":
-            return url[1:]
-        elif first_chars == "http":
-            return url
-        else:
-            return self.get_canonical_website() + url
+            return reverse("video", args=[self.id])
+        return f"/library/{self.id}/"
 
     # The 'author_list' part will be highly varied... some contain Firstname Lastname, Firstname Lastname
     # others contain Lastname, Firstname and Lastname, Firstname
@@ -833,7 +806,6 @@ class LibraryItem(Record):
         )
 
         return citation
-
 
     @property
     def get_citation_ris(self):
@@ -1026,35 +998,6 @@ class LibraryItem(Record):
         except:
             return "unknown"
 
-    # We have a number of cached properties, which should be deleted when we save this
-    # We also trigger this kind of deletion when we update/change associated objects,
-    # such as relationships with this document or data
-    def delete_cached_properties(self, type=None):
-        cached_properties = {}
-        cached_properties["relationships"] = ["authors", "author", "funders", "curators", "voters", "publishers", "producer", "uploader", "organizer", "processor"]
-        cached_properties["data"] = ["data", "data_spaces"]
-        cached_properties["spaces"] = ["imported_spaces", "get_map_type", "data_spaces"]
-
-        if not type:
-            properties = cached_properties["relationships"] + cached_properties["data"] + cached_properties["spaces"]
-        else:
-            properties = cached_properties[type]
-
-        # Ref: https://medium.com/@fdemmer/django-cached-property-on-models-f4673de33990
-        for property in properties:
-            try:
-                del self.__dict__[property]
-            except KeyError:
-                pass
-
-    def delete_cached_objects(self):
-        if self.meta_data and "cache" in self.meta_data:
-            for each in self.meta_data.get("cache"):
-                cache.delete(each)
-            del(self.meta_data["cache"])
-            self.save()
-        return True
-
     # This takes the stocks or flows file and records it in the Data table
     # Note that I feel this 'try except' fest may be a bit of a loose canon and I am
     # very open to people with better ideas on how to structure this and properly catch
@@ -1073,15 +1016,6 @@ class LibraryItem(Record):
         if not error:
             all = Data.objects_include_private.filter(source=self)
             all.delete()
-
-            # We may have cached space-related properties for this object, so let's clear those
-            # They will be re-cached the first time the query runs so we can run this generously
-            # even if this script doesn't come to fruition
-            self.delete_cached_properties("data")
-
-            # We may have cached the json objects based on old data, so we should
-            # delete any cached objects that exist.
-            self.delete_cached_objects()
 
             df = file["df"]
             column_count = len(df.columns)
@@ -1253,11 +1187,6 @@ class LibraryItem(Record):
 
         check = Island.objects_unfiltered.filter(source=self)
         error = False
-
-        # We may have cached space-related properties for this object, so let's clear those
-        # They will be re-cached the first time the query runs so we can run this generously
-        # even if this script doesn't come to fruition
-        self.delete_cached_properties("spaces")
 
         if check:
             if self.meta_data.get("allow_deletion_spaces"):
@@ -1586,8 +1515,6 @@ class LibraryItem(Record):
             Document.objects_include_private.filter(attached_to=self.id).update(is_public=self.is_public)
 
         super(LibraryItem, self).save(*args, **kwargs)
-
-        self.delete_cached_properties()
 
     objects = PublicActiveRecordManager()
     objects_unfiltered = models.Manager()

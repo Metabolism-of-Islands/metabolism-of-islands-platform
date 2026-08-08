@@ -104,7 +104,7 @@
           {% if request.user.is_authenticated %}
             <a href="{% url 'optamos:logout' %}" class="py-6 hover:text-brand">Log out</a>
           {% else %}
-            <a {% if menu == 'login' %}class="active text-brand font-bold py-6"{% endif %} href="{% url 'optamos:login' %}" class="py-6 hover:text-brand">Log in</a>
+            <a {% if menu == 'login' %}class="active text-brand font-bold py-6"{% endif %} href="{% url 'login' %}?redirect={{ request.get_full_path|urlencode }}" class="py-6 hover:text-brand">Log in</a>
           {% endif %}
         </div>
       {% endif %}
