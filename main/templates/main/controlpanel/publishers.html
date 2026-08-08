@@ -19,8 +19,8 @@
   <tbody>
   {% for each in publishers %}
     <tr>
-      <td class="font-mono text-slate-700">{{ each.id }}</td>
-      <td><a href="{% url "controlpanel_publisher" each.id %}">{{ each }}</a></td>
+      <td class="font-mono text-slate-700">{{ each.uid }}</td>
+      <td><a href="{% url "controlpanel_publisher" each.uid %}">{{ each }}</a></td>
       <td class="whitespace-nowrap">{{ each.publications.count }}</td>
     </tr>
   {% endfor %}
