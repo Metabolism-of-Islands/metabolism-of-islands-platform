@@ -306,14 +306,6 @@ class Record(models.Model):
         return Record.objects.filter(parent_list__record_child=self, parent_list__relationship__id=5)
 
     @property
-    def curators(self):
-        return Record.objects.filter(parent_list__record_child=self, parent_list__relationship__id=20)
-
-    @property
-    def voters(self):
-        return People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=36)
-
-    @property
     def producer(self):
         list = Organization.objects.filter(parent_list__record_child=self, parent_list__relationship__id=3)
         return list[0] if list else None
@@ -326,11 +318,6 @@ class Record(models.Model):
     @property
     def organizer(self):
         list = People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=14)
-        return list[0] if list else None
-
-    @property
-    def processor(self):
-        list = People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=34)
         return list[0] if list else None
 
     @property

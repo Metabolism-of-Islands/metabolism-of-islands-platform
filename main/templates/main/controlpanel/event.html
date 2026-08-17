@@ -1,0 +1,151 @@
+{% extends "main/_base.html" %}
+
+{% block content %}
+
+<form method="post" enctype="multipart/form-data" class="space-y-8">
+
+  {% csrf_token %}
+
+  <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+    <div class="border-b border-slate-200 px-6 py-5">
+      <h2 class="text-xl font-bold tracking-tight text-slate-900">Event Information</h2>
+    </div>
+
+    <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <div class="lg:col-span-2">
+        <label class="block mb-2 text-sm font-semibold text-slate-700">Name</label>
+        <input type="text" name="name" value="{{ info.name|default:'' }}" required class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+      </div>
+
+      <div>
+        <label class="block mb-2 text-sm font-semibold text-slate-700">Event type</label>
+        <select name="event_type" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+          <option value="">---------</option>
+          <option value="conference"{% if info.event_type == "conference" %} selected{% endif %}>Conference</option>
+          <option value="workshop"{% if info.event_type == "workshop" %} selected{% endif %}>Workshop</option>
+          <option value="seminar"{% if info.event_type == "seminar" %} selected{% endif %}>Seminar</option>
+          <option value="summerschool"{% if info.event_type == "summerschool" %} selected{% endif %}>Summer School</option>
+          <option value="training_outreach"{% if info.event_type == "training_outreach" %} selected{% endif %}>Training and Outreach</option>
+          <option value="other"{% if info.event_type == "other" %} selected{% endif %}>Other</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block mb-2 text-sm font-semibold text-slate-700">Event URL</label>
+        <input type="url" name="url" value="{{ info.url|default:'' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+      </div>
+
+      <div>
+        <label class="block mb-2 text-sm font-semibold text-slate-700">Start date</label>
+        {% if info.start_date and info.start_date|date:"H:i" == "00:00" %}
+          <input type="date" name="start_date" value="{{ info.start_date|date:'Y-m-d' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+        {% else %}
+          <input type="datetime-local" name="start_date" value="{{ info.start_date|date:'Y-m-d\TH:i' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+        {% endif %}
+      </div>
+
+      <div>
+        <label class="block mb-2 text-sm font-semibold text-slate-700">End date</label>
+        {% if info.end_date and info.end_date|date:"H:i" == "00:00" %}
+          <input type="date" name="end_date" value="{{ info.end_date|date:'Y-m-d' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+        {% else %}
+          <input type="datetime-local" name="end_date" value="{{ info.end_date|date:'Y-m-d\TH:i' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+        {% endif %}
+      </div>
+
+      <div class="lg:col-span-2">
+        <label class="block mb-2 text-sm font-semibold text-slate-700">Location</label>
+        <input type="text" name="location" value="{{ info.location|default:'' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+      </div>
+
+      <div class="lg:col-span-2">
+        <label class="block mb-2 text-sm font-semibold text-slate-700">Event Image</label>
+        {% if info.image %}
+          <div class="mb-3 flex items-center space-x-4">
+            <img src="{{ info.image.thumbnail.url }}" class="h-16 w-16 object-cover rounded-lg border border-slate-200">
+            <span class="text-xs text-slate-500">Currently: <a href="{{ info.image.url }}" target="_blank" class="text-brand underline">View full size</a></span>
+          </div>
+        {% endif %}
+        <input type="file" name="image" accept="image/*" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200">
+      </div>
+
+      <div class="lg:col-span-2">
+        <label class="block mb-2 text-sm font-semibold text-slate-700">Description</label>
+        <input type="hidden" name="description" id="hidden_description" value="{{ info.description_html|default:'' }}">
+        <div id="editor_container" class="w-full rounded-b-xl border border-slate-300 bg-white" style="min-height: 200px;">
+          {{ info.description_html|safe }}
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="flex flex-row-reverse items-center justify-between">
+    
+    <button type="submit" class="rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white hover:opacity-90">
+      <i class="fal fa-save mr-2"></i>
+      Save record
+    </button>
+
+    {% if info.id %}
+      <button
+        tabindex="-1"
+        name="delete"
+        value="true"
+        type="submit"
+        onclick="javascript:return confirm('Are you sure you want to remove this record?')"
+        class="btn-red">
+        <i class="fal fa-trash-alt mr-2"></i>
+        Delete
+      </button>
+    {% else %}
+      <div></div>
+    {% endif %}
+
+  </div>
+
+</form>
+
+
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<style>
+  /* Keeps the Quill container match your Tailwind theme borders */
+  .ql-toolbar.ql-snow {
+    border-color: #cbd5e1 !important;
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
+    background-color: #f8fafc;
+  }
+  .ql-container.ql-snow {
+    border-color: #cbd5e1 !important;
+    border-bottom-left-radius: 0.75rem;
+    border-bottom-right-radius: 0.75rem;
+    font-family: inherit;
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const quill = new Quill('#editor_container', {
+      theme: 'snow',
+      modules: {
+        toolbar: [
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          ['clean']
+        ]
+      }
+    });
+
+    // Before form submission, copy the HTML from Quill to the hidden Django input field
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function() {
+      const hiddenInput = document.getElementById('hidden_description');
+      // If editor has content, pass the innerHTML to Django
+      hiddenInput.value = quill.root.innerHTML === '<p><br></p>' ? '' : quill.root.innerHTML;
+    });
+  });
+</script>
+{% endblock %}

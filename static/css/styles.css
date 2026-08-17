@@ -721,6 +721,9 @@
   .h-10 {
     height: calc(var(--spacing) * 10);
   }
+  .h-16 {
+    height: calc(var(--spacing) * 16);
+  }
   .h-20 {
     height: calc(var(--spacing) * 20);
   }
@@ -789,6 +792,9 @@
   }
   .w-11 {
     width: calc(var(--spacing) * 11);
+  }
+  .w-16 {
+    width: calc(var(--spacing) * 16);
   }
   .w-20 {
     width: calc(var(--spacing) * 20);
@@ -894,6 +900,9 @@
   }
   .flex-col {
     flex-direction: column;
+  }
+  .flex-row-reverse {
+    flex-direction: row-reverse;
   }
   .flex-wrap {
     flex-wrap: wrap;
@@ -1083,6 +1092,10 @@
   .rounded-r-xl {
     border-top-right-radius: var(--radius-xl);
     border-bottom-right-radius: var(--radius-xl);
+  }
+  .rounded-b-xl {
+    border-bottom-right-radius: var(--radius-xl);
+    border-bottom-left-radius: var(--radius-xl);
   }
   .border {
     border-style: var(--tw-border-style);
@@ -1678,6 +1691,9 @@
   .no-underline {
     text-decoration-line: none;
   }
+  .underline {
+    text-decoration-line: underline;
+  }
   .antialiased {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -1955,6 +1971,11 @@
       border-width: 0px;
     }
   }
+  .file\:bg-slate-100 {
+    &::file-selector-button {
+      background-color: var(--color-slate-100);
+    }
+  }
   .file\:bg-slate-900 {
     &::file-selector-button {
       background-color: var(--color-slate-900);
@@ -1970,6 +1991,12 @@
       padding-block: calc(var(--spacing) * 2);
     }
   }
+  .file\:text-sm {
+    &::file-selector-button {
+      font-size: var(--text-sm);
+      line-height: var(--tw-leading, var(--text-sm--line-height));
+    }
+  }
   .file\:text-xs {
     &::file-selector-button {
       font-size: var(--text-xs);
@@ -1980,6 +2007,11 @@
     &::file-selector-button {
       --tw-font-weight: var(--font-weight-semibold);
       font-weight: var(--font-weight-semibold);
+    }
+  }
+  .file\:text-slate-700 {
+    &::file-selector-button {
+      color: var(--color-slate-700);
     }
   }
   .file\:text-white {
@@ -2147,6 +2179,15 @@
       @media (hover: hover) {
         &::file-selector-button {
           background-color: var(--color-brand);
+        }
+      }
+    }
+  }
+  .hover\:file\:bg-slate-200 {
+    &:hover {
+      @media (hover: hover) {
+        &::file-selector-button {
+          background-color: var(--color-slate-200);
         }
       }
     }
@@ -2519,17 +2560,6 @@
         margin-inline-start: calc(calc(var(--spacing) * 8) * var(--tw-space-x-reverse));
         margin-inline-end: calc(calc(var(--spacing) * 8) * calc(1 - var(--tw-space-x-reverse)));
       }
-    }
-  }
-  .lg\:border-l {
-    @media (width >= 64rem) {
-      border-left-style: var(--tw-border-style);
-      border-left-width: 1px;
-    }
-  }
-  .lg\:border-slate-200 {
-    @media (width >= 64rem) {
-      border-color: var(--color-slate-200);
     }
   }
   .lg\:p-10 {

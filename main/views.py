@@ -13,6 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 from itertools import groupby
 import json
 import requests
+from django.utils.dateparse import parse_datetime
 
 def index(request):
     islands = Island.objects.all()
@@ -815,6 +816,39 @@ def controlpanel_event(request, id=None):
 
     if id:
         info = Event.objects.get(pk=id)
+    else:
+        info = Event()
+
+    if request.method == "POST":
+        if request.POST.get("delete") == "true" and info.pk:
+            info.is_deleted = True
+            info.save()
+            messages.success(request, "Event deleted successfully.")
+            return redirect("controlpanel_events")
+
+        info.name = request.POST.get("name")
+        info.event_type = request.POST.get("event_type") or None
+        info.url = request.POST.get("url") or None
+        info.location = request.POST.get("location") or None
+        info.description = request.POST.get("description")
+        info.description_html = request.POST.get("description")
+
+        for field in ["start_date", "end_date"]:
+            raw_val = request.POST.get(field)
+            if raw_val:
+                # If the string length matches YYYY-MM-DD, add the midnight time string fallback
+                if len(raw_val) == 10:
+                    raw_val += "T00:00"
+                setattr(info, field, parse_datetime(raw_val))
+            else:
+                setattr(info, field, None)
+
+        if "image" in request.FILES:
+            info.image = request.FILES["image"]
+
+        info.save()
+        messages.success(request, "Information saved successfully.")
+        return redirect(info.get_absolute_url())
 
     context = {
         "info": info,
@@ -878,6 +912,24 @@ def controlpanel_publisher(request, id=None):
         info = Publisher.objects.get(pk=id)
     else:
         info = Publisher()
+
+    if request.method == "POST":
+        if request.POST.get("delete") == "true" and info.pk:
+            info.is_deleted = True
+            info.save()
+            messages.success(request, "Publisher deleted successfully.")
+            return redirect("controlpanel_publishers")
+
+        info.name = request.POST.get("name")
+        info.description = request.POST.get("description")
+
+        if "image" in request.FILES:
+            info.image = request.FILES["image"]
+
+        info.save()
+        messages.success(request, "Publisher record saved successfully.")
+        return redirect("controlpanel_publishers")
+
     context = {
         "info": info,
         "controlpanel": True,
