@@ -19,8 +19,8 @@
     </tr>
   </thead>
   <tbody>
-  {% for each in pages %}
-    <tr>
+  {% for each in islands %}
+    <tr {% if each.is_deleted %}class="line-through"{% endif %}>
       <td><a href="{% url "controlpanel_island" each.id %}">{{ each }}</a></td>
       <td>{{ each.region }}</td>
       <td>{% if each.geometry %}<i class="fa fa-check text-green-500"></i>{% else %}<i class="fa fa-exclamation-triangle text-red-500"></i>{% endif %}</td>

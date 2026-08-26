@@ -552,7 +552,7 @@ def controlpanel(request):
 @staff_required
 def controlpanel_islands(request):
     context = {
-        "pages": Island.objects.all(),
+        "islands": Island.objects_unfiltered.all(),
         "controlpanel": True,
     }
     return render(request, "main/controlpanel/islands.html", context)
@@ -561,16 +561,22 @@ def controlpanel_islands(request):
 def controlpanel_island(request, id=None):
 
     if id:
-        info = get_object_or_404(Island, pk=id)
+        info = Island.objects_unfiltered.get(pk=id)
     else:
         info = None
 
     if request.method == "POST":
-        if "deactivate" in request.POST:
+        if "delete" in request.POST:
             info.is_deleted = True
             info.save()
             messages.success(request, f"{info.name} was deactivated.")
-            return redirect("/controlpanel/islands/")
+            return redirect("controlpanel_islands")
+
+        if "reactivate" in request.POST:
+            info.is_deleted = False
+            info.save()
+            messages.success(request, f"{info.name} was reactivated.")
+            return redirect("controlpanel_islands")
 
         # Extract plain parameters from text form bindings
         name = request.POST.get("name", "").strip()
@@ -599,7 +605,7 @@ def controlpanel_island(request, id=None):
             
         info.save()
         messages.success(request, f"Successfully saved profile for {info.name}.")
-        return redirect("/controlpanel/islands/")
+        return redirect("controlpanel_islands")
 
     # Compile a GeoJSON payload if a non-Point geometry (like a structural shapefile outline) exists
     geojson_payload = "{}"
@@ -619,6 +625,7 @@ def controlpanel_island(request, id=None):
         "regions": Region.objects.all(),
         "geojson": geojson_payload,
         "controlpanel": True,
+        "licenses": License.objects.all(),
     }
     return render(request, "main/controlpanel/island.html", context)
 

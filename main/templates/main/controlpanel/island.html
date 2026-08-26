@@ -67,6 +67,19 @@
             </div>
           {% endif %}
           <input type="file" name="primary_image" accept=".jpg,.jpeg,.png" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-brand file:cursor-pointer transition-all">
+
+          <div class="space-y-1">
+            <input type="text" name="primary_author" value="{{ info.name|default:'' }}" placeholder="Author name" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
+          </div>
+          <div class="space-y-1">
+            <select name="primary_license" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
+              <option value="">-- Select license --</option>
+              {% for each in licenses %}
+                <option value="{{ each.id }}" {% if info.license.id == each.id %}selected{% endif %}>{{ each }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
         </div>
 
         <!-- Secondary Image Upload Module -->
@@ -96,11 +109,35 @@
 
     </div>
 
-    <!-- Bottom Submission Buttons Row -->
-    <div class="border-t border-slate-200 pt-5 flex items-center justify-between gap-3">
-      <button type="submit" onclick="javascript:return confirm('Are you sure?')" name="deactivate" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-red-500 text-xs font-bold text-white transition-all shadow-none">Deactivate</button>
-      <button type="submit" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-brand text-xs font-bold text-white transition-all shadow-none">Save</button>
+    <!-- Form Actions -->
+    <div class="flex flex-row-reverse items-center justify-between">
+      {% if info.is_deleted %}
+        <button type="submit" name="reactivate" value="true" class="rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white hover:opacity-90">
+          <i class="fal fa-save mr-2"></i>
+          Reactivate island
+        </button>
+      {% else %}
+        <button type="submit" class="rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white hover:opacity-90">
+          <i class="fal fa-save mr-2"></i>
+          Save record
+        </button>
+
+        {% if info.id %}
+          <button
+            tabindex="-1"
+            name="delete"
+            value="true"
+            type="submit"
+            onclick="javascript:return confirm('Are you sure you want to remove this record?')"
+            class="btn-red">
+            <i class="fal fa-trash-alt mr-2"></i>
+            Delete
+          </button>
+        {% endif %}
+      {% endif %}
+
     </div>
+
   </form>
 </div>
 
