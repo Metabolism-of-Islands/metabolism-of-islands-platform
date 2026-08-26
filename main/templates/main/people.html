@@ -47,10 +47,52 @@
     <div class="border border-slate-200 rounded-xl bg-white overflow-hidden text-sm divide-y divide-slate-100">
       <div class="w-full max-h-[400px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
         {% if info.image %}
-          <img class="w-full h-full object-cover" src="{{ info.image.url }}" alt="{{ info }}">
+          <img class="w-full h-full object-cover" src="{{ info.image.large.url }}" alt="{{ info }}">
         {% endif %}
       </div>
     </div>
+
+    <ul class="divide-y divide-slate-200">
+
+      {% if info.affiliation %}
+        <li class="px-4 py-3">
+          <i class="far fa-fw fa-building mb-1 mr-1" aria-hidden="true"></i> 
+          <strong>Affiliation:</strong><br>
+          {{ info.affiliation }}
+        </li>
+      {% endif %}
+
+      {% if info.website %}
+        <li class="px-4 py-3">
+          <i class="far fa-fw fa-link mb-1 mr-1" aria-hidden="true"></i> 
+          <strong>Website</strong><br>
+          <a href="{{ info.website }}">
+            {{ info.website|truncatechars:60 }}
+          </a>
+        </li>
+      {% endif %}
+
+      {% if info.orcid %}
+        <li class="px-4 py-3">
+          <i class="far fa-fw fa-link mb-1 mr-1" aria-hidden="true"></i> 
+          <strong>Orcid</strong><br>
+          <a href="{{ info.orcid }}">
+            {{ info.get_orcid }}
+          </a>
+        </li>
+      {% endif %}
+
+      {% if info.google_scholar %}
+        <li class="px-4 py-3">
+          <i class="far fa-fw fa-link mb-1 mr-1" aria-hidden="true"></i> 
+          <strong>Google Scholar</strong><br>
+          <a href="{{ info.google_scholar }}">
+            {{ info.google_scholar|truncatechars:60 }}
+          </a>
+        </li>
+      {% endif %}
+
+    </ul>
 
   </div>
 </div>

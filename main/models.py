@@ -470,11 +470,9 @@ class People(Record):
     email = models.EmailField(max_length=255, null=True, blank=True)
     is_team = models.BooleanField(default=False)
     website = models.CharField(max_length=255, null=True, blank=True)
-    twitter = models.CharField(max_length=255, null=True, blank=True)
     google_scholar = models.CharField(max_length=255, null=True, blank=True)
     orcid = models.CharField(max_length=255, null=True, blank=True)
     researchgate = models.CharField(max_length=255, null=True, blank=True)
-    linkedin = models.CharField(max_length=255, null=True, blank=True)
     research_interests = models.TextField(null=True, blank=True)
     user = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE)
 
@@ -499,6 +497,13 @@ class People(Record):
             photo = Photo.objects.get(pk=1278693)
             return photo.image
 
+    @property
+    def get_orcid(self):
+        match = re.search(r"\b\d{4}-\d{4}-\d{4}-\d{3}[\dX]\b", self.orcid)
+        if match:
+            return match.group()
+        return self.orcid
+
     class Meta:
         verbose_name_plural = "people"
         ordering = ["name"]
@@ -506,15 +511,6 @@ class People(Record):
     def save(self, *args, **kwargs):
         if self.email:
             self.email=self.email.lower()
-        if self.twitter:
-            try:
-                url = self.twitter
-                if url[:4] == "http":
-                    self.twitter = url.rsplit("/", 1)[-1]
-                elif url[:1] == "@":
-                    self.twitter = url[1:]
-            except:
-                pass
         super(People, self).save(*args, **kwargs)
 
     objects = PublicActiveRecordManager()

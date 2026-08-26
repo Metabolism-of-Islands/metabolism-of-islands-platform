@@ -346,6 +346,7 @@ def people(request, id):
         "menu": "about",
         "slug": "community",
         "info": People.objects.get(pk=id),
+        "edit_link": reverse("controlpanel_people", args=[id]),
     }
     return render(request, "main/people.html", context)
 
@@ -994,9 +995,38 @@ def controlpanel_people(request, id=None):
         info = People.objects.get(pk=id)
     else:
         info = People()
+        info.is_team = True
+
+    if request.method == "POST":
+        if request.POST.get("delete") == "true" and info.pk:
+            if info.user:
+                info.is_team = False
+                info.save()
+            else:
+                info.is_deleted = True
+                info.save()
+            messages.success(request, "Profile deleted successfully.")
+            return redirect("controlpanel_people_list")
+
+        info.name = request.POST.get("name")
+        info.website = request.POST.get("website")
+        info.affiliation = request.POST.get("affiliation")
+        info.google_scholar = request.POST.get("google_scholar")
+        info.orcid = request.POST.get("orcid")
+        info.description = request.POST.get("description")
+        info.description_html = request.POST.get("description")
+
+        if "image" in request.FILES:
+            info.image = request.FILES["image"]
+
+        info.save()
+        messages.success(request, "Information saved successfully.")
+        return redirect(info.get_absolute_url())
+
     context = {
         "info": info,
         "controlpanel": True,
+        "load_quill": True,
     }
     return render(request, "main/controlpanel/people.html", context)
 
@@ -1036,6 +1066,7 @@ def controlpanel_publisher(request, id=None):
     context = {
         "info": info,
         "controlpanel": True,
+        "load_quill": True,
     }
     return render(request, "main/controlpanel/publisher.html", context)
 

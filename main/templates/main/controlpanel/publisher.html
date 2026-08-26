@@ -66,44 +66,4 @@
 
 </form>
 
-<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
-<style>
-  /* Keeps the Quill container match your Tailwind theme borders */
-  .ql-toolbar.ql-snow {
-    border-color: #cbd5e1 !important;
-    border-top-left-radius: 0.75rem;
-    border-top-right-radius: 0.75rem;
-    background-color: #f8fafc;
-  }
-  .ql-container.ql-snow {
-    border-color: #cbd5e1 !important;
-    border-bottom-left-radius: 0.75rem;
-    border-bottom-right-radius: 0.75rem;
-    font-family: inherit;
-  }
-</style>
-
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-    const quill = new Quill('#editor_container', {
-      theme: 'snow',
-      modules: {
-        toolbar: [
-          ['bold', 'italic', 'underline', 'strike'],
-          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-          ['clean']
-        ]
-      }
-    });
-
-    // Before form submission, copy the HTML from Quill to the hidden Django input field
-    const form = document.querySelector('form');
-    form.addEventListener('submit', function() {
-      const hiddenInput = document.getElementById('hidden_description');
-      // If editor has content, pass the innerHTML to Django
-      hiddenInput.value = quill.root.innerHTML === '<p><br></p>' ? '' : quill.root.innerHTML;
-    });
-  });
-</script>
 {% endblock %}
