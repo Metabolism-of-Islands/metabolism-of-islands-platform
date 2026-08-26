@@ -50,6 +50,10 @@ urlpatterns = [
     path("controlpanel/webpages/<int:id>/", views.controlpanel_webpage, name="controlpanel_webpage"),
     path("controlpanel/webpages/create/", views.controlpanel_webpage, name="controlpanel_webpage"),
 
+    path("controlpanel/news/", views.controlpanel_news_list, name="controlpanel_news_list"),
+    path("controlpanel/news/<int:id>/", views.controlpanel_news, name="controlpanel_news"),
+    path("controlpanel/news/create/", views.controlpanel_news, name="controlpanel_news"),
+
     path("controlpanel/events/", views.controlpanel_events, name="controlpanel_events"),
     path("controlpanel/events/<int:id>/", views.controlpanel_event, name="controlpanel_event"),
     path("controlpanel/events/create/", views.controlpanel_event, name="controlpanel_event"),

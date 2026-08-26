@@ -78,6 +78,9 @@
 @utility btn-edit {
   @apply text-sm bg-amber-300 text-white px-3.5 py-2.5 rounded-sm hover:bg-amber-400 focus:outline-none font-semibold focus:ring-amber-300 no-underline hover:text-white inline-block cursor-pointer;
 }
+@utility btn-add {
+  @apply inline-flex no-underline items-center justify-center rounded-xl bg-brand px-5 py-3 font-semibold text-white hover:opacity-90 transition-opacity;
+}
 @utility btn-white {
   @apply text-sm bg-white border border-gray-200 text-gray-500 px-3.5 py-2.5 rounded-sm hover:bg-gray-50 focus:outline-none font-semibold focus:ring-cyan-300 no-underline inline-block cursor-pointer;
 }

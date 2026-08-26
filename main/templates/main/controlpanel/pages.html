@@ -20,7 +20,7 @@
   <tbody>
   {% for each in pages %}
     <tr>
-      <td>{{ each.id }}<br>{{ each.slug }}</td>
+      <td class="font-mono text-slate-700">{{ each.id }}</td>
       <td><a href="{% url "controlpanel_webpage" each.id %}">{{ each }}</a></td>
       <td>{{ each.get_section_display }}</td>
       <td class="whitespace-nowrap">{{ each.date_created|date:"M d, Y" }}</td>

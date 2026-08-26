@@ -588,6 +588,27 @@
       outline-style: none;
     }
   }
+  .btn-add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-xl);
+    background-color: var(--color-brand);
+    padding-inline: calc(var(--spacing) * 5);
+    padding-block: calc(var(--spacing) * 3);
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-white);
+    text-decoration-line: none;
+    transition-property: opacity;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+    &:hover {
+      @media (hover: hover) {
+        opacity: 90%;
+      }
+    }
+  }
   .badge {
     display: inline-flex;
     align-items: center;

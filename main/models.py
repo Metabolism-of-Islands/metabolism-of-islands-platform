@@ -327,6 +327,9 @@ class Record(models.Model):
     def save(self, *args, **kwargs):
         if not self.description:
             self.description_html = None
+        elif self.description_html:
+            pass
+            # description_html has been set so no need to convert anything
         elif self.meta_data and "format" in self.meta_data and self.meta_data["format"] != "markdown":
             if self.meta_data["format"] == "markdown_html":
                 # Here it wouldn't hurt to apply bleach and take out unnecessary tags
@@ -336,53 +339,28 @@ class Record(models.Model):
                 self.description_html = self.description
         else:
             self.description_html = markdown(bleach.clean(self.description))
-            if hasattr(self, "dataarticle"):
-                # For data articles we have a special syntax that converts things like [@3893] to a link, or [#3983] to an iframe
-                p = re.compile("\\[#(\\d*)\\]")
-                self.description_html = p.sub(r'<iframe class="libraryitem card" src="/library/preview/\1/" onload="resizeIframe(this)"></iframe>', self.description_html)
+            # In normal Markdown convention, a single newline will NOT be converted to <br>
+            # However this is not how regular textareas work, and people are expecting this to work
+            # so we add these <br>s.
+            self.description_html = self.description_html.replace("\n", "<br>")
 
-                # For custom dataviz, the format is [#1111-222] with 222 indicating the ID of the data viz (converted to a GET parameter)
-                p = re.compile("\\[#(\\d*)-(\\d*)\\]")
-                self.description_html = p.sub(r'<iframe class="libraryitem card" src="/library/preview/\1/?data-viz=\2" onload="resizeIframe(this)"></iframe>', self.description_html)
-
-                p = re.compile("\\[@(\\d*)\\]")
-                # For local testing, add /data/ to src=
-                self.description_html = p.sub(r'<sup>[<a data-id="\1" href="/library/\1/">source</a>]</sup>', self.description_html)
-
-            else:
-                # In normal Markdown convention, a single newline will NOT be converted to <br>
-                # However this is not how regular textareas work, and people are expecting this to work
-                # so we add these <br>s.
-                self.description_html = self.description_html.replace("\n", "<br>")
-
-                # This creates all kinds of additional <br>s in between paragraphs, headers, lists, etc
-                # This code removes that. It's ugly and inefficient. Any takers to make this more efficient??
-                self.description_html = self.description_html.replace("</p><br><p>", "</p><p>")
-                self.description_html = self.description_html.replace("</p><br><ul>", "</p><ul>")
-                self.description_html = self.description_html.replace("</p><br><ol>", "</p><ol>")
-                self.description_html = self.description_html.replace("</li><br><li>", "</li><li>")
-                self.description_html = self.description_html.replace("</ul><br><p>", "</ul><p>")
-                self.description_html = self.description_html.replace("</ol><br><p>", "</ol><p>")
-                self.description_html = self.description_html.replace("<ul><br><li>", "<ul><li>")
-                self.description_html = self.description_html.replace("<ol><br><li>", "<ol><li>")
-                self.description_html = self.description_html.replace("</li><br></ul>", "</li></ul>")
-                self.description_html = self.description_html.replace("</li><br></ol>", "</li></ol>")
-                self.description_html = self.description_html.replace("<br><h", "<h")
-                self.description_html = self.description_html.replace("</h1><br>", "</h1>")
-                self.description_html = self.description_html.replace("</h2><br>", "</h2>")
-                self.description_html = self.description_html.replace("</h3><br>", "</h3>")
-                self.description_html = self.description_html.replace("</h4><br>", "</h4>")
-
-        # For all the activated spaces, we record the country_name in the meta_data
-        # That way, we can retrieve this without an additional database call
-        if hasattr(self, "activated"):
-            if not self.meta_data:
-                self.meta_data = {}
-            if self.get_country:
-                self.meta_data["country_name"] = str(self.get_country)
-            elif "country_name" in self.meta_data:
-                del(self.meta_data["country_name"])
-
+            # This creates all kinds of additional <br>s in between paragraphs, headers, lists, etc
+            # This code removes that. It's ugly and inefficient. Any takers to make this more efficient??
+            self.description_html = self.description_html.replace("</p><br><p>", "</p><p>")
+            self.description_html = self.description_html.replace("</p><br><ul>", "</p><ul>")
+            self.description_html = self.description_html.replace("</p><br><ol>", "</p><ol>")
+            self.description_html = self.description_html.replace("</li><br><li>", "</li><li>")
+            self.description_html = self.description_html.replace("</ul><br><p>", "</ul><p>")
+            self.description_html = self.description_html.replace("</ol><br><p>", "</ol><p>")
+            self.description_html = self.description_html.replace("<ul><br><li>", "<ul><li>")
+            self.description_html = self.description_html.replace("<ol><br><li>", "<ol><li>")
+            self.description_html = self.description_html.replace("</li><br></ul>", "</li></ul>")
+            self.description_html = self.description_html.replace("</li><br></ol>", "</li></ol>")
+            self.description_html = self.description_html.replace("<br><h", "<h")
+            self.description_html = self.description_html.replace("</h1><br>", "</h1>")
+            self.description_html = self.description_html.replace("</h2><br>", "</h2>")
+            self.description_html = self.description_html.replace("</h3><br>", "</h3>")
+            self.description_html = self.description_html.replace("</h4><br>", "</h4>")
 
         super().save(*args, **kwargs)
 
@@ -441,6 +419,7 @@ class News(Record):
         return People.objects.filter(parent_list__record_child=self, parent_list__relationship__id=4)
 
     def save(self, *args, **kwargs):
+        # Should check for duplicates! Also for events.
         self.slug = slugify(unidecode(self.name))
         super().save(*args, **kwargs)
 

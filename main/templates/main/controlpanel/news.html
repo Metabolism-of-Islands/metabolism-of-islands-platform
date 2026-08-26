@@ -8,7 +8,7 @@
 
   <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
     <div class="border-b border-slate-200 px-6 py-5">
-      <h2 class="text-xl font-bold tracking-tight text-slate-900">{% block title %}{% if info %}Edit page{% else %}Add page{% endif %}{% endblock %}</h2>
+      <h2 class="text-xl font-bold tracking-tight text-slate-900">News details</h2>
     </div>
 
     <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -18,8 +18,26 @@
         <input type="text" name="name" value="{{ info.name|default:'' }}" required class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
       </div>
 
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block mb-2 text-sm font-semibold text-slate-700">Date</label>
+          <input type="date" name="date" required value="{{ info.date|date:'Y-m-d' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+        </div>
+      </div>
+
       <div class="lg:col-span-2">
-        <label class="block mb-2 text-sm font-semibold text-slate-700">Content</label>
+        <label class="block mb-2 text-sm font-semibold text-slate-700">Image</label>
+        {% if info.image %}
+          <div class="mb-3 flex items-center space-x-4">
+            <img src="{{ info.image.thumbnail.url }}" class="h-16 w-16 object-cover rounded-lg border border-slate-200">
+            <span class="text-xs text-slate-500">Currently: <a href="{{ info.image.url }}" target="_blank" class="text-brand underline">View full size</a></span>
+          </div>
+        {% endif %}
+        <input type="file" name="image" accept="image/*" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200">
+      </div>
+
+      <div class="lg:col-span-2">
+        <label class="block mb-2 text-sm font-semibold text-slate-700">Description</label>
         <input type="hidden" name="description" id="hidden_description" value="{{ info.description_html|default_if_none:'' }}">
         <div id="editor_container" class="w-full rounded-b-xl border border-slate-300 bg-white" style="min-height: 200px;">
           {{ info.description_html|default_if_none:""|safe }}
@@ -33,7 +51,7 @@
     
     <button type="submit" class="rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white hover:opacity-90">
       <i class="fal fa-save mr-2"></i>
-      Save page
+      Save record
     </button>
 
     {% if info.id %}
@@ -54,6 +72,5 @@
   </div>
 
 </form>
-
 
 {% endblock %}

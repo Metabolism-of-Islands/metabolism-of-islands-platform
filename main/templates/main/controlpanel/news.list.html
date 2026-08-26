@@ -4,7 +4,7 @@
 
 <h1>
 {% block title %}
-  Events
+  News
 {% endblock %}
 </h1>
 
@@ -13,20 +13,20 @@
     <tr>
       <th>ID</th>
       <th>Title</th>
-      <th>Dates</th>
+      <th>Date</th>
     </tr>
   </thead>
   <tbody>
-  {% for each in events %}
+  {% for each in news %}
     <tr>
       <td class="font-mono text-slate-700">{{ each.id }}</td>
-      <td><a href="{% url "controlpanel_event" each.id %}">{{ each }}</a></td>
-      <td class="whitespace-nowrap">{{ each.get_dates }}</td>
+      <td><a href="{% url "controlpanel_news" each.id %}">{{ each }}</a></td>
+      <td class="whitespace-nowrap">{{ each.date }}</td>
     </tr>
   {% endfor %}
   </tbody>
 </table>
 
-<a class="btn-add" href="{% url "controlpanel_event" %}"><i class="fa fa-plus mr-1"></i>Add event</a>
+<a class="btn-add" href="{% url "controlpanel_news" %}"><i class="fa fa-plus mr-1"></i>Add article</a>
 
 {% endblock %}

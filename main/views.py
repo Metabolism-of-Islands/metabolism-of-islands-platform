@@ -406,6 +406,7 @@ def news(request, slug):
         "info": info,
         "menu": "news",
         "latest": News.objects.all()[:5],
+        "edit_link": reverse("controlpanel_news", args=[info.id]),
     }
     return render(request, "main/news.html", context)
 
@@ -423,7 +424,8 @@ def event(request, slug):
     context = {
         "info": info,
         "menu": "events",
-        "latest": Event.objects.all().order_by("start_date")[:5],
+        "latest": Event.objects.all().order_by("-start_date")[:5],
+        "edit_link": reverse("controlpanel_event", args=[info.id]),
     }
     return render(request, "main/event.html", context)
 
@@ -730,10 +732,28 @@ def controlpanel_webpage(request, id=None):
 
     if id:
         info = Webpage.objects.get(pk=id)
+    else:
+        info = Webpage()
+
+    if request.method == "POST":
+        if request.POST.get("delete") == "true" and info.pk:
+            info.is_deleted = True
+            info.save()
+            messages.success(request, "Webpage deleted successfully.")
+            return redirect("controlpanel_webpages")
+
+        info.name = request.POST.get("name")
+        info.description = request.POST.get("description")
+        info.description_html = request.POST.get("description")
+
+        info.save()
+        messages.success(request, "Information saved successfully.")
+        return redirect(info.get_absolute_url())
 
     context = {
         "info": info,
         "controlpanel": True,
+        "load_quill": True,
     }
     return render(request, "main/controlpanel/page.html", context)
 
@@ -833,15 +853,20 @@ def controlpanel_event(request, id=None):
         info.description = request.POST.get("description")
         info.description_html = request.POST.get("description")
 
-        for field in ["start_date", "end_date"]:
-            raw_val = request.POST.get(field)
-            if raw_val:
-                # If the string length matches YYYY-MM-DD, add the midnight time string fallback
-                if len(raw_val) == 10:
-                    raw_val += "T00:00"
-                setattr(info, field, parse_datetime(raw_val))
+        for prefix in ["start", "end"]:
+            date_val = request.POST.get(f"{prefix}_date")
+            time_val = request.POST.get(f"{prefix}_time")
+
+            if date_val:
+                # Default to midnight if the user left the time box empty (----)
+                if not time_val:
+                    time_val = "00:00"
+                
+                # Combine into standard ISO format: YYYY-MM-DDTHH:MM
+                combined_str = f"{date_val}T{time_val}"
+                setattr(info, f"{prefix}_date", parse_datetime(combined_str))
             else:
-                setattr(info, field, None)
+                setattr(info, f"{prefix}_date", None)
 
         if "image" in request.FILES:
             info.image = request.FILES["image"]
@@ -853,8 +878,51 @@ def controlpanel_event(request, id=None):
     context = {
         "info": info,
         "controlpanel": True,
+        "load_quill": True,
     }
     return render(request, "main/controlpanel/event.html", context)
+
+@staff_required
+def controlpanel_news_list(request):
+    context = {
+        "news": News.objects.all(),
+        "controlpanel": True,
+    }
+    return render(request, "main/controlpanel/news.list.html", context)
+
+@staff_required
+def controlpanel_news(request, id=None):
+
+    if id:
+        info = News.objects.get(pk=id)
+    else:
+        info = News()
+
+    if request.method == "POST":
+        if request.POST.get("delete") == "true" and info.pk:
+            info.is_deleted = True
+            info.save()
+            messages.success(request, "News item deleted successfully.")
+            return redirect("controlpanel_news_list")
+
+        info.name = request.POST.get("name")
+        info.description = request.POST.get("description")
+        info.description_html = request.POST.get("description")
+        info.date = request.POST.get("date")
+
+        if "image" in request.FILES:
+            info.image = request.FILES["image"]
+
+        info.save()
+        messages.success(request, "Information saved successfully.")
+        return redirect(info.get_absolute_url())
+
+    context = {
+        "info": info,
+        "controlpanel": True,
+        "load_quill": True,
+    }
+    return render(request, "main/controlpanel/news.html", context)
 
 @staff_required
 def controlpanel_users(request):

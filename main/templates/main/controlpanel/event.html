@@ -36,22 +36,27 @@
         <input type="url" name="url" value="{{ info.url|default:'' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
       </div>
 
-      <div>
-        <label class="block mb-2 text-sm font-semibold text-slate-700">Start date</label>
-        {% if info.start_date and info.start_date|date:"H:i" == "00:00" %}
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block mb-2 text-sm font-semibold text-slate-700">Start date</label>
           <input type="date" name="start_date" value="{{ info.start_date|date:'Y-m-d' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
-        {% else %}
-          <input type="datetime-local" name="start_date" value="{{ info.start_date|date:'Y-m-d\TH:i' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
-        {% endif %}
+        </div>
+        <div>
+          <label class="block mb-2 text-sm font-semibold text-slate-700">Start time <span class="text-xs font-normal text-slate-400">(optional)</span></label>
+          <input type="time" name="start_time" value="{% if info.start_date and info.start_date|date:'H:i' != '00:00' %}{{ info.start_date|date:'H:i' }}{% endif %}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+        </div>
       </div>
 
-      <div>
-        <label class="block mb-2 text-sm font-semibold text-slate-700">End date</label>
-        {% if info.end_date and info.end_date|date:"H:i" == "00:00" %}
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block mb-2 text-sm font-semibold text-slate-700">End date</label>
           <input type="date" name="end_date" value="{{ info.end_date|date:'Y-m-d' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
-        {% else %}
-          <input type="datetime-local" name="end_date" value="{{ info.end_date|date:'Y-m-d\TH:i' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
-        {% endif %}
+        </div>
+        <div>
+          <label class="block mb-2 text-sm font-semibold text-slate-700">End time <span class="text-xs font-normal text-slate-400">(optional)</span></label>
+          <input type="time" name="end_time" value="{% if info.end_date and info.end_date|date:'H:i' != '00:00' %}{{ info.end_date|date:'H:i' }}{% endif %}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+        </div>
       </div>
 
       <div class="lg:col-span-2">
@@ -107,45 +112,4 @@
 
 </form>
 
-
-<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
-<style>
-  /* Keeps the Quill container match your Tailwind theme borders */
-  .ql-toolbar.ql-snow {
-    border-color: #cbd5e1 !important;
-    border-top-left-radius: 0.75rem;
-    border-top-right-radius: 0.75rem;
-    background-color: #f8fafc;
-  }
-  .ql-container.ql-snow {
-    border-color: #cbd5e1 !important;
-    border-bottom-left-radius: 0.75rem;
-    border-bottom-right-radius: 0.75rem;
-    font-family: inherit;
-  }
-</style>
-
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-    const quill = new Quill('#editor_container', {
-      theme: 'snow',
-      modules: {
-        toolbar: [
-          ['bold', 'italic', 'underline', 'strike'],
-          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-          ['clean']
-        ]
-      }
-    });
-
-    // Before form submission, copy the HTML from Quill to the hidden Django input field
-    const form = document.querySelector('form');
-    form.addEventListener('submit', function() {
-      const hiddenInput = document.getElementById('hidden_description');
-      // If editor has content, pass the innerHTML to Django
-      hiddenInput.value = quill.root.innerHTML === '<p><br></p>' ? '' : quill.root.innerHTML;
-    });
-  });
-</script>
 {% endblock %}
