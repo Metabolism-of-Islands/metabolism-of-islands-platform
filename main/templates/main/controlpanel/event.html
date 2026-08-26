@@ -8,7 +8,7 @@
 
   <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
     <div class="border-b border-slate-200 px-6 py-5">
-      <h2 class="text-xl font-bold tracking-tight text-slate-900">Event Information</h2>
+      <h2 class="text-xl font-bold tracking-tight text-slate-900">{% if info.id %}Edit event{% else %}Edit event{% endif %}</h2>
     </div>
 
     <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -22,12 +22,9 @@
         <label class="block mb-2 text-sm font-semibold text-slate-700">Event type</label>
         <select name="event_type" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
           <option value="">---------</option>
-          <option value="conference"{% if info.event_type == "conference" %} selected{% endif %}>Conference</option>
-          <option value="workshop"{% if info.event_type == "workshop" %} selected{% endif %}>Workshop</option>
-          <option value="seminar"{% if info.event_type == "seminar" %} selected{% endif %}>Seminar</option>
-          <option value="summerschool"{% if info.event_type == "summerschool" %} selected{% endif %}>Summer School</option>
-          <option value="training_outreach"{% if info.event_type == "training_outreach" %} selected{% endif %}>Training and Outreach</option>
-          <option value="other"{% if info.event_type == "other" %} selected{% endif %}>Other</option>
+          {% for value,name in event_types %}
+            <option {% if info.event_type == value %}selected{% endif %} value="{{ value }}">{{ name }}</option>
+          {% endfor %}
         </select>
       </div>
 

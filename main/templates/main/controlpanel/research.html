@@ -2,9 +2,134 @@
 
 {% block content %}
 
-    <h1>{% block title %}{% if info %}Edit research project{% else %}Add research project{% endif %}{% endblock %}</h1>
+<form method="post" enctype="multipart/form-data" class="space-y-8">
 
-    <div class="bg-gray-100 p-5 mb-5"><h2>{{ info }}</h2></div>
-    <div class="bg-gray-100 p-5">{{ info.get_description }}</div>
+  {% csrf_token %}
+
+  <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+    <div class="border-b border-slate-200 px-6 py-5">
+      <h2 class="mb-0 text-xl font-bold tracking-tight text-slate-900">{% block title %}{% if info.id %}Edit research project{% else %}Edit research project{% endif %}{% endblock %}</h2>
+    </div>
+
+    <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <div class="lg:col-span-2">
+        <label class="block mb-2 text-sm font-semibold text-slate-700">Name</label>
+        <input type="text" name="name" value="{{ info.name|default:'' }}" required class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+      </div>
+
+      <div>
+        <label class="block mb-2 text-sm font-semibold text-slate-700">Type</label>
+        <select name="project_type" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0" required>
+          <option value="">---------</option>
+          {% for value,name in project_types %}
+            <option {% if info.project_type == value %}selected{% endif %} value="{{ value }}">{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="block mb-2 text-sm font-semibold text-slate-700">URL</label>
+        <input type="url" name="url" value="{{ info.url|default:'' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+      </div>
+
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block mb-2 text-sm font-semibold text-slate-700">Start date</label>
+          <input type="date" name="start_date" value="{{ info.start_date|date:'Y-m-d' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block mb-2 text-sm font-semibold text-slate-700">End date</label>
+          <input type="date" name="end_date" value="{{ info.end_date|date:'Y-m-d' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+        </div>
+      </div>
+
+      <div class="lg:col-span-2">
+        <label class="block mb-2 text-sm font-semibold text-slate-700">Institution(s)</label>
+        <input type="text" name="institution" value="{{ info.meta_data.institution|default:'' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+      </div>
+
+      {% if info.project_type == "thesis" %}
+
+        <div class="lg:col-span-2">
+          <label class="block mb-2 text-sm font-semibold text-slate-700">Researcher(s)</label>
+          <input type="text" name="researcher" value="{{ info.meta_data.researcher|default:'' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+        </div>
+
+        <div class="lg:col-span-2">
+          <label class="block mb-2 text-sm font-semibold text-slate-700">Supervisor(s)</label>
+          <input type="text" name="supervisor" value="{{ info.meta_data.supervisor|default:'' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+        </div>
+
+      {% else %}
+
+        <div class="lg:col-span-2">
+          <label class="block mb-2 text-sm font-semibold text-slate-700">Research team</label>
+          <input type="text" name="research_team" value="{{ info.meta_data.research_team|default:'' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+        </div>
+
+        <div class="lg:col-span-2">
+          <label class="block mb-2 text-sm font-semibold text-slate-700">Project leader</label>
+          <input type="text" name="project_leader" value="{{ info.meta_data.project_leader|default:'' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+        </div>
+
+        <div class="lg:col-span-2">
+          <label class="block mb-2 text-sm font-semibold text-slate-700">E-mail</label>
+          <input type="email" name="email" value="{{ info.email|default:'' }}" class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+        </div>
+
+      {% endif %}
+
+      <div class="lg:col-span-2">
+        <label class="block mb-2 text-sm font-semibold text-slate-700">Image/logo</label>
+        {% if info.image %}
+          <div class="mb-3 flex items-center space-x-4">
+            <img src="{{ info.image.thumbnail.url }}" class="h-16 w-16 object-cover rounded-lg border border-slate-200">
+            <span class="text-xs text-slate-500">Currently: <a href="{{ info.image.url }}" target="_blank" class="text-brand underline">View full size</a></span>
+          </div>
+        {% endif %}
+        <input type="file" name="image" accept="image/*" class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200">
+      </div>
+
+      <div class="lg:col-span-2">
+        <label class="block mb-2 text-sm font-semibold text-slate-700">Description</label>
+        <input type="hidden" name="description" id="hidden_description" value="{{ info.description_html|default:'' }}">
+        <div id="editor_container" class="w-full rounded-b-xl border border-slate-300 bg-white" style="min-height: 200px;">
+          {{ info.get_description|safe }}
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="flex flex-row-reverse items-center justify-between">
+    
+    <button type="submit" class="rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white hover:opacity-90">
+      <i class="fal fa-save mr-2"></i>
+      Save record
+    </button>
+
+    {% if info.id %}
+      <button
+        tabindex="-1"
+        name="delete"
+        value="true"
+        type="submit"
+        onclick="javascript:return confirm('Are you sure you want to remove this record?')"
+        class="btn-red">
+        <i class="fal fa-trash-alt mr-2"></i>
+        Delete
+      </button>
+    {% else %}
+      <div></div>
+    {% endif %}
+
+  </div>
+
+</form>
 
 {% endblock %}

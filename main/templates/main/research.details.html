@@ -13,6 +13,17 @@
     <meta property="og:image" content="https://metabolismofislands.org{{ info.image.url }}">
   {% endif %}
   <meta property="og:url" content="https://metabolismofislands.org{{ request.get_full_path }}">
+
+  <style type="text/css">
+  #sidebar i {
+    color: var(--color-slate-400);
+  }
+
+  #sidebar {
+    color: var(--color-slate-600);
+  }
+  </style>
+
 {% endblock %}
 
 {% block content %}
@@ -21,13 +32,6 @@
   
   <!-- Left Side: Primary Reading Pane -->
   <article class="lg:col-span-2 space-y-6">
-
-    <!-- Top Feature Image Block -->
-    <div class="w-full max-h-[400px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-      {% if info.image %}
-        <img class="w-full h-full object-cover" src="{{ info.image.large.url }}" alt="{{ info }}">
-      {% endif %}
-    </div>
 
     <!-- Main Title Heading -->
     <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
@@ -53,29 +57,76 @@
   <div class="space-y-6">
     
     <div class="border border-slate-200 rounded-xl bg-white overflow-hidden text-sm divide-y divide-slate-100">
-      
-      {% if info.authors %}
-        <div class="p-4 flex items-start gap-3">
-          <i class="fa fa-user text-slate-400 mt-0.5 w-4 text-center" aria-hidden="true"></i>
-          <div class="text-slate-700 font-normal">
-            {% if info.authors.count == 1 %}
-              <span class="font-medium text-slate-900">{{ info.authors.0 }}</span>
-            {% else %}
-              <span class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Authors</span>
-              <div class="space-y-1 font-medium text-slate-900">
-                {% for each in info.authors %}
-                  <div>{{ each }}</div>
-                {% endfor %}
-              </div>
-            {% endif %}
-          </div>
-        </div>
-      {% endif %}
 
-      <div class="p-4 flex items-center gap-3">
-        <i class="fa fa-calendar text-slate-400 w-4 text-center" aria-hidden="true"></i>
-        <span class="font-mono text-slate-600 font-medium">{{ info.get_dates }}</span>
-      </div>
+        <div id="sidebar">
+        {% if info.image %}
+          <img src="{{ info.image.url }}" alt="" class="w-full p-3" />
+        {% endif %}
+
+          <ul class="divide-y divide-slate-200">
+
+            {% if info.start_date %}
+              <li class="px-4 py-3">
+                <i class="far fa-fw fa-calendar mb-1 mr-1" aria-hidden="true"></i> 
+                {{ info.get_dates }}
+              </li>
+            {% endif %}
+
+            {% if info.meta_data.institution %}
+              <li class="px-4 py-3">
+                <i class="far fa-fw fa-building mb-1 mr-1" aria-hidden="true"></i> 
+                <strong>Institution:</strong><br>
+                {{ info.meta_data.institution }}
+              </li>
+            {% endif %}
+
+            {% if info.meta_data.researcher %}
+              <li class="px-4 py-3">
+                <i class="far fa-fw fa-user mb-1 mr-1" aria-hidden="true"></i> 
+                <strong>Researcher(s):</strong><br>
+                {{ info.meta_data.researcher }}
+              </li>
+            {% endif %}
+
+            {% if info.meta_data.supervisor %}
+              <li class="px-4 py-3">
+                <i class="far fa-fw fa-user mb-1 mr-1" aria-hidden="true"></i> 
+                <strong>Supervisor(s):</strong><br>
+                {{ info.meta_data.supervisor }}
+              </li>
+            {% endif %}
+
+            {% if info.meta_data.research_team %}
+              <li class="px-4 py-3">
+                <i class="far fa-fw fa-user mb-1 mr-1" aria-hidden="true"></i> 
+                <strong>Research team</strong><br>
+                {{ info.meta_data.research_team }}
+              </li>
+            {% endif %}
+
+            {% if info.meta_data.project_leader %}
+              <li class="px-4 py-3">
+                <i class="far fa-fw fa-user mb-1 mr-1" aria-hidden="true"></i> 
+                <strong>Project leader</strong><br>
+                {{ info.meta_data.project_leader }}
+              </li>
+            {% endif %}
+
+            {% if info.email %}
+              <li class="px-4 py-3">
+                <i class="far fa-fw fa-envelope mb-1 mr-1" aria-hidden="true"></i> 
+                <strong>E-mail:</strong><br>
+                {{ info.email }}
+              </li>
+            {% endif %}
+
+            {% if info.url %}
+              <a class="block px-4 py-3" href="{{ info.url }}">
+                <i class="far fa-fw fa-link mb-1 mr-1" aria-hidden="true"></i> Project website
+              </a>
+            {% endif %}
+          </ul>
+        </div>
 
     </div>
 

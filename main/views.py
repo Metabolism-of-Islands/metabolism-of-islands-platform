@@ -448,6 +448,7 @@ def research_details(request, slug, id):
         "menu": "research",
         "slug": slug,
         "latest_research": Research.objects.filter(project_type=project_type).order_by("-start_date")[:5],
+        "edit_link": reverse("controlpanel_research", args=[info.id]),
     }
     return render(request, "main/research.details.html", context)
 
@@ -760,7 +761,7 @@ def controlpanel_webpage(request, id=None):
 @staff_required
 def controlpanel_research_list(request):
     context = {
-        "research": Research.objects.all(),
+        "research": Research.objects.all().order_by("-start_date"),
         "controlpanel": True,
     }
     return render(request, "main/controlpanel/research.list.html", context)
@@ -770,10 +771,43 @@ def controlpanel_research(request, id=None):
 
     if id:
         info = Research.objects.get(pk=id)
+    else:
+        info = Research()
+
+    if request.method == "POST":
+        if request.POST.get("delete") == "true" and info.pk:
+            info.is_deleted = True
+            info.save()
+            messages.success(request, "Research record deleted successfully.")
+            return redirect("controlpanel_research_list")
+
+        info.name = request.POST.get("name")
+        info.url = request.POST.get("url")
+        info.project_type = request.POST.get("project_type")
+        info.description = request.POST.get("description")
+        info.description_html = request.POST.get("description")
+        info.start_date = request.POST.get("start_date") or None
+        info.end_date = request.POST.get("end_date") or None
+        if not info.meta_data:
+            info.meta_data = {}
+        info.meta_data["supervisor"] = request.POST.get("supervisor")
+        info.meta_data["institution"] = request.POST.get("institution")
+        info.meta_data["researcher"] = request.POST.get("researcher")
+        info.meta_data["research_team"] = request.POST.get("research_team")
+        info.meta_data["project_leader"] = request.POST.get("project_leader")
+
+        if "image" in request.FILES:
+            info.image = request.FILES["image"]
+
+        info.save()
+        messages.success(request, "Information saved successfully.")
+        return redirect(info.get_absolute_url())
 
     context = {
         "info": info,
         "controlpanel": True,
+        "load_quill": True,
+        "project_types": Research.PROJECT_TYPES,
     }
     return render(request, "main/controlpanel/research.html", context)
 
@@ -879,6 +913,7 @@ def controlpanel_event(request, id=None):
         "info": info,
         "controlpanel": True,
         "load_quill": True,
+        "event_types": Event.EVENT_TYPE,
     }
     return render(request, "main/controlpanel/event.html", context)
 
