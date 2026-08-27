@@ -1538,6 +1538,8 @@ class Island(Record):
     geometry = models.GeometryField(null=True, blank=True)
     slug = models.CharField(max_length=255, db_index=True, null=True, unique=True)
     region = models.ForeignKey(Region, on_delete=models.CASCADE, null=True, related_name="islands")
+    main_photo = models.ForeignKey(Photo, on_delete=models.CASCADE, null=True, related_name="islands_main")
+    landscape_photo = models.ForeignKey(Photo, on_delete=models.CASCADE, null=True, related_name="islands_landscape")
 
     def __str__(self):
         return self.name

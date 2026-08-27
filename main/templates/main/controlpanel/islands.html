@@ -14,7 +14,7 @@
       <th>Name</th>
       <th>Region</th>
       <th>Location</th>
-      <th>Photo</th>
+      <th>Photos</th>
       <th>Created</th>
     </tr>
   </thead>
@@ -24,7 +24,10 @@
       <td><a href="{% url "controlpanel_island" each.id %}">{{ each }}</a></td>
       <td>{{ each.region }}</td>
       <td>{% if each.geometry %}<i class="fa fa-check text-green-500"></i>{% else %}<i class="fa fa-exclamation-triangle text-red-500"></i>{% endif %}</td>
-      <td>{% if each.photo.id != 1278693 %}<i class="fa fa-check text-green-500"></i>{% else %}<i class="fa fa-exclamation-triangle text-red-500"></i>{% endif %}</td>
+      <td>
+        {% if each.main_photo %}<i class="fa fa-check text-green-500"></i>{% else %}<i class="fa fa-exclamation-triangle text-red-500"></i>{% endif %}
+        {% if each.landscape_photo %}<i class="fa fa-check text-green-500"></i>{% else %}<i class="fa fa-exclamation-triangle text-red-500"></i>{% endif %}
+      </td>
       <td class="whitespace-nowrap">{{ each.date_created|date:"M d, Y" }}</td>
     </tr>
   {% endfor %}
