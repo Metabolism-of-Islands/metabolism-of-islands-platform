@@ -1538,8 +1538,8 @@ class Island(Record):
     geometry = models.GeometryField(null=True, blank=True)
     slug = models.CharField(max_length=255, db_index=True, null=True, unique=True)
     region = models.ForeignKey(Region, on_delete=models.CASCADE, null=True, related_name="islands")
-    main_photo = models.ForeignKey(Photo, on_delete=models.CASCADE, null=True, related_name="islands_main")
-    landscape_photo = models.ForeignKey(Photo, on_delete=models.CASCADE, null=True, related_name="islands_landscape")
+    photo = models.ForeignKey(Photo, on_delete=models.CASCADE, null=True, related_name="islands_main")
+    photo_bg = models.ForeignKey(Photo, on_delete=models.CASCADE, null=True, related_name="islands_landscape")
 
     def __str__(self):
         return self.name
@@ -1566,21 +1566,6 @@ class Island(Record):
             return self.geometry.centroid[0]
         except:
             return None
-
-    # So this was what we used before, but it means a db query every time we pull this field in
-    # Not efficient. We now have a signal (update_referencespace_photo) that simply checks if
-    # photos are being changed and then adds it to the IMAGE field in the reference space, allowing
-    # us to pull in the photo using the get_thumbnail or get_large_photo properties instead, which
-    # don't need any additional db query. This photo field needs to be phased out but I want to see
-    # exactly where it lives on the site. Let's try to phase out no later than March 2021...
-
-    @property
-    def photo(self):
-        from main.models import Photo
-        try:
-            return Photo.objects.filter(spaces=self).order_by("position")[0]
-        except:
-            return Photo.objects.get(pk=1278693)
 
     @property
     def get_thumbnail(self):

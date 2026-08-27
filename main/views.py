@@ -551,9 +551,6 @@ def controlpanel(request):
 
 @staff_required
 def controlpanel_islands(request):
-    for each in Island.objects.filter(main_photo_id=1278693):
-        each.main_photo = None
-        each.save()
     context = {
         "islands": Island.objects_unfiltered.all(),
         "controlpanel": True,
