@@ -551,15 +551,9 @@ def controlpanel(request):
 
 @staff_required
 def controlpanel_islands(request):
-    for each in Island.objects_unfiltered.all():
-        each.main_photo = each.photo
-        try:
-            secondary = Photo.objects.filter(spaces=each).order_by("position")[1]
-            each.landscape_photo = secondary
-        except Exception as e:
-            print(str(e), each)
+    for each in Island.objects.filter(main_photo_id=1278693):
+        each.main_photo = None
         each.save()
-
     context = {
         "islands": Island.objects_unfiltered.all(),
         "controlpanel": True,
