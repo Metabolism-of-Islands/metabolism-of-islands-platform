@@ -10,6 +10,9 @@
   rel="stylesheet"
   href="https://unpkg.com/leaflet.fullscreen@3.0.0/Control.FullScreen.css"
 />
+<style type="text/css">
+#map{width:100%;height:500px}
+</style>
 
   
 {% endblock %}
@@ -18,7 +21,6 @@
 
 <div class="max-w-4xl mx-auto py-6 space-y-6">
   
-  <!-- Content Header Block -->
   <div class="border-b border-slate-200 pb-4">
     <h1 class="text-xl font-bold tracking-tight text-slate-900">
       {% block title %}
@@ -27,7 +29,6 @@
     </h1>
   </div>
 
-  <!-- Main System Action Form Framework -->
   <form method="POST" enctype="multipart/form-data" class="space-y-6">
     {% csrf_token %}
     
@@ -44,7 +45,36 @@
           <input type="text" id="id_name" name="name" value="{{ info.name|default:'' }}" required class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
         </div>
 
-        <!-- Regional Dropdown Option Picker Selection -->
+        <div class="space-y-1 border border-slate-200 p-4 rounded-xl bg-white space-y-3">
+          <div>
+            <span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Primary Photo</span>
+            <span class="text-2xs text-slate-400 block mt-0.5">This should be an attractive photo that is used as a thumbnail on maps, in the overview, etc.</span>
+          </div>
+          {% if info.photo %}
+            <div class="w-32 h-20 rounded-lg overflow-hidden border border-slate-100 bg-slate-50">
+              <img src="{{ info.photo.thumbnail.url }}" class="w-full h-full object-cover" alt="Primary Thumbnail Preview">
+            </div>
+          {% endif %}
+          <input type="file" name="photo" accept=".jpg,.jpeg,.png" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-brand file:cursor-pointer transition-all">
+
+          <div class="space-y-1">
+            <input type="text" name="photo_author_list" value="{{ info.photo.author_list|default:'' }}" placeholder="Author name" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
+          </div>
+          <div class="space-y-1">
+            <select name="photo_license" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
+              <option value="">-- Select license --</option>
+              {% for each in licenses %}
+                <option value="{{ each.id }}" {% if info.photo.license.id == each.id %}selected{% endif %}>{{ each }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="space-y-2 flex flex-col">
+
         <div class="space-y-1">
           <label for="id_region" class="block text-xs font-bold uppercase tracking-wider text-slate-500">Region</label>
           <select id="id_region" name="region" required class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
@@ -55,59 +85,46 @@
           </select>
         </div>
 
-        <!-- Primary Image Upload Module -->
         <div class="space-y-1 border border-slate-200 p-4 rounded-xl bg-white space-y-3">
           <div>
-            <span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Primary Photo</span>
-            <span class="text-2xs text-slate-400 block mt-0.5">This should be an attractive photo that is used as a thumbnail</span>
+            <span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Landscape Photo</span>
+            <span class="text-2xs text-slate-400 block mt-0.5">This is the photo used as a background. Make sure it is a panoramic landscape photo.</span>
           </div>
-          {% if info.primary_image %}
+          {% if info.photo_bg %}
             <div class="w-32 h-20 rounded-lg overflow-hidden border border-slate-100 bg-slate-50">
-              <img src="{{ info.primary_image.thumbnail.url }}" class="w-full h-full object-cover" alt="Primary Thumbnail Preview">
+              <img src="{{ info.photo_bg.thumbnail.url }}" class="w-full h-full object-cover" alt="Primary Thumbnail Preview">
             </div>
           {% endif %}
-          <input type="file" name="primary_image" accept=".jpg,.jpeg,.png" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-brand file:cursor-pointer transition-all">
+          <input type="file" name="photo_bg" accept=".jpg,.jpeg,.png" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-brand file:cursor-pointer transition-all">
 
           <div class="space-y-1">
-            <input type="text" name="primary_author" value="{{ info.name|default:'' }}" placeholder="Author name" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
+            <input type="text" name="photo_bg_author_list" value="{{ info.photo_bg.author_list|default:'' }}" placeholder="Author name" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
           </div>
           <div class="space-y-1">
             <select name="primary_license" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
               <option value="">-- Select license --</option>
               {% for each in licenses %}
-                <option value="{{ each.id }}" {% if info.license.id == each.id %}selected{% endif %}>{{ each }}</option>
+                <option value="{{ each.id }}" {% if info.photo_bg.license.id == each.id %}selected{% endif %}>{{ each }}</option>
               {% endfor %}
             </select>
           </div>
 
         </div>
 
-        <!-- Secondary Image Upload Module -->
-        <div class="space-y-1 border border-slate-200 p-4 rounded-xl bg-white space-y-3">
-          <div>
-            <span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Landscape background photo</span>
-            <span class="text-2xs text-slate-400 block mt-0.5">An alternative landscape image used for the background</span>
-          </div>
-          {% if info.secondary_image %}
-            <div class="w-32 h-20 rounded-lg overflow-hidden border border-slate-100 bg-slate-50">
-              <img src="{{ info.secondary_image.thumbnail.url }}" class="w-full h-full object-cover" alt="Secondary Thumbnail Preview">
-            </div>
-          {% endif %}
-          <input type="file" name="secondary_image" accept=".jpg,.jpeg,.png" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-brand file:cursor-pointer transition-all">
-        </div>
-      </div>
-
-      <!-- Right Column Spatial Positioning Leaflet Map Frame Well -->
-      <div class="space-y-2 flex flex-col">
-        <span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Location</span>
-        <span class="text-2xs text-slate-400 block">Click anywhere on the map to set that as the center of the island when showing pins or displaying the map.</span>
         
-        <div class="flex-1 min-h-[340px] border border-slate-200 bg-slate-50 rounded-xl overflow-hidden relative z-0">
-          <div id="map" class="w-full h-full"></div>
-        </div>
+
       </div>
 
     </div>
+
+    <div>
+      <span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Location</span>
+      <span class="text-2xs text-slate-400 block">Click anywhere on the map to set that as the center of the island when showing pins or displaying the map.</span>
+      <div class="flex-1 min-h-[340px] border border-slate-200 bg-slate-50 rounded-xl overflow-hidden relative z-0">
+        <div id="map" class="w-full h-full"></div>
+      </div>
+    </div>
+
 
     <!-- Form Actions -->
     <div class="flex flex-row-reverse items-center justify-between">

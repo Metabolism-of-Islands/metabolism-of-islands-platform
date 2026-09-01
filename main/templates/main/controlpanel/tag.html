@@ -4,6 +4,32 @@
 
     <h1>{% block title %}{% if info %}Edit tag{% else %}Add tag{% endif %}{% endblock %}</h1>
 
-    <div class="bg-gray-100 p-5 mb-5"><h2>{{ info }}</h2></div>
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="flex flex-col gap-4 sm:flex-row">
+        <input
+          type="text"
+          name="name"
+          value="{{ info }}"
+          required
+          class="flex-1 rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+
+        <button
+          type="submit"
+          class="inline-flex items-center justify-center rounded-xl bg-brand px-5 py-3 font-semibold text-white hover:opacity-90 transition-opacity">
+          Save
+        </button>
+      </div>
+
+    </form>
+
+    <h2 class="mt-10">Associated items</h2>
+
+    <ul class="list-disc ml-4">
+    {% for each in records %}
+      <li><a href="{{ each.get_absolute_url }}">{{ each }}</a></li>
+    {% endfor %}
+    </ul>
 
 {% endblock %}

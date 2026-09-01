@@ -59,32 +59,12 @@
 
     <div class="mb-8">
       <h2 class="font-semibold text-slate-400 mb-1">Tag</h2>
-      <div class="space-y-2">
-        {% for parent, children_tags in tags %} 
-          <div class="filter-group">
-            <div class="flex items-center justify-between group py-1.5 px-2 rounded-lg hover:bg-slate-100 transition-colors duration-150">
-              <label class="flex items-center space-x-3 cursor-pointer text-sm font-medium text-slate-800 flex-1">
-                <input type="checkbox" name="parent_tag" value="{{ parent }}" class="parent-checkbox w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2">
-                <span class="truncate">{{ parent }}</span>
-                <span class="active-badge hidden items-center justify-center bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-full min-w-[20px]">0</span>
-              </label>
-              <button class="toggle-btn text-slate-400 hover:text-slate-600 p-1 focus:outline-none" aria-label="Toggle children">
-                <svg class="w-4 h-4 transform transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-            </div>
-            <ul class="child-list hidden pl-9 mt-1 space-y-2 border-l border-slate-200 ml-4">
-              {% for each in children_tags %}
-                <li>
-                  <label class="flex items-center space-x-3 cursor-pointer text-sm text-slate-600 hover:text-slate-900">
-                    <input type="checkbox" name="tag" value="{{ each.id }}" class="child-checkbox w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2">
-                    <span>{{ each }}</span>
-                  </label>
-                </li>
-              {% endfor %}
-            </ul>
-          </div>
+      <div class="space-y-2 pl-2">
+        {% for each in tags %}
+          <label class="flex items-center space-x-3 cursor-pointer text-sm font-medium text-slate-800 py-1.5 px-2 rounded-lg hover:bg-slate-100 transition-colors duration-150">
+            <input type="checkbox" name="tag" value="{{ each.id }}" class="w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2">
+            <span>{{ each }}</span>
+          </label>
         {% endfor %}
       </div>
     </div>

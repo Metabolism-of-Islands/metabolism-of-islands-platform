@@ -154,62 +154,12 @@ class Tag(models.Model):
     def __str__(self):
         return self.name
 
-    def get_description(self):
-        # The description_html field is already sanitized, according to the settings (see the save() function below)
-        # So when we retrieve the html description we can trust this is safe, and will mark it as such
-        # We avoid using |safe in templates -- to centralize the effort to sanitize input
-        if self.description:
-            return mark_safe(self.description_html)
-        else:
-            return ""
-
-    def get_name_after_colon(self):
-        # For some tags, we have a long name like:
-        # Layer 1: Infrastructure
-        # And we want an easy way to just get "Infrastructure" returned
-        try:
-            string = self.name
-            return string.split(":")[1]
-        except:
-            return self.name
-
-    def get_name_after_period(self):
-        # For some tags, we have a long name like:
-        # 1.1. City boundaries
-        # And we want an easy way to just get "City boundaries" returned
-        try:
-            string = self.name
-            return string.split(".")[-1]
-        except:
-            return self.name
-
-    def save(self, *args, **kwargs):
-        if not self.description:
-            self.description_html = None
-        else:
-            self.description_html = markdown(self.description)
-        super().save(*args, **kwargs)
-
-    @property
-    def shortcode(self):
-        "Returns abbreviation -- text between parenthesis -- if there is any"
-        if "(" in self.name:
-            s = self.name
-            return s[s.find("(")+1:s.find(")")]
-        else:
-            return self.name
-
-    @property
-    def fullname(self):
-        "Returns full name without abbreviation -- text between parenthesis -- if there is any"
-        if "(" in self.name:
-            s = self.name
-            return s[0:s.find("(")-1]
-        else:
-            return self.name
-
     class Meta:
         ordering = ["name"]
+
+    def get_island_items(self):
+        sp = Island.objects.get(name="Singapore")
+        return Record.objects.filter(tags=self, spaces__isnull=False).exclude(spaces=sp).count()
 
     objects = PublicActiveRecordManager()
     objects_unfiltered = models.Manager()
@@ -226,7 +176,7 @@ class Record(models.Model):
     spaces = models.ManyToManyField("Island", blank=True)
     #sectors = models.ManyToManyField("Sector", blank=True)
     #materials = models.ManyToManyField("Material", blank=True)
-    tags = models.ManyToManyField(Tag, blank=True)
+    tags = models.ManyToManyField(Tag, blank=True, related_name="tagged")
 
     # We should migrate this to become a relationship instead
     subscribers = models.ManyToManyField("People", blank=True, related_name="subscribed")
@@ -255,7 +205,7 @@ class Record(models.Model):
         if hasattr(self, "dataset"):
             url = reverse("data:dataset", args=[self.id])
         elif hasattr(self, "libraryitem"):
-            url = reverse("library:item", args=[self.id])
+            url = reverse("library_item", args=[self.id])
         elif hasattr(self, "news"):
             url = reverse("main:news", args=[self.news.slug])
         elif hasattr(self, "event"):

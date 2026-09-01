@@ -89,9 +89,9 @@ def island(request, slug):
     
     # Aggregate only the Tags present in this island's collection
     tags = Tag.objects.filter(
-        record__libraryitem__id__in=item_ids
+        tagged__libraryitem__id__in=item_ids
     ).annotate(
-        island_total=Count("record__libraryitem", filter=Q(record__libraryitem__id__in=item_ids))
+        island_total=Count("tagged__libraryitem", filter=Q(tagged__libraryitem__id__in=item_ids))
     ).order_by("-island_total")
 
     try:
@@ -145,31 +145,17 @@ def library(request):
         "regions": regions,
         "total": items.count(),
         "menu": "library",
+        "themes": Tag.objects.filter(parent_tag=Tag.objects_unfiltered.get(name="Themes")).annotate(total=Count("tagged", filter=~Q(tagged__libraryitem__type_id=38))).order_by("name")
     }
     return render(request, "main/library.html", context)
 
 def library_list(request, item_type=None):
 
-    tags = (
-        Tag.objects
-           .annotate(record_count=Count("record"))
-           .filter(record_count__gt=0)
-           .select_related("parent_tag")
-           .order_by("parent_tag_id", "parent_tag__name", "name")
-    )
-
-    grouped_tags = []
-    for parent_tag_id, group in groupby(tags, key=lambda t: t.parent_tag_id):
-        group_list = list(group)
-
-        parent = group_list[0].parent_tag
-        parent_name = parent.name if parent is not None else None
-
-        grouped_tags.append((parent_name, group_list))
+    tags = Tag.objects.filter(parent_tag__name="Themes")
 
     context = {
         "item_types": LibraryItemType.objects.exclude(pk=38).annotate(total=Count("items")).filter(total__gt=0).order_by("-total"),
-        "tags": grouped_tags,
+        "tags": tags,
         "menu": "library",
     }
     return render(request, "main/library.list.html", context)
@@ -847,8 +833,70 @@ def controlpanel_region(request, id):
 
 @staff_required
 def controlpanel_tags(request):
+    tags = Tag.objects.all()
+    if "children_only" in request.GET:
+        tags = tags.filter(children__isnull=True)
+
+    for each in tags:
+        hits = each.tagged.count()
+        if hits == 0:
+            print(each, hits)
+            each.is_deleted=True
+            each.save()
+        hits = each.get_island_items()
+        if hits == 0:
+            print(each, hits)
+            each.is_deleted=True
+            each.save()
+    parents_to_remove = Tag.objects.filter(name__in=["Tools", "Industrial ecology concepts", "System types", "Energy assessment methods", "Scales", "Input/output methods", "Flow analysis methods", "Time horizons", "Various", "Footprint methods", "MoC Video collections", "Life cycle assessment methods", "Indicators", "Temporary tags", "Hybrid methods"])
+    kids = Tag.objects.filter(parent_tag__in=parents_to_remove)
+    kids.update(is_deleted=True)
+    parents_to_remove.update(is_deleted=True)
+
+    parentize = ["Fossil Fuels", "Metals", "Greenhouse Gases (GHGs)", "Energy"]
+    for each in parentize:
+        tag = Tag.objects.get(name=each)
+        children = Tag.objects.filter(parent_tag=tag)
+        for doc in Record.objects.filter(tags__in=children):
+            doc.tags.add(tag)
+        children.update(is_deleted=True)
+
+
+    tag = Tag.objects.get(name="Waste")
+    children = Tag.objects.filter(name__in=["3.30. Waste", "4.18. Waste flows", "Construction and Demolition Waste (CDW)", "e-Waste", "E-waste", "Municipal Solid Waste (MSW)"])
+    for doc in Record.objects.filter(tags__in=children):
+        doc.tags.add(tag)
+    children.update(is_deleted=True)
+    tag.parent_tag=Tag.objects_unfiltered.get(name="Themes")
+    tag.save()
+
+    tag = Tag.objects.get(name="Water")
+    children = Tag.objects.filter(name__in=["4.13. Flows: Water", "Wastewater"])
+    for doc in Record.objects.filter(tags__in=children):
+        doc.tags.add(tag)
+    children.update(is_deleted=True)
+    tag.parent_tag=Tag.objects_unfiltered.get(name="Themes")
+    tag.save()
+
+    tag = Tag.objects.get(name="Food")
+    tag.parent_tag=Tag.objects_unfiltered.get(name="Themes")
+    tag.save()
+
+    tag = Tag.objects.get(name="Metals")
+    tag.parent_tag=Tag.objects_unfiltered.get(name="Themes")
+    tag.save()
+
+    tag = Tag.objects.get(name="Energy")
+    children = Tag.objects.filter(name__in=["3.03. Electricity generation", "3.04. Electricity transmission and distribution", "3.05. Energy storage", "4.12. Flows: Energy"])
+    for doc in Record.objects.filter(tags__in=children):
+        doc.tags.add(tag)
+    children.update(is_deleted=True)
+    tag.parent_tag=Tag.objects_unfiltered.get(name="Themes")
+    tag.save()
+
+
     context = {
-        "tags": Tag.objects.all(),
+        "tags": tags,
         "controlpanel": True,
     }
     return render(request, "main/controlpanel/tags.html", context)
@@ -862,6 +910,7 @@ def controlpanel_tag(request, id=None):
     context = {
         "info": info,
         "controlpanel": True,
+        "records": Record.objects.filter(tags=info),
     }
     return render(request, "main/controlpanel/tag.html", context)
 

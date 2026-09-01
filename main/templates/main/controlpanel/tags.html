@@ -8,19 +8,25 @@
 {% endblock %}
 </h1>
 
+<div class="alert alert-info"><strong>{{ tags.count }}</strong> items found.</div>
+
 <table class="table table-striped">
   <thead>
     <tr>
       <th>ID</th>
       <th>Title</th>
+      <th>Record</th>
+      <th>Island #</th>
       <th>Parent</th>
     </tr>
   </thead>
   <tbody>
   {% for each in tags %}
     <tr>
-      <td>{{ each.id }}</td>
+      <td class="font-mono text-slate-600">{{ each.id }}</td>
       <td><a href="{% url "controlpanel_tag" each.id %}">{{ each }}</a></td>
+      <td>{{ each.tagged.count }}</td>
+      <td>{{ each.get_island_items }}</td>
       <td>{{ each.parent_tag|default_if_none:"" }}</td>
     </tr>
   {% endfor %}
