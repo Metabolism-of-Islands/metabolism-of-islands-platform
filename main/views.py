@@ -848,7 +848,7 @@ def controlpanel_tags(request):
             print(each, hits)
             each.is_deleted=True
             each.save()
-    parents_to_remove = Tag.objects.filter(name__in=["Tools", "Industrial ecology concepts", "System types", "Energy assessment methods", "Scales", "Input/output methods", "Flow analysis methods", "Time horizons", "Various", "Footprint methods", "MoC Video collections", "Life cycle assessment methods", "Indicators", "Temporary tags", "Hybrid methods"])
+    parents_to_remove = Tag.objects_unfiltered.filter(name__in=["Tools", "Industrial ecology concepts", "System types", "Energy assessment methods", "Scales", "Input/output methods", "Flow analysis methods", "Time horizons", "Various", "Footprint methods", "MoC Video collections", "Life cycle assessment methods", "Indicators", "Temporary tags", "Hybrid methods"])
     kids = Tag.objects.filter(parent_tag__in=parents_to_remove)
     kids.update(is_deleted=True)
     parents_to_remove.update(is_deleted=True)
