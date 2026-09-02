@@ -1,4 +1,3 @@
-from main.models import *
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import user_passes_test
@@ -7,13 +6,14 @@ from django.core.files.base import ContentFile
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.serializers import serialize
 from django.db.models import Count #, Q, Subquery, OuterRef, CharField, Avg
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse, FileResponse
 from django.shortcuts import render, get_object_or_404, redirect
+from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import csrf_exempt
 from itertools import groupby
+from main.models import *
 import json
 import requests
-from django.utils.dateparse import parse_datetime
 
 def index(request):
     islands = Island.objects.all()
@@ -300,6 +300,25 @@ def library_ajax_search(request):
             })
             
     return JsonResponse(results, safe=False)
+
+def library_download(request, document, id=None):
+    if id:
+        # If this document is linked to a library item then we need to ensure the user
+        # has access to this library item before we open the document
+        try:
+            file = LibraryItem.objects.get(pk=id)
+            document = file.attachments.get(pk=document)
+        except:
+            raise Http404("Document was not found (or you lack access).") 
+    else:
+        document = Document.objects.get(pk=document)
+        if document.attached_to and hasattr(document.attached_to, "libraryitem"):
+            # If this is linked to a document then it should not be opened in this way
+            # but instead include the id of that main document so we can check access
+            raise Http404("URL is invalid") 
+
+    file_path = document.file.path if document.file else document.image.path
+    return FileResponse(open(file_path, "rb"), filename=str(document.name))
 
 def about_overview(request):
     return redirect("/about/purpose")
