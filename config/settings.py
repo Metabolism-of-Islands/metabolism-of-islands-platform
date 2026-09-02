@@ -127,7 +127,7 @@ STATICFILES_DIRS = [
 STATIC_ROOT = os.environ['STATIC_ROOT']
 
 MEDIA_URL = 'media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.environ['MEDIA_ROOT']
 
 EMAIL_QUOTA = 2
 
