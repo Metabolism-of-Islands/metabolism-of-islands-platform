@@ -37,6 +37,7 @@ urlpatterns = [
     path("library/ajax/search/", views.library_ajax_search, name="library_ajax_search"),
     path("library/<int:id>/", views.library_item, name="library_item"),
     path("library/<int:id>/download/<int:document>/", views.library_download, name="library_download"),
+    path("publishers/", views.publishers, name="publishers"),
     path("publishers/<int:id>/", views.publisher, name="publisher"),
 
     path("accounts/login/", views.account_login, name="login"),

@@ -2,9 +2,11 @@
 
 {% block content %}
 
-<h1>{% block title %}Library{% endblock %}</h1>
+<a href="/library/" class="inline-flex items-center text-xs font-semibold uppercase tracking-wider text-slate-400 hover:text-brand !no-underline transition-colors">
+  <i class="fa fa-arrow-left mr-2"></i> Back to library homepage
+</a>
 
-
+<h1 class="mt-5">{% block title %}Library - Search{% endblock %}</h1>
 
 <div class="flex flex-col md:flex-row min-h-screen font-sans w-full overflow-x-hidden">
 

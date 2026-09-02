@@ -41,6 +41,39 @@
       {{ info.get_description }}
     </div>
 
+    <h2>Records in our library from this publisher</h2>
+    {% for item in info.publications.all %}
+      <!-- Serialized card item mapping with targeted data identifiers to enable jQuery manipulation -->
+      <div class="island-item-card max-w-full mb-3" data-type-id="{{ item.type_id }}" data-tag-ids="{% for t in item.tags.all %}{{ t.id }}{% if not forloop.last %},{% endif %}{% endfor %}">
+        <a href="{{ item.get_absolute_url }}" class="!no-underline block">
+          <div class="bg-white p-5 rounded-xl border border-slate-200 hover:border-brand transition-all duration-150 overflow-hidden">
+            <div class="flex justify-between items-start gap-4">
+              <h3 class="text-base font-semibold text-slate-900 hover:text-brand transition-colors leading-snug">{{ item.name }}</h3>
+              {% if item.year %}
+                <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded mt-0.5 whitespace-nowrap">{{ item.year }}</span>
+              {% endif %}
+            </div>
+            
+            <div class="text-xs text-slate-400 mt-1 truncate">
+              <span class="font-medium text-slate-500"><i class="fa fa-{{ item.type.icon|default:'file' }} mr-1"></i>{{ item.type.name }}</span>
+              {% if item.authors %}
+                <span class="text-slate-300 mx-1.5">|</span> <span class="italic text-slate-500">By: {{ item.authors }}</span>
+              {% endif %}
+            </div>
+            
+            {% if item.description %}
+              <p class="text-slate-600 font-normal mt-2.5 text-sm overflow-hidden break-all line-clamp-2 leading-relaxed">{{ item.description }}</p>
+            {% endif %}
+          </div>
+        </a>
+      </div>
+    {% empty %}
+      <div class="border border-slate-200 rounded-xl bg-white p-8 text-center text-sm italic text-slate-500">
+        No active library items cataloged for this island.
+      </div>
+    {% endfor %}
+
+
   </article>
 
   <div class="space-y-6">

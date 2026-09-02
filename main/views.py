@@ -145,7 +145,8 @@ def library(request):
         "regions": regions,
         "total": items.count(),
         "menu": "library",
-        "themes": Tag.objects.filter(parent_tag=Tag.objects_unfiltered.get(name="Themes")).annotate(total=Count("tagged", filter=~Q(tagged__libraryitem__type_id=38))).order_by("name")
+        "themes": Tag.objects.filter(parent_tag=Tag.objects_unfiltered.get(name="Themes")).annotate(total=Count("tagged", filter=~Q(tagged__libraryitem__type_id=38))).order_by("name"),
+        "publishers": Publisher.objects.all().annotate(total=Count("publications")).order_by("-total")[:20],
     }
     return render(request, "main/library.html", context)
 
@@ -354,6 +355,14 @@ def people(request, id):
         "edit_link": reverse("controlpanel_people", args=[id]),
     }
     return render(request, "main/people.html", context)
+
+def publishers(request):
+    context = {
+        "menu": "library",
+        "slug": "publishers",
+        "publishers": Publisher.objects.all().annotate(total=Count("publications"))
+    }
+    return render(request, "main/publishers.html", context)
 
 def publisher(request, id):
     context = {
