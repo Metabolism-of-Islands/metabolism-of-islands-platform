@@ -34,12 +34,7 @@ def islands(request, region=None):
     islands = Island.objects.all()
 
     if region:
-
-        # Horrific hack while we don't have a slug yet, but no real impact performance with 4 regions...
-        for each in Region.objects.all():
-            if slugify(each.name) == region:
-                region = each
-
+        region = Region.objects.get(slug=region)
         islands = islands.filter(region=region)
 
     # 1. Base filtered items queryset excluding images for total counts

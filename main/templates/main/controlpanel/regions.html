@@ -19,7 +19,9 @@
   {% for each in regions %}
     <tr>
       <td class="font-mono text-slate-700">{{ each.id }}</td>
-      <td><a href="{% url "controlpanel_region" each.id %}">{{ each }}</a></td>
+      <td><a href="{% url "controlpanel_region" each.id %}">{{ each }}</a>
+{{ each.slug }}
+      </td>
     </tr>
   {% endfor %}
   </tbody>

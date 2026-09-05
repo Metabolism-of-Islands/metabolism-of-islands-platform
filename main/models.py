@@ -1470,14 +1470,15 @@ class Region(models.Model):
     name = models.CharField(max_length=255)
     position = models.PositiveSmallIntegerField(db_index=True)
     photo_island = models.ForeignKey("Island", on_delete=models.SET_NULL, null=True, related_name="depicted_region") # This island is used to show a photo for the region
+    slug = models.SlugField(null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(unidecode(self.name))
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
-
-    # Let's make this a db field later, but when the migration is complete
-    @property
-    def slug(self):
-        return slugify(self.name)        
 
     class Meta:
         ordering = ["position"]
