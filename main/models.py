@@ -1470,7 +1470,7 @@ class Region(models.Model):
     name = models.CharField(max_length=255)
     position = models.PositiveSmallIntegerField(db_index=True)
     photo_island = models.ForeignKey("Island", on_delete=models.SET_NULL, null=True, related_name="depicted_region") # This island is used to show a photo for the region
-    slug = models.SlugField(null=True)
+    slug = models.SlugField()
 
     def save(self, *args, **kwargs):
         if not self.slug:

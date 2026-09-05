@@ -4,7 +4,7 @@
 
 <h1>
 {% block title %}
-  Region
+  Region{% if info.id %} - {{ info }}{% endif %}
 {% endblock %}
 </h1>
 
