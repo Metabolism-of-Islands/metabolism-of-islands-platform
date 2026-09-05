@@ -1149,3 +1149,12 @@ def controlpanel_publisher(request, id=None):
     }
     return render(request, "main/controlpanel/publisher.html", context)
 
+@staff_required
+def controlpanel_zotero(request):
+
+    context = {
+        "controlpanel": True,
+        "items": ZoteroItem.objects.all().select_related("library_item").order_by("-date_created"),
+    }
+    return render(request, "main/controlpanel/zotero.html", context)
+

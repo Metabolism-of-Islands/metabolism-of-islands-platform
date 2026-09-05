@@ -42,7 +42,7 @@
         {% if info.description %}
           <div class="border-t border-slate-200 pt-6 space-y-2">
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Abstract / Summary</h2>
-            <p class="text-sm text-slate-600 font-normal leading-relaxed text-justify">{{ info.get_description|safe }}</p>
+            <div class="leading-relaxed text-justify">{{ info.get_description }}</div>
           </div>
         {% endif %}
 

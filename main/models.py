@@ -19,6 +19,7 @@ User = get_user_model()
 # To sanitize user input
 import bleach
 from django.utils.safestring import mark_safe
+from django.utils.html import conditional_escape
 
 # To get the geometry fields
 from django.contrib.gis.db import models
@@ -224,13 +225,28 @@ class Record(models.Model):
         return url
 
     def get_description(self):
-        # The description_html field is already sanitized, according to the settings (see the save() function below)
-        # So when we retrieve the html description we can trust this is safe, and will mark it as such
-        # We avoid using |safe in templates -- to centralize the effort to sanitize input
-        if self.description:
-            return mark_safe(self.description_html)
-        else:
-            return ""
+        value = self.description or ""
+
+        # Does the original text contain an HTML tag?
+        TAG_RE = re.compile(r"<\s*/?\s*[A-Za-z][^>]*>")
+        contains_tags = bool(TAG_RE.search(value))
+
+        if not contains_tags:
+            # Treat it as plain text: escape HTML, then convert newlines.
+            escaped = conditional_escape(value)
+            escaped = escaped.replace("\r\n", "\n").replace("\r", "\n")
+            return mark_safe(escaped.replace("\n", "<br>"))
+
+        # HTML exists: retain only <p> and <br>.
+        cleaned = bleach.clean(
+            value,
+            tags=["p", "br"],
+            attributes={},
+            strip=True,
+        )
+
+        return mark_safe(cleaned)
+
 
     def get_markdown_description(self):
         return markdown(self.description) if self.description else None
@@ -1708,7 +1724,7 @@ class ZoteroItem(models.Model):
         return hits
 
     def find_spaces(self):
-        spaces = Island.objects.filter(geocodes=8355)
+        spaces = Island.objects.all()
         hits = []
         for each in spaces:
             if each.name in self.title:

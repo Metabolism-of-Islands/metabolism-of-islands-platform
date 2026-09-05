@@ -93,6 +93,8 @@ urlpatterns = [
     path("controlpanel/people/<int:id>/", views.controlpanel_people, name="controlpanel_people"),
     path("controlpanel/people/create/", views.controlpanel_people, name="controlpanel_people"),
 
+    path("controlpanel/zotero/", views.controlpanel_zotero, name="controlpanel_zotero"),
+
     # Migration redirects
     path("community/", RedirectView.as_view(url="/about/community", permanent=True)),
 ]

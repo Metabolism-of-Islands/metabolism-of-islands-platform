@@ -1,0 +1,30 @@
+{% extends "main/_base.html" %}
+
+{% block content %}
+
+<h1>
+{% block title %}
+  Zotero
+{% endblock %}
+</h1>
+
+<table class="table table-striped mb-2">
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Date created</th>
+      <th>Imported?</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for each in items %}
+    <tr>
+      <td>{{ each }}</td>
+      <td class="whitespace-nowrap">{{ each.date_created|date:"M d, Y" }}</td>
+      <td>{% if each.library_item %}<a href="{{ each.library_item.get_absolute_url }}">{{ each.library_item_id }}{% else %}{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}
