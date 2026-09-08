@@ -3,7 +3,6 @@ psycopg[binary]
 Pillow
 django-anymail[sendgrid]
 feedparser
-pyzotero
 django-imagekit
 python-dotenv
 

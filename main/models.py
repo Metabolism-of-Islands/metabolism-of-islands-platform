@@ -1592,6 +1592,7 @@ class ZoteroItem(models.Model):
     collection = models.ForeignKey(ZoteroCollection, on_delete=models.CASCADE)
     data = models.JSONField(null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
+    processing_results = models.CharField(max_length=255, null=True)
 
     def __str__(self):
         return self.title
@@ -1607,6 +1608,9 @@ class ZoteroItem(models.Model):
         except:
             return None
 
+    def get_type(self):
+        return re.sub(r"(\w)([A-Z])", r"\1 \2", self.data.get("itemType"))
+
     def import_to_library(self):
         info = self.find_match()
         print("Got past info, update the entry now: ", info)
@@ -1617,57 +1621,64 @@ class ZoteroItem(models.Model):
         info.year = self.get_year()
         info.url = self.data.get("url")
         info.description = self.data.get("abstractNote")
-        try:
-            # Zotero uses camelCase so we convert that into spaces
-            full_type = re.sub(r"(\w)([A-Z])", r"\1 \2", self.data.get("itemType"))
-            type = LibraryItemType.objects.get(name__iexact=full_type)
-            info.type = type
-        except:
-            info.type_id = 16 # Default to journal article if all else fails
-
-        info.save()
-        journal = self.data.get("publicationTitle")
-
-        if journal:
-            record_new_journal = True
-            check = RecordRelationship.objects.filter(record_child=info, relationship_id=2)
-            if check:
-                current = check[0]
-                if current.record_parent.name == journal:
-                    record_new_journal = False
+        full_type = re.sub(r"(\w)([A-Z])", r"\1 \2", self.data.get("itemType"))
+        if full_type == "attachment":
+            self.processing_results = "This is an attachment. Not imported"
+            self.save()
+        else:
+            try:
+                type_conversion = {
+                    "report": 27,
+                    "document": 27,
+                    "magazine Article": 21,
+                    "blog Post": 4,
+                    "bill": 3,
+                    "newspaper Article": 21,
+                    "conference Paper": 9,
+                    "statute": 3,
+                }
+                if full_type in type_conversion:
+                    get_type = LibraryItemType.objects.get(pk=type_conversion[full_type])
                 else:
-                    # We will change the journal
-                    check.delete()
-            if record_new_journal:
-                # Let's check to see if this journal already exist in our list with organizations
-                organization = Organization.objects.filter(name=journal)
-                if not organization:
-                    # If not, we create it
-                    organization = Organization.objects.create(
-                        name = journal,
-                        type = "journal",
-                    )                        
-                else:
-                    organization = organization[0]
-                RecordRelationship.objects.create(
-                    record_parent = organization,
-                    record_child = info,
-                    relationship_id = 2,
-                )
+                    get_type = LibraryItemType.objects.get(name__iexact=full_type)
+                    info.type = get_type
+            except:
+                info.type_id = 16 # Default to journal article if all else fails
 
-        # Let's now add the tags
-        if self.collection.uid == 3:
-            # Adding the island tag
-            info.tags.add(Tag.objects.get(id=219))
+            journal = self.data.get("publicationTitle")
 
-        for each in self.find_tags():
-            info.tags.add(each)
+            if journal:
+                record_new_journal = True
+                check = RecordRelationship.objects.filter(record_child=info, relationship_id=2)
+                if check:
+                    current = check[0]
+                    if current.record_parent.name == journal:
+                        record_new_journal = False
+                    else:
+                        # We will change the journal
+                        check.delete()
+                if record_new_journal:
+                    # Let's check to see if this journal already exist in our list with organizations
+                    get_journal = Publisher.objects.filter(name=journal)
+                    if not get_journal:
+                        # If not, we create it
+                        get_journal = Publisher.objects.create(
+                            name = journal,
+                        )                        
+                    else:
+                        get_journal = get_journal[0]
+                    info.publisher = get_journal
 
-        for each in self.find_spaces():
-            info.spaces.add(each)
+            info.save()
 
-        self.library_item = info
-        self.save()
+            for each in self.find_tags():
+                info.tags.add(each)
+
+            for each in self.find_spaces():
+                info.spaces.add(each)
+
+            self.library_item = info
+            self.save()
 
     def get_authors(self):
         all = self.data.get("creators")

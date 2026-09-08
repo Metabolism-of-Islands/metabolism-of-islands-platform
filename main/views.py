@@ -98,7 +98,7 @@ def island(request, slug):
         "info": info,
         "items": items,
         "doc_types": doc_types,
-        "tags": tags,
+        "tags": tags.filter(parent_tag__name="Themes"),
         "menu": "islands",
         "geojson": json.loads(info.geometry.geojson) if info.geometry else None,
         "bg_image": info.photo.image.large.url,
@@ -641,7 +641,7 @@ def controlpanel_island(request, id=None):
 @staff_required
 def controlpanel_library(request):
     context = {
-        "types": LibraryItemType.objects.all(),
+        "types": LibraryItemType.objects.filter(items__isnull=False).distinct(),
         "controlpanel": True,
     }
     return render(request, "main/controlpanel/library.html", context)
@@ -1152,9 +1152,32 @@ def controlpanel_publisher(request, id=None):
 @staff_required
 def controlpanel_zotero(request):
 
+    # temp
+    all_types = []
+    for each in ZoteroItem.objects.all().select_related("library_item").order_by("-date_created"):
+        t = each.get_type()
+        if t not in all_types:
+            all_types.append(t)
+    print(all_types)
+
+    for each in all_types:
+        hits = LibraryItemType.objects.filter(name__iexact=each)
+        if hits:
+            print("GOOD", each)
+        else:
+            print("PROBLEMO!", each)
+
     context = {
         "controlpanel": True,
         "items": ZoteroItem.objects.all().select_related("library_item").order_by("-date_created"),
     }
     return render(request, "main/controlpanel/zotero.html", context)
+
+@staff_required
+def controlpanel_zotero_item(request, id):
+    context = {
+        "controlpanel": True,
+        "info": ZoteroItem.objects.get(pk=id),
+    }
+    return render(request, "main/controlpanel/zotero.item.html", context)
 

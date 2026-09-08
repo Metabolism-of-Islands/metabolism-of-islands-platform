@@ -8,10 +8,13 @@
 {% endblock %}
 </h1>
 
+<div class="alert alert-info"><strong>{{ items.count }}</strong> records found.</div>
+
 <table class="table table-striped mb-2">
   <thead>
     <tr>
       <th>Title</th>
+      <th>Zotero Type</th>
       <th>Date created</th>
       <th>Imported?</th>
     </tr>
@@ -19,7 +22,8 @@
   <tbody>
   {% for each in items %}
     <tr>
-      <td>{{ each }}</td>
+      <td><a href="{% url "controlpanel_zotero_item" each.id %}">{{ each }}</a></td>
+      <td>{{ each.get_type }}</td>
       <td class="whitespace-nowrap">{{ each.date_created|date:"M d, Y" }}</td>
       <td>{% if each.library_item %}<a href="{{ each.library_item.get_absolute_url }}">{{ each.library_item_id }}{% else %}{% endif %}</td>
     </tr>

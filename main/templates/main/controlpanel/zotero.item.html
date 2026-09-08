@@ -1,0 +1,72 @@
+{% extends "main/_base.html" %}
+
+{% block content %}
+
+<h1>
+{% block title %}
+  {{ info }}
+{% endblock %}
+</h1>
+
+
+<div class="border-b border-gray-200 pb-4 mb-6">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+    <span class="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded self-start sm:self-auto">
+      ID: {{ info.key }}
+    </span>
+  </div>
+  
+  <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-sm text-gray-600">
+    <div class="flex items-center gap-1">
+      <span class="font-medium text-gray-700">Created:</span>
+      <time datetime="{{ info.date_created|date:'Y-m-d H:i' }}">
+        {{ info.date_created|date:"F j, Y, g:i a" }}
+      </time>
+    </div>
+
+    {% if info.library_item %}
+      <div class="hidden sm:block text-gray-300">|</div>
+      <div class="flex items-center gap-1">
+        <span class="font-medium text-gray-700">Library Item:</span>
+        <a href="{{ info.library_item.get_absolute_url }}" class="text-blue-600 hover:text-blue-800 hover:underline font-medium transition-colors">
+          {{ info.library_item }}
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if info.data %}
+  <div>
+    <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 mb-3">
+      Data from Zotero
+    </h2>
+    <dl class="divide-y divide-gray-100 border-t border-b border-gray-100">
+      {% for key, value in info.data.items %}
+        <div class="py-3 sm:grid sm:grid-cols-3 sm:gap-4">
+          <dt class="text-sm font-medium text-gray-600">
+            {{ key }}
+          </dt>
+          <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 font-mono bg-gray-50/50 p-1.5 rounded-sm overflow-x-auto">
+            {% if value is True or value is False %}
+              <span class="text-xs font-bold uppercase {% if value %}text-green-700{% else %}text-red-700{% endif %}">
+                {{ value|yesno:"True,False" }}
+              </span>
+            {% elif value == None %}
+              <span class="text-gray-400 italic">null</span>
+            {% else %}
+              {{ value }}
+            {% endif %}
+          </dd>
+        </div>
+      {% endfor %}
+    </dl>
+  </div>
+{% else %}
+  <p class="text-sm italic text-gray-400">
+    No structured data available for this record.
+  </p>
+{% endif %}
+
+
+{% endblock %}

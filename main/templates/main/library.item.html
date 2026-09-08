@@ -152,7 +152,9 @@
               <p class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Document Tags</p>
               <div class="flex flex-wrap gap-1.5">
                 {% for tag in info.tags.all %}
-                  <a href="/library/browse/?tags={{ tag.id }}" class="inline-flex items-center rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-500 hover:border-brand hover:text-brand transition-colors !no-underline">{{ tag.name }}</a>
+                  {% if tag.parent_tag.name == "Themes" %}
+                    <a href="/library/browse/?tags={{ tag.id }}" class="inline-flex items-center rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-500 hover:border-brand hover:text-brand transition-colors !no-underline">{{ tag.name }}</a>
+                  {% endif %}
                 {% endfor %}
               </div>
             </div>
