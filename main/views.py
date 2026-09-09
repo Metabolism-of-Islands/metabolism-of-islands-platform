@@ -70,7 +70,7 @@ def island(request, slug):
         spaces=info
     ).exclude(
         type_id=38
-    ).select_related("type").prefetch_related("tags").order_by("-year", "name")
+    ).select_related("type").prefetch_related("tags").prefetch_related("files").order_by("-year", "name")
     
     # Extract item IDs to limit sidebar counts to this specific island context
     item_ids = list(items.values_list("id", flat=True))

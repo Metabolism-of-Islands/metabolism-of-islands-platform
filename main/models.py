@@ -344,6 +344,11 @@ class Document(Record):
     objects_include_private = PrivateRecordManager()
     objects_include_deleted = PublicRecordManager()
 
+    def get_extension(self):
+        extension = self.file.name
+        extension = extension.split(".")
+        return extension[-1].lower()
+
     def get_size(self):
         file = self.file if self.file else self.image
         try:

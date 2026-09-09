@@ -110,24 +110,48 @@
           <!-- Serialized card item mapping with targeted data identifiers to enable jQuery manipulation -->
           <div class="island-item-card max-w-full mb-3" data-type-id="{{ item.type_id }}" data-tag-ids="{% for t in item.tags.all %}{{ t.id }}{% if not forloop.last %},{% endif %}{% endfor %}">
             <a href="{{ item.get_absolute_url }}" class="!no-underline block">
-              <div class="bg-white p-5 rounded-xl border border-slate-200 hover:border-brand transition-all duration-150 overflow-hidden">
-                <div class="flex justify-between items-start gap-4">
-                  <h3 class="text-base font-semibold text-slate-900 hover:text-brand transition-colors leading-snug">{{ item.name }}</h3>
-                  {% if item.year %}
-                    <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded mt-0.5 whitespace-nowrap">{{ item.year }}</span>
+              <div class="bg-white rounded-xl border border-slate-200 hover:border-brand transition-all duration-150 overflow-hidden flex flex-col justify-between">
+                
+                <div class="p-5 flex gap-4 justify-between items-start">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex justify-between items-start gap-4">
+                      <h3 class="text-base font-semibold text-slate-900 hover:text-brand transition-colors leading-snug">{{ item.name }}</h3>
+                      {% if item.year %}
+                        <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded mt-0.5 whitespace-nowrap">{{ item.year }}</span>
+                      {% endif %}
+                    </div>
+                    
+                    <div class="text-xs text-slate-400 mt-1 truncate">
+                      <span class="font-medium text-slate-500"><i class="fa fa-{{ item.type.icon|default:'file' }} mr-1"></i>{{ item.type.name }}</span>
+                      {% if item.author_list %}
+                        <span class="text-slate-300 mx-1.5">|</span> <span class="italic text-slate-500">{{ item.author_list }}</span>
+                      {% endif %}
+                    </div>
+                    
+                    {% if item.description %}
+                      <p class="text-slate-600 font-normal mt-2.5 text-sm overflow-hidden break-all line-clamp-2 leading-relaxed">{{ item.description }}</p>
+                    {% endif %}
+                  </div>
+
+                  {% if item.id == 1011359 %}
+                    <div class="flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border border-slate-200">
+                      <img src="/media/biomass.jpg" alt="Chart Preview" class="w-full h-full object-cover" />
+                    </div>
                   {% endif %}
                 </div>
-                
-                <div class="text-xs text-slate-400 mt-1 truncate">
-                  <span class="font-medium text-slate-500"><i class="fa fa-{{ item.type.icon|default:'file' }} mr-1"></i>{{ item.type.name }}</span>
-                  {% if item.authors %}
-                    <span class="text-slate-300 mx-1.5">|</span> <span class="italic text-slate-500">By: {{ item.authors }}</span>
-                  {% endif %}
-                </div>
-                
-                {% if item.description %}
-                  <p class="text-slate-600 font-normal mt-2.5 text-sm overflow-hidden break-all line-clamp-2 leading-relaxed">{{ item.description }}</p>
+
+                {% if item.files.all %}
+                  <div class="bg-brand/25 border-t border-brand/35 px-5 py-2.5 flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-2 text-slate-600 font-medium">
+                      <i class="fa fa-paperclip text-sm"></i>
+                      <span>
+                        {% if item.files.count == 1 %}Download{% else %}Downloads{% endif %} available
+                        ({{ item.files.all.0.get_extension }})
+                      </span>
+                    </div>
+                  </div>
                 {% endif %}
+
               </div>
             </a>
           </div>

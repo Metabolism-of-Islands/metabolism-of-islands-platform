@@ -1191,6 +1191,18 @@
   .border-brand {
     border-color: var(--color-brand);
   }
+  .border-brand\/35 {
+    border-color: color-mix(in srgb, #9175a7 35%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-brand) 35%, transparent);
+    }
+  }
+  .border-brand\/80 {
+    border-color: color-mix(in srgb, #9175a7 80%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-brand) 80%, transparent);
+    }
+  }
   .border-gray-100 {
     border-color: var(--color-gray-100);
   }
@@ -1240,6 +1252,18 @@
     background-color: color-mix(in srgb, #9175a7 10%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
       background-color: color-mix(in oklab, var(--color-brand) 10%, transparent);
+    }
+  }
+  .bg-brand\/25 {
+    background-color: color-mix(in srgb, #9175a7 25%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-brand) 25%, transparent);
+    }
+  }
+  .bg-brand\/50 {
+    background-color: color-mix(in srgb, #9175a7 50%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-brand) 50%, transparent);
     }
   }
   .bg-cyan-600 {
