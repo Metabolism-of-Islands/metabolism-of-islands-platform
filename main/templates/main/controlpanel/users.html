@@ -39,7 +39,7 @@
         {% if not each.is_active %}
           <span class="badge badge-danger">User deactivated</span>
         {% elif each.is_staff %}
-          <span class="badge badge-success">Editor</span>
+          <span class="badge badge-success">Admin</span>
         {% endif %}
         {% if each.people.access_type %}
           <span class="badge badge-success">{{ each.people.get_access_type_display }}</span>

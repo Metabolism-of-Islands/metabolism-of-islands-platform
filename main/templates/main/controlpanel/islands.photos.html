@@ -20,9 +20,9 @@
   {% for each in islands %}
     <tr {% if each.is_deleted %}class="line-through"{% endif %}>
       <td><a href="{% url "controlpanel_island" each.id %}">{{ each }}</a></td>
-      <td>By {{ each.photo.author_list }}
+      <td>{% if each.photo.author_list %}By {{ each.photo.author_list }}{% endif %}
       <br>{{ each.photo.license }}</td>
-      <td>By {{ each.photo_bg.author_list }}
+      <td>{% if each.photo_bg.author_list %}By {{ each.photo_bg.author_list }}{% endif %}
       <br>{{ each.photo_bg.license }}</td>
     </tr>
   {% endfor %}
