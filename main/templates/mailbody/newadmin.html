@@ -10,7 +10,7 @@
 
 <p>
   Link: <br>
-  <a href="https://metabolismofislands.org/accounts/login/">https://metabolismofislands.org/accounts/login/</a>
+  <a href="{{ request.scheme }}://{{ request.get_host }}/login/">{{ request.scheme }}://{{ request.get_host }}/accounts/login/</a>
   <br>
   <br>
   Temporary password: <br>{{ password }}

@@ -37,6 +37,18 @@ def index(request):
 def islands(request, region=None):
     islands = Island.objects.all()
 
+    # TEMP CODE
+
+    for each in islands:
+        photo = Photo.objects.filter(spaces=each).order_by("position").first()
+        try:
+            photo_bg = Photo.objects.filter(spaces=info).order_by("position")[1]
+            each.photo_bg = photo_bg
+            each.save()
+        except:
+            photo_bg = None
+    # END TEMP
+
     if region:
         region = Region.objects.get(slug=region)
         islands = islands.filter(region=region)
@@ -93,11 +105,6 @@ def island(request, slug):
         island_total=Count("tagged__libraryitem", filter=Q(tagged__libraryitem__id__in=item_ids))
     ).order_by("-island_total")
 
-    try:
-        second_photo = Photo.objects.filter(spaces=info).order_by("position")[1]
-    except:
-        second_photo = None
-
     context = {
         "info": info,
         "items": items,
@@ -105,8 +112,8 @@ def island(request, slug):
         "tags": tags.filter(parent_tag__name="Themes"),
         "menu": "islands",
         "geojson": json.loads(info.geometry.geojson) if info.geometry else None,
-        "bg_image": info.photo.image.large.url,
-        "second_photo": second_photo,
+        "bg_image": info.photo_bg.image.large.url if info.photo_bg else info.photo.image.large.url,
+        "edit_link": reverse("controlpanel_island", args=[info.id]),
     }
 
     return render(request, "main/island.html", context)
@@ -608,14 +615,42 @@ def controlpanel_island(request, id=None):
             except (ValueError, TypeError):
                 messages.error(request, "Invalid spatial coordinate data schema submitted.")
         
-        # Save media files if newly supplied, preserving fallback paths if blank
-        if "primary_image" in request.FILES:
-            info.primary_image = request.FILES["primary_image"]
-        if "secondary_image" in request.FILES:
-            info.secondary_image = request.FILES["secondary_image"]
-            
+        if "photo" in request.FILES:
+            photo = Photo.objects.create(
+                author_list=request.POST.get("photo_author_list"),
+                url=request.POST.get("photo_url"),
+                license_id=request.POST.get("photo_license"),
+                image=request.FILES["photo"],
+                type_id=38,
+            )
+            info.photo = photo
+        elif info.photo:
+            photo = info.photo
+            photo.url = request.POST.get("photo_url")
+            photo.author_list = request.POST.get("photo_author_list")
+            photo.license_id = request.POST.get("photo_license")
+            photo.save()
+
+        if "photo_bg" in request.FILES:
+            photo = Photo.objects.create(
+                author_list=request.POST.get("photo_bg_author_list"),
+                url=request.POST.get("photo_bg_url"),
+                license_id=request.POST.get("photo_bg_license"),
+                image=request.FILES["photo_bg"],
+                type_id=38,
+            )
+            info.photo_bg = photo
+        elif info.photo_bg:
+            photo = info.photo_bg
+            photo.url = request.POST.get("photo_bg_url")
+            photo.author_list = request.POST.get("photo_bg_author_list")
+            photo.license_id = request.POST.get("photo_bg_license")
+            photo.save()
+
         info.save()
         messages.success(request, f"Successfully saved profile for {info.name}.")
+        if "redirect" in request.GET:
+            return redirect(request.GET["redirect"])
         return redirect("controlpanel_islands")
 
     # Compile a GeoJSON payload if a non-Point geometry (like a structural shapefile outline) exists
@@ -637,6 +672,7 @@ def controlpanel_island(request, id=None):
         "geojson": geojson_payload,
         "controlpanel": True,
         "licenses": License.objects.all(),
+        "bg_image": info.photo.image.large.url if info else None,
     }
     return render(request, "main/controlpanel/island.html", context)
 

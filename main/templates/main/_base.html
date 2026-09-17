@@ -60,7 +60,7 @@
           <div>
             <a class="mr-3 inline-block p-2 {% if controlpanel %}bg-white{% endif %}" href="{% url "controlpanel" %}"><strong><i class="fal fa-cog fa-fw mr-1"></i> Control panel</strong></a> 
             {% if edit_link %}
-            <a href="{{ edit_link }}"><i class="fal fa-pencil fa-fw mr-1"></i> Edit</a> 
+            <a href="{{ edit_link }}?redirect={{ request.get_full_path }}"><i class="fal fa-pencil fa-fw mr-1"></i> Edit</a> 
             {% endif %}
           </div>
           <a href="{% url "logout" %}" class="inline-block p-2">Log out</a>
@@ -71,10 +71,10 @@
     {% include "main/_nav.html" %}
 
     <div class="bg" style="background-image:url({% if bg_image %}{{ bg_image }}{% else %}/media/bg2.jpg{% endif %})">
-      <div class="overlay {% if bg_image %}pb-100{% else %}pb-64{% endif %}">
+      <div class="overlay {% if bg_image and not controlpanel %}pb-100{% else %}pb-64{% endif %}">
         <header class="py-10">
           <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            {% if bg_image %}
+            {% if bg_image and not controlpanel %}
               <a href="{{ info.region.get_absolute_url }}" class="inline-flex items-center text-xs font-semibold uppercase tracking-wider text-slate-400 hover:text-brand !no-underline transition-colors" style="position:absolute;top:18px">
                 <i class="fa fa-arrow-left mr-2"></i> {{ info.region }} overview
               </a>
@@ -87,7 +87,7 @@
       </div>
     </div>
 
-    <main class="{% if bg_image %}-mt-10{% else %}-mt-64{% endif %}">
+    <main class="{% if bg_image and not controlpanel %}-mt-10{% else %}-mt-64{% endif %}">
       <div class="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
         <div class="rounded-lg bg-white {% if not remove_padding_main_container %}px-5 py-10 sm:px-6{% endif %} shadow-sm relative">
           <div class="ml-10 mr-10">

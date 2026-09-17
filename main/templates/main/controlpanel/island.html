@@ -21,8 +21,8 @@
 
 <div class="max-w-4xl mx-auto py-6 space-y-6">
   
-  <div class="border-b border-slate-200 pb-4">
-    <h1 class="text-xl font-bold tracking-tight text-slate-900">
+  <div class="border-b border-slate-200">
+    <h1 class="text-xl font-bold tracking-tight text-slate-900 mb-1">
       {% block title %}
         {% if info %}Modify Island: {{ info.name }}{% else %}Register New Island{% endif %}
       {% endblock %}
@@ -31,44 +31,15 @@
 
   <form method="POST" enctype="multipart/form-data" class="space-y-6">
     {% csrf_token %}
-    
-    <!-- Hidden input parameter capturing coordinates for python processing -->
     <input type="hidden" id="geometry-wkt-input" name="geometry" value="{% if info.geometry.geom_type == 'Point' %}{{ info.geometry.wkt }}{% endif %}">
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       
-      <!-- Left Column Fields Panel -->
       <div class="space-y-4">
         
         <div class="space-y-1">
           <label for="id_name" class="block text-xs font-bold uppercase tracking-wider text-slate-500">Island Name</label>
           <input type="text" id="id_name" name="name" value="{{ info.name|default:'' }}" required class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
-        </div>
-
-        <div class="space-y-1 border border-slate-200 p-4 rounded-xl bg-white space-y-3">
-          <div>
-            <span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Primary Photo</span>
-            <span class="text-2xs text-slate-400 block mt-0.5">This should be an attractive photo that is used as a thumbnail on maps, in the overview, etc.</span>
-          </div>
-          {% if info.photo %}
-            <div class="w-32 h-20 rounded-lg overflow-hidden border border-slate-100 bg-slate-50">
-              <img src="{{ info.photo.thumbnail.url }}" class="w-full h-full object-cover" alt="Primary Thumbnail Preview">
-            </div>
-          {% endif %}
-          <input type="file" name="photo" accept=".jpg,.jpeg,.png" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-brand file:cursor-pointer transition-all">
-
-          <div class="space-y-1">
-            <input type="text" name="photo_author_list" value="{{ info.photo.author_list|default:'' }}" placeholder="Author name" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
-          </div>
-          <div class="space-y-1">
-            <select name="photo_license" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
-              <option value="">-- Select license --</option>
-              {% for each in licenses %}
-                <option value="{{ each.id }}" {% if info.photo.license.id == each.id %}selected{% endif %}>{{ each }}</option>
-              {% endfor %}
-            </select>
-          </div>
-
         </div>
 
       </div>
@@ -85,29 +56,66 @@
           </select>
         </div>
 
-        <div class="space-y-1 border border-slate-200 p-4 rounded-xl bg-white space-y-3">
+      </div>
+
+    </div>
+
+    <div class="border-b border-slate-200 mt-10">
+      <h2 class="text-xl font-bold tracking-tight text-slate-900 mb-1">Photos</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      <div class="">
+        
+        <div class="space-y-3 border border-slate-200 p-4 rounded-xl">
+          <div>
+            <span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Primary Photo</span>
+            <span class="text-2xs text-slate-400 block mt-0.5">This should be an attractive photo that is used as a thumbnail on maps, in the overview, etc.</span>
+          </div>
+          {% if info.photo %}
+            <div class="w-32 h-20 rounded-lg overflow-hidden border border-slate-100 bg-slate-50">
+              <img src="{{ info.photo.image.thumbnail.url }}" class="w-full h-full object-cover" alt="Primary Thumbnail Preview">
+            </div>
+          {% endif %}
+          <input type="file" name="photo" accept=".jpg,.jpeg,.png" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-brand file:cursor-pointer transition-all">
+          <input type="text" name="photo_url" value="{{ info.photo.url|default:'' }}" placeholder="URL" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
+          <input type="text" name="photo_author_list" value="{{ info.photo.author_list|default:'' }}" placeholder="Author name" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
+          <select name="photo_license" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
+            <option value="">-- Select license --</option>
+            {% for each in licenses %}
+              <option value="{{ each.id }}" {% if info.photo.license.id == each.id %}selected{% endif %}>{{ each }}</option>
+            {% endfor %}
+          </select>
+
+        </div>
+
+      </div>
+
+      <div class="space-y-2 flex flex-col">
+
+        <div class="space-y-3 border border-slate-200 p-4 rounded-xl">
           <div>
             <span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Landscape Photo</span>
-            <span class="text-2xs text-slate-400 block mt-0.5">This is the photo used as a background. Make sure it is a panoramic landscape photo.</span>
+            <span class="text-2xs text-slate-400 block mt-0.5">
+              This is the photo used as a background. Make sure it is a panoramic landscape photo.
+              Ideally a minimum of 1920x540px.
+            </span>
           </div>
           {% if info.photo_bg %}
             <div class="w-32 h-20 rounded-lg overflow-hidden border border-slate-100 bg-slate-50">
-              <img src="{{ info.photo_bg.thumbnail.url }}" class="w-full h-full object-cover" alt="Primary Thumbnail Preview">
+              <img src="{{ info.photo_bg.image.thumbnail.url }}" class="w-full h-full object-cover" alt="Primary Thumbnail Preview">
             </div>
           {% endif %}
           <input type="file" name="photo_bg" accept=".jpg,.jpeg,.png" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-brand file:cursor-pointer transition-all">
-
-          <div class="space-y-1">
-            <input type="text" name="photo_bg_author_list" value="{{ info.photo_bg.author_list|default:'' }}" placeholder="Author name" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
-          </div>
-          <div class="space-y-1">
-            <select name="primary_license" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
-              <option value="">-- Select license --</option>
-              {% for each in licenses %}
-                <option value="{{ each.id }}" {% if info.photo_bg.license.id == each.id %}selected{% endif %}>{{ each }}</option>
-              {% endfor %}
-            </select>
-          </div>
+          <input type="text" name="photo_bg_url" value="{{ info.photo_bg.url|default:'' }}" placeholder="URL" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
+          <input type="text" name="photo_bg_author_list" value="{{ info.photo_bg.author_list|default:'' }}" placeholder="Author name" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
+          <select name="photo_bg_license" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
+            <option value="">-- Select license --</option>
+            {% for each in licenses %}
+              <option value="{{ each.id }}" {% if info.photo_bg.license.id == each.id %}selected{% endif %}>{{ each }}</option>
+            {% endfor %}
+          </select>
 
         </div>
 
@@ -117,8 +125,11 @@
 
     </div>
 
+    <div class="border-b border-slate-200 mt-10">
+      <h2 class="text-xl font-bold tracking-tight text-slate-900 mb-1">Location</h2>
+    </div>
+
     <div>
-      <span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Location</span>
       <span class="text-2xs text-slate-400 block">Click anywhere on the map to set that as the center of the island when showing pins or displaying the map.</span>
       <div class="flex-1 min-h-[340px] border border-slate-200 bg-slate-50 rounded-xl overflow-hidden relative z-0">
         <div id="map" class="w-full h-full"></div>
