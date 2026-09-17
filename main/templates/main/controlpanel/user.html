@@ -100,7 +100,7 @@
             {% if user.is_staff %}checked{% endif %}
             class="rounded border-slate-300 text-brand focus:ring-brand">
           <span class="text-sm font-medium text-slate-700">
-            Back-end user
+            Administrator
           </span>
         </label>
 
@@ -132,63 +132,88 @@
       </p>
     </div>
 
+    <div class="px-6 pb-6 border-b border-slate-100 mt-5">
+      <label class="block text-sm font-semibold text-slate-700 mb-3">
+        Access Type Limitations
+      </label>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        
+        <label class="relative flex flex-col p-4 border rounded-xl bg-slate-50 cursor-pointer border-slate-200 hover:border-slate-300 transition-colors">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-sm font-bold text-slate-900">Full Access</span>
+            <input 
+              type="radio" 
+              name="access_type" 
+              value="full" 
+              {% if user.people.access_type == "full" %}checked{% endif %} 
+              class="h-4 w-4 text-brand focus:ring-brand border-slate-300">
+          </div>
+          <p class="text-xs text-slate-500">Unrestricted permission over all content management.</p>
+        </label>
+
+        <label class="relative flex flex-col p-4 border rounded-xl bg-slate-50 cursor-pointer border-slate-200 hover:border-slate-300 transition-colors">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-sm font-bold text-slate-900">Selected island(s) only</span>
+            <input 
+              type="radio" 
+              name="access_type" 
+              value="islands_only" 
+              {% if user.people.access_type == "islands_only" %}checked{% endif %} 
+              class="h-4 w-4 text-brand focus:ring-brand border-slate-300">
+          </div>
+          <p class="text-xs text-slate-500">Limits modifications strictly to assigned islands.</p>
+        </label>
+
+        <label class="relative flex flex-col p-4 border rounded-xl bg-slate-50 cursor-pointer border-slate-200 hover:border-slate-300 transition-colors">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-sm font-bold text-slate-900">Selected section(s) only</span>
+            <input 
+              type="radio" 
+              name="access_type" 
+              value="controlpanel_only" 
+              {% if user.people.access_type == "controlpanel_only" %}checked{% endif %} 
+              class="h-4 w-4 text-brand focus:ring-brand border-slate-300">
+          </div>
+          <p class="text-xs text-slate-500">Restricts usage strictly to standard admin modules.</p>
+        </label>
+
+      </div>
+    </div>
+
     <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-      <div>
-
+      <div id="island-select-container" {% if user.people.access_type != "islands_only" %}style="display: none;"{% endif %}>
         <label class="block text-sm font-semibold text-slate-700 mb-2">
           Islands this user can edit
         </label>
-
-        <select
-          name="islands"
-          multiple
-          size="12"
-          class="w-full rounded-xl border border-slate-300 px-3 py-3 focus:border-brand focus:ring-0">
-
+        <select name="island_access" multiple size="12" class="w-full rounded-xl border border-slate-300 px-3 py-3 focus:border-brand focus:ring-0">
           {% for each in islands %}
-            <option value="{{ each.id }}">
-              {{ each }}
-            </option>
+            <option value="{{ each.id }}" {% if each in user.people.island_access.all %}selected{% endif %}>{{ each }}</option>
           {% endfor %}
-
         </select>
-
-        <p class="mt-2 text-xs text-slate-500">
-          Hold Ctrl (Windows) or Command (Mac) to select multiple islands.
-        </p>
-
+        <p class="mt-2 text-xs text-slate-500">Hold Ctrl or Command to select multiple items.</p>
       </div>
 
-      <div>
-
+      <div id="controlpanel-select-container" {% if user.people.access_type != "controlpanel_only" %}style="display: none;"{% endif %}>
         <label class="block text-sm font-semibold text-slate-700 mb-2">
           Admin sections
         </label>
-
-        <select
-          name="sections"
-          multiple
-          size="12"
-          class="w-full rounded-xl border border-slate-300 px-3 py-3 focus:border-brand focus:ring-0">
-
-          <option value="webpages">Web pages</option>
-          <option value="research">Research</option>
-          <option value="islands">Islands</option>
-          <option value="library">Library</option>
-          <option value="people">People</option>
-          <option value="regions">Regions</option>
-          <option value="news">News</option>
-          <option value="events">Events</option>
-          <option value="videos">Videos</option>
-          <option value="tags">Tags</option>
-
+        <select name="controlpanel_access" multiple size="12" class="w-full rounded-xl border border-slate-300 px-3 py-3 focus:border-brand focus:ring-0">
+          <option value="webpages" {% if "webpages" in user.people.controlpanel_access %}selected{% endif %}>Web pages</option>
+          <option value="research" {% if "research" in user.people.controlpanel_access %}selected{% endif %}>Research</option>
+          <option value="islands" {% if "islands" in user.people.controlpanel_access %}selected{% endif %}>Islands</option>
+          <option value="library" {% if "library" in user.people.controlpanel_access %}selected{% endif %}>Library</option>
+          <option value="people" {% if "people" in user.people.controlpanel_access %}selected{% endif %}>People</option>
+          <option value="users" {% if "users" in user.people.controlpanel_access %}selected{% endif %}>Users</option>
+          <option value="regions" {% if "regions" in user.people.controlpanel_access %}selected{% endif %}>Regions</option>
+          <option value="publishers" {% if "publishers" in user.people.controlpanel_access %}selected{% endif %}>Publishers</option>
+          <option value="news" {% if "news" in user.people.controlpanel_access %}selected{% endif %}>News</option>
+          <option value="events" {% if "events" in user.people.controlpanel_access %}selected{% endif %}>Events</option>
+          <option value="videos" {% if "videos" in user.people.controlpanel_access %}selected{% endif %}>Videos</option>
+          <option value="tags" {% if "tags" in user.people.controlpanel_access %}selected{% endif %}>Tags</option>
+          <option value="zotero" {% if "zotero" in user.people.controlpanel_access %}selected{% endif %}>Zotero</option>
         </select>
-
-        <p class="mt-2 text-xs text-slate-500">
-          The selected sections will appear in the user's control panel.
-        </p>
-
+        <p class="mt-2 text-xs text-slate-500">Selected components render directly in user dashboards.</p>
       </div>
 
     </div>
@@ -214,5 +239,14 @@
 
 </form>
 
+<script>
+  document.querySelectorAll('input[name="access_type"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      const selected = e.target.value;
+      document.getElementById('island-select-container').style.display = selected === 'islands_only' ? 'block' : 'none';
+      document.getElementById('controlpanel-select-container').style.display = selected === 'controlpanel_only' ? 'block' : 'none';
+    });
+  });
+</script>
 
 {% endblock %}

@@ -1,0 +1,27 @@
+{% extends "mailbody/_mailbase.html" %}
+
+{% block content %}
+
+<p>
+  A new account has been created for you to manage content
+  on Metabolism of Islands. You can find the details to log in 
+  below.
+</p>
+
+<p>
+  Link: <br>
+  <a href="https://metabolismofislands.org/accounts/login/">https://metabolismofislands.org/accounts/login/</a>
+  <br>
+  <br>
+  Temporary password: <br>{{ password }}
+  <br>
+  <br>
+  E-mail: <br>
+  {{ email }}
+</p>
+
+<p>
+  For more information, please contact:
+  {{ request.user.first_name }}.
+</p>
+{% endblock %}

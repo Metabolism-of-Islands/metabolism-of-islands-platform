@@ -3,17 +3,21 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.files.base import ContentFile
+from django.core.mail import send_mail
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.serializers import serialize
 from django.db.models import Count #, Q, Subquery, OuterRef, CharField, Avg
 from django.http import Http404, JsonResponse, FileResponse
 from django.shortcuts import render, get_object_or_404, redirect
+from django.template.loader import render_to_string
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import csrf_exempt
 from itertools import groupby
 from main.models import *
 import json
+import random
 import requests
+import string
 
 def index(request):
     islands = Island.objects.all()
@@ -477,9 +481,9 @@ def account_login(request):
             login(request, user)
             people = People.objects.get(user=user)
             if people.meta_data and "temporary_password" in people.meta_data:
-                messages.success(request, "Please change your temporary pin. You can set your own password here:" + "<br><a href='/hub/profile/edit/?shortened=true'>" + "Edit my profile" + "</a>")
+                messages.success(request, "Please change your temporary pin. You can set your own password here:" + "<br><a href='/account/?activation=true'>" + "Edit my profile" + "</a>")
             elif people.meta_data and "pending_activation" in people.meta_data:
-                messages.success(request, "Welcome to OPTamos! Please finish setting up your account here:" + "<br><a href='/account/?activation=true'>" + "Edit my account" + "</a>")
+                messages.success(request, "Welcome to Metabolism of Islands! Please finish setting up your account here:" + "<br><a href='/account/?activation=true'>" + "Edit my account" + "</a>")
             return redirect(redirect_url)
         else:
             messages.error(request, "We could not authenticate you, please try again.")
@@ -524,17 +528,15 @@ def account(request):
         if not people.meta_data:
             people.meta_data = {}
 
-        if "institution" in request.POST:
-            people.meta_data["institution"] = request.POST.get("institution")
-        if "location" in request.POST:
-            people.meta_data["location"] = request.POST.get("location")
-        if "how" in request.POST:
-            people.meta_data["how"] = request.POST.get("how")
         people.save()
 
         login(request, user)
         messages.success(request, "Changes have been saved.")
-        return redirect(request.path)
+
+        if user.is_staff:
+            return redirect(reverse("controlpanel"))
+        else:
+            return redirect(request.path)
 
     context = {
         "menu": "account",
@@ -1041,9 +1043,61 @@ def controlpanel_news(request, id=None):
 
 @staff_required
 def controlpanel_users(request):
+    category = request.GET["category"]
+
+    if request.method == "POST":
+        email = request.POST["email"]
+        if (user := User.objects.filter(email=email).first()):
+            # User already has an active account
+            if user.is_staff and user.is_active:
+                messages.warning(request, f"{email} already is an active admin. No changes made.")
+            if not user.is_staff:
+                user.is_staff = True
+                user.save()
+                messages.success(request, f"{email} already had an account but is now upgraded to admin.")
+            if not user.is_active:
+                user.is_active = True
+                user.save()
+                messages.success(request, f"{email} existed as a deactivated account but is now activated again.")
+        else:
+            password = "".join(random.choices(string.ascii_letters + string.digits, k=20))
+            user = User.objects.create_user(email, email, password)
+            user.first_name = email
+            user.is_superuser = False
+            user.is_staff = True
+            user.save()
+            people = People.objects.create(name=email, email=user.email, user=user, meta_data={"auto_created": True, "pending_activation": True, "temp_password": password})
+            messages.success(request, f"The following account was created as a new admin: <strong>{email}</strong>. The user has received an e-mail with a temporary password.")
+
+            mailcontext = {
+                "request": request,
+                "password": password,
+                "email": email,
+            }
+            msg_html = render_to_string("mailbody/newadmin.html", mailcontext)
+            msg_plain = render_to_string("mailbody/newadmin.txt", mailcontext)
+            sender = '"Metabolism of Islands" <' + settings.DEFAULT_FROM_EMAIL + '>'
+            send_mail("Metabolism of Islands account created", msg_plain, sender, [email], html_message=msg_html)
+
+    if category == "admin":
+        users = User.objects.filter(is_staff=True, is_active=True)
+    elif category == "optamos":
+        users = User.objects.filter(people__meta_data__contains={"optamos": True})
+    elif category == "deactivated":
+        users = User.objects.filter(is_active=False)
+    elif category == "all":
+        users = User.objects.all()
+    users = users.order_by("-last_login")
+
     context = {
-        "users": User.objects.filter(last_login__isnull=False).order_by("-last_login"),
+        "users": users,
         "controlpanel": True,
+        "categories": {
+            "Admin": "admin",
+            "Optamos invitees": "optamos",
+            "Deactivated": "deactivated",
+            "All": "all",
+        },
     }
     return render(request, "main/controlpanel/users.html", context)
 
@@ -1053,6 +1107,47 @@ def controlpanel_user(request, id=None):
         user = User.objects.get(pk=id)
     else:
         user = User()
+
+    if request.method == "POST":
+        user.username = request.POST.get("username")
+        user.email = request.POST.get("email")
+        user.first_name = request.POST.get("first_name")
+        user.last_name = request.POST.get("last_name")
+        
+        password = request.POST.get("password")
+        if password:
+            user.set_password(password)
+            
+        user.is_active = "is_active" in request.POST
+        user.is_staff = "is_staff" in request.POST
+        user.is_superuser = "is_superuser" in request.POST
+        
+        user.save()
+
+        people = getattr(user, "people", None)
+        if not people:
+            people = People(user=user)
+            people.save()
+
+        access_choice = request.POST.get("access_type")
+        people.access_type = access_choice
+
+        if access_choice == "controlpanel_only":
+            people.controlpanel_access = request.POST.getlist("controlpanel_access")
+            people.island_access.clear()
+        elif access_choice == "islands_only":
+            people.controlpanel_access = []
+            people.island_access.set(request.POST.getlist("island_access"))
+        else:
+            people.controlpanel_access = []
+            people.island_access.clear()
+
+        people.save()
+
+        messages.success(request, "Information saved successfully.")
+        category = request.GET.get("category", "admin")
+        return redirect(f"/controlpanel/users/?category={category}")
+
     context = {
         "user": user,
         "islands": Island.objects.all(),

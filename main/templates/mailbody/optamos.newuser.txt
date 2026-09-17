@@ -1,0 +1,14 @@
+You have been invited to participate in a decision-making process
+for a project named {{ project }}. You have been 
+invited by {{ request.user.first_name }}.
+
+In order to participate, please use the following details to 
+log in:
+
+Link: https://metabolismofislands.org{{ project.get_absolute_url }}
+Temporary password: {{ password }}
+E-mail: {{ email }}
+
+For more information about this project, please get in touch 
+with {{ request.user.first_name }}.
+

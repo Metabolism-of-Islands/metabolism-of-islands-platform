@@ -1,0 +1,22 @@
+{% extends "mailbody/_mailbase.html" %}
+
+{% block content %}
+
+<p>
+  You have been invited to participate in a decision-making process
+  for a project named <strong>{{ project }}</strong>. You have been 
+  invited by <strong>{{ request.user.first_name }}</strong>.
+  In order to participate, please use the following details to 
+  log in using your existing OPTamos/Metabolism of Islands account.
+</p>
+
+<p>
+  Link: <br>
+  <a href="https://metabolismofislands.org{% url "optamos:project" project.uid %}">https://metabolismofislands.org{% url "optamos:project" project.uid %}</a>
+</p>
+
+<p>
+  For more information about this project, please get in touch 
+  with {{ request.user.first_name }}.
+</p>
+{% endblock %}

@@ -447,18 +447,20 @@ class People(Record):
     research_interests = models.TextField(null=True, blank=True)
     user = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE)
 
+    ACCESS_TYPE = [
+        ("full", "Full Access"),
+        ("islands_only", "Selected island(s)"),
+        ("controlpanel_only", "Selected section(s)"),
+    ]
+    access_type = models.CharField(max_length=20, choices=ACCESS_TYPE, null=True)
+    controlpanel_access = models.JSONField(null=True, blank=True)
+    island_access = models.ManyToManyField("Island", blank=True)
+
     def __str__(self):
         return self.name
 
     def get_absolute_url(self):
         return reverse("people", args=[self.id])
-
-    @property
-    def avatar(self):
-        if self.image and self.image != "":
-            return mark_safe('<img class="avatar" src="' + self.image.thumbnail.url + '" alt="' + self.name + '" title="' + self.name + '">')
-        else:
-            return mark_safe('<div title="' + self.name + '" class="avatar letter">' + self.name[:1] + '</div>')
 
     @property
     def get_photo(self):

@@ -8,6 +8,14 @@
 {% endblock %}
 </h1>
 
+<ul class="nav-tabs">
+  {% for value,key in categories.items %}
+  <li class="nav-item">
+    <a class="nav-link {% if request.GET.category == key %}active{% endif %}" aria-current="page" href="?category={{ key }}">{{ value }}</a>
+  </li>
+  {% endfor %}
+</ul>
+
 <table class="table table-striped">
   <thead>
     <tr>
@@ -19,14 +27,22 @@
   <tbody>
   {% for each in users %}
     <tr>
-      <td><a href="{% url "controlpanel_user" each.id %}">{{ each }}</a></td>
+      <td><a href="{% url "controlpanel_user" each.id %}?category={{ request.GET.category }}">{{ each }}</a></td>
       <td>
         {{ each.first_name }} {{ each.last_name }}
         {% if each.people.meta_data.optamos %}
           <span class="badge">OPTamos invitee</span>
         {% endif %}
+        {% if each.people.meta_data.pending_activation %}
+          <span class="badge" hidden>Pending login</span>
+        {% endif %}
         {% if not each.is_active %}
           <span class="badge badge-danger">User deactivated</span>
+        {% elif each.is_staff %}
+          <span class="badge badge-success">Editor</span>
+        {% endif %}
+        {% if each.people.access_type %}
+          <span class="badge badge-success">{{ each.people.get_access_type_display }}</span>
         {% endif %}
       </td>
       <td class="whitespace-nowrap">{{ each.last_login|date:"M d, Y" }}</td>
@@ -34,5 +50,44 @@
   {% endfor %}
   </tbody>
 </table>
+
+{% if request.GET.category == "admin" %}
+
+  <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden mt-5">
+
+    <div class="border-b border-slate-200 px-6 py-5">
+      <h2 class="text-xl font-bold tracking-tight text-slate-900">
+        Quick add
+      </h2>
+      <p class="mt-1 text-sm text-slate-500">
+        Create a new admin by entering their e-mail below. The user will receive a link in their e-mail
+        to activate their account.
+      </p>
+    </div>
+
+    <form method="post" class="p-6">
+      {% csrf_token %}
+
+      <div class="flex flex-col gap-4 sm:flex-row">
+        <input
+          type="email"
+          name="email"
+          required
+          placeholder="E-mail"
+          class="flex-1 rounded-xl border border-slate-300 px-4 py-3 focus:border-brand focus:ring-0">
+
+        <button
+          type="submit"
+          class="inline-flex items-center justify-center rounded-xl bg-brand px-5 py-3 font-semibold text-white hover:opacity-90 transition-opacity">
+          <i class="fa fa-plus mr-2"></i>
+          Add admin
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+
+{% endif %}
 
 {% endblock %}

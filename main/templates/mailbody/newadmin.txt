@@ -1,0 +1,8 @@
+A new account has been created for you to manage content on Metabolism of Islands. You can find the details to log in below.
+
+Link: https://metabolismofislands.org/accounts/login/
+Temporary password: {{ password }}
+E-mail: {{ email }}
+
+For more information, please contact:
+{{ request.user.first_name }}.

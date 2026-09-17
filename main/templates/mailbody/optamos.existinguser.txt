@@ -1,0 +1,12 @@
+You have been invited to participate in a decision-making process
+for a project named {{ project }}. You have been 
+invited by {{ request.user.first_name }}.
+
+In order to participate, please use the following details to 
+log in using your existing OPTamos/Metabolism of Islands account.
+
+Link: 
+https://metabolismofislands.org{% url "optamos:project" project.uid %}
+
+For more information about this project, please get in touch 
+with {{ request.user.first_name }}.

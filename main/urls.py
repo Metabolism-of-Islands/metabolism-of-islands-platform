@@ -42,6 +42,7 @@ urlpatterns = [
 
     path("accounts/login/", views.account_login, name="login"),
     path("accounts/logout/", views.account_logout, name="logout"),
+    path("account/", views.account, name="account"),
 
     #################
     # CONTROL PANEL #
