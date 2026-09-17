@@ -261,14 +261,14 @@
     fullscreenControlOptions: {
       position: "topleft"
     }
-  }).setView([0, 0], 2);
+  }).setView([0, 0], {{ info.map_zoom }});
 
   bounds = [];
 
   {% if info.geometry.geom_type == "Point" %}
     lat = {{ info.geometry.y }};
     lng = {{ info.geometry.x }};
-    map.setView([lat, lng], 6);
+    map.setView([lat, lng], {{ info.map_zoom }});
   {% else %}
     const layer = L.geoJSON({{ geojson|safe }}, {
       style: {

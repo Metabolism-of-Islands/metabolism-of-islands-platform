@@ -32,6 +32,7 @@
   <form method="POST" enctype="multipart/form-data" class="space-y-6">
     {% csrf_token %}
     <input type="hidden" id="geometry-wkt-input" name="geometry" value="{% if info.geometry.geom_type == 'Point' %}{{ info.geometry.wkt }}{% endif %}">
+    <input type="hidden" name="zoom" id="map-zoom-input" value="{{ info.zoom_level|default:2 }}" />
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       
@@ -119,8 +120,6 @@
 
         </div>
 
-        
-
       </div>
 
     </div>
@@ -180,7 +179,7 @@
   var map = L.map("map", {
     fullscreenControl: true,
     fullscreenControlOptions: { position: "topleft" }
-  }).setView([0, 0], 2);
+  }).setView([0, 0], {{ info.map_zoom|default:7 }});
 
   // Bind baseline map background canvas vector tile sheets
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -205,7 +204,7 @@
   {% if info.geometry and info.geometry.geom_type == "Point" %}
     var lat = {{ info.geometry.y }};
     var lng = {{ info.geometry.x }};
-    map.setView([lat, lng], 7);
+    map.setView([lat, lng], {{ info.map_zoom|default:7 }});
     setPointGeometry(lat, lng);
   {% elif info.geometry %}
     // If complex shapes exist, overlay geojson boundaries and zoom map canvas over them
@@ -219,6 +218,18 @@
   map.on("click", function(e) {
     setPointGeometry(e.latlng.lat, e.latlng.lng);
   });
+
+  // Reference the hidden zoom input element
+  var $zoomInput = document.getElementById("map-zoom-input");
+
+  // Set the initial zoom level on page load
+  $zoomInput.value = map.getZoom();
+
+  // Listen for zoom changes and update the form input instantly
+  map.on("zoomend", function() {
+    $zoomInput.value = map.getZoom();
+  });
+
 </script>
   
 {% endblock %}

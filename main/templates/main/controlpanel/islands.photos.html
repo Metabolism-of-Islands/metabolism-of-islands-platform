@@ -1,0 +1,32 @@
+{% extends "main/_base.html" %}
+
+{% block content %}
+
+<h1>
+{% block title %}
+  Islands
+{% endblock %}
+</h1>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Primary photo</th>
+      <th>Background photo</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for each in islands %}
+    <tr {% if each.is_deleted %}class="line-through"{% endif %}>
+      <td><a href="{% url "controlpanel_island" each.id %}">{{ each }}</a></td>
+      <td>By {{ each.photo.author_list }}
+      <br>{{ each.photo.license }}</td>
+      <td>By {{ each.photo_bg.author_list }}
+      <br>{{ each.photo_bg.license }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

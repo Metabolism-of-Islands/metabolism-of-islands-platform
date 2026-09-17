@@ -1515,6 +1515,7 @@ class Island(Record):
     region = models.ForeignKey(Region, on_delete=models.CASCADE, null=True, related_name="islands")
     photo = models.ForeignKey(Photo, on_delete=models.CASCADE, null=True, related_name="islands_main")
     photo_bg = models.ForeignKey(Photo, on_delete=models.CASCADE, null=True, related_name="islands_landscape")
+    map_zoom = models.PositiveSmallIntegerField(default=7)
 
     def __str__(self):
         return self.name

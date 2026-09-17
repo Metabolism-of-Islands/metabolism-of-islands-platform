@@ -37,18 +37,6 @@ def index(request):
 def islands(request, region=None):
     islands = Island.objects.all()
 
-    # TEMP CODE
-
-    for each in islands:
-        photo = Photo.objects.filter(spaces=each).order_by("position").first()
-        try:
-            photo_bg = Photo.objects.filter(spaces=info).order_by("position")[1]
-            each.photo_bg = photo_bg
-            each.save()
-        except:
-            photo_bg = None
-    # END TEMP
-
     if region:
         region = Region.objects.get(slug=region)
         islands = islands.filter(region=region)
@@ -573,6 +561,8 @@ def controlpanel_islands(request):
         "islands": Island.objects_unfiltered.all(),
         "controlpanel": True,
     }
+    if "photos" in request.GET:
+        return render(request, "main/controlpanel/islands.photos.html", context)
     return render(request, "main/controlpanel/islands.html", context)
 
 @staff_required
@@ -607,6 +597,7 @@ def controlpanel_island(request, id=None):
         
         info.name = name
         info.region = get_object_or_404(Region, pk=region_id) if region_id else None
+        info.map_zoom = request.POST["zoom"]
         
         # Handle standard map input conversion to Point geometries safely
         if wkt_geometry:
@@ -672,7 +663,7 @@ def controlpanel_island(request, id=None):
         "geojson": geojson_payload,
         "controlpanel": True,
         "licenses": License.objects.all(),
-        "bg_image": info.photo.image.large.url if info else None,
+        "bg_image": info.photo.image.large.url if info and info.photo else None,
     }
     return render(request, "main/controlpanel/island.html", context)
 
