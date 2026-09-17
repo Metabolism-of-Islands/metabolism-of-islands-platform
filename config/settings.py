@@ -9,7 +9,6 @@ env_path = BASE_DIR / '.env'
 load_dotenv(dotenv_path=env_path)
 
 DEBUG = os.environ['DJANGO_DEBUG']
-PRODUCTION = os.environ['PRODUCTION']
 SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
 ALLOWED_HOSTS = os.environ['DJANGO_ALLOWED_HOSTS'].split()
 
@@ -99,7 +98,18 @@ STATIC_ROOT = os.environ['STATIC_ROOT']
 MEDIA_URL = 'media/'
 MEDIA_ROOT = os.environ['MEDIA_ROOT']
 
-EMAIL_QUOTA = os.environ['EMAIL_QUOTA']
+EMAIL_QUOTA = int(os.environ['EMAIL_QUOTA'])
+DEFAULT_FROM_EMAIL = "info@metabolismofislands.org"
+
+PRODUCTION = os.environ.get('PRODUCTION', 'False').lower() in ('true', '1', 'yes')
+if not PRODUCTION:
+    EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+    EMAIL_FILE_PATH = '/code/media/mail.log/'
+else:
+    ANYMAIL = {
+        "POSTMARK_SERVER_TOKEN": os.environ['POSTMARK_SERVER_TOKEN'],
+    }
+    EMAIL_BACKEND = "anymail.backends.postmark.EmailBackend"
 
 MESSAGE_TAGS = {
     messages.DEBUG: 'alert-info',
@@ -108,14 +118,3 @@ MESSAGE_TAGS = {
     messages.WARNING: 'alert-warning',
     messages.ERROR: 'alert-danger',
 }
-
-DEFAULT_FROM_EMAIL = "info@metabolismofislands.org"
-
-if PRODUCTION:
-    ANYMAIL = {
-        "POSTMARK_SERVER_TOKEN": os.environ['POSTMARK_SERVER_TOKEN'],
-    }
-    EMAIL_BACKEND = "anymail.backends.postmark.EmailBackend"
-else:
-    EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
-    EMAIL_FILE_PATH = '/code/media/mail.log/'
