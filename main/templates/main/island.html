@@ -265,22 +265,9 @@
 
   bounds = [];
 
-  {% if info.geometry.geom_type == "Point" %}
-    lat = {{ info.geometry.y }};
-    lng = {{ info.geometry.x }};
-    map.setView([lat, lng], {{ info.map_zoom }});
-  {% else %}
-    const layer = L.geoJSON({{ geojson|safe }}, {
-      style: {
-        opacity: 0,
-        fillOpacity: 0,
-        weight: 0
-      },
-      interactive: false
-    }).addTo(map);
-
-    map.fitBounds(layer.getBounds());
-  {% endif %}
+  var lat = {{ info.geometry.centroid.y }};
+  var lng = {{ info.geometry.centroid.x }};
+  map.setView([lat, lng], {{ info.map_zoom }});
 
   const osm = L.tileLayer(
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",

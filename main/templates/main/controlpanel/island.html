@@ -11,7 +11,7 @@
   href="https://unpkg.com/leaflet.fullscreen@3.0.0/Control.FullScreen.css"
 />
 <style type="text/css">
-#map{width:100%;height:500px}
+#map{width:100%;height:315px}
 </style>
 
   
@@ -21,12 +21,15 @@
 
 <div class="max-w-4xl mx-auto py-6 space-y-6">
   
-  <div class="border-b border-slate-200">
+  <div class="border-b border-slate-200 flex justify-between">
     <h1 class="text-xl font-bold tracking-tight text-slate-900 mb-1">
       {% block title %}
         {% if info %}Modify Island: {{ info.name }}{% else %}Register New Island{% endif %}
       {% endblock %}
     </h1>
+    {% if info %}
+      <a href="{{ info.get_absolute_url }}">View online profile</a>
+    {% endif %}
   </div>
 
   <form method="POST" enctype="multipart/form-data" class="space-y-6">
@@ -71,36 +74,10 @@
         
         <div class="space-y-3 border border-slate-200 p-4 rounded-xl">
           <div>
-            <span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Primary Photo</span>
-            <span class="text-2xs text-slate-400 block mt-0.5">This should be an attractive photo that is used as a thumbnail on maps, in the overview, etc.</span>
-          </div>
-          {% if info.photo %}
-            <div class="w-32 h-20 rounded-lg overflow-hidden border border-slate-100 bg-slate-50">
-              <img src="{{ info.photo.image.thumbnail.url }}" class="w-full h-full object-cover" alt="Primary Thumbnail Preview">
-            </div>
-          {% endif %}
-          <input type="file" name="photo" accept=".jpg,.jpeg,.png" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-brand file:cursor-pointer transition-all">
-          <input type="text" name="photo_url" value="{{ info.photo.url|default:'' }}" placeholder="URL" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
-          <input type="text" name="photo_author_list" value="{{ info.photo.author_list|default:'' }}" placeholder="Author name" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
-          <select name="photo_license" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
-            <option value="">-- Select license --</option>
-            {% for each in licenses %}
-              <option value="{{ each.id }}" {% if info.photo.license.id == each.id %}selected{% endif %}>{{ each }}</option>
-            {% endfor %}
-          </select>
-
-        </div>
-
-      </div>
-
-      <div class="space-y-2 flex flex-col">
-
-        <div class="space-y-3 border border-slate-200 p-4 rounded-xl">
-          <div>
-            <span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Landscape Photo</span>
+            <span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Background Photo</span>
             <span class="text-2xs text-slate-400 block mt-0.5">
-              This is the photo used as a background. Make sure it is a panoramic landscape photo.
-              Ideally a minimum of 1920x540px.
+              This is the photo used as a background. Make sure it looks good as a panoramic landscape photo.
+              Minimum width of 1920px.
             </span>
           </div>
           {% if info.photo_bg %}
@@ -122,6 +99,31 @@
 
       </div>
 
+      <div class="space-y-2 flex flex-col">
+        <div class="space-y-3 border border-slate-200 p-4 rounded-xl">
+          <div>
+            <span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Resource metabolism photo</span>
+            <span class="text-2xs text-slate-400 block mt-0.5">Photo of local infrastructure, material extraction or disposal, or other resource metabolism photo from this island.</span>
+          </div>
+          {% if info.photo %}
+            <div class="w-32 h-20 rounded-lg overflow-hidden border border-slate-100 bg-slate-50">
+              <img src="{{ info.photo.image.thumbnail.url }}" class="w-full h-full object-cover" alt="Primary Thumbnail Preview">
+            </div>
+          {% endif %}
+          <input type="file" name="photo" accept=".jpg,.jpeg,.png" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-brand file:cursor-pointer transition-all">
+          <input type="text" name="photo_url" value="{{ info.photo.url|default:'' }}" placeholder="URL" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
+          <input type="text" name="photo_author_list" value="{{ info.photo.author_list|default:'' }}" placeholder="Author name" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
+          <select name="photo_license" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
+            <option value="">-- Select license --</option>
+            {% for each in licenses %}
+              <option value="{{ each.id }}" {% if info.photo.license.id == each.id %}selected{% endif %}>{{ each }}</option>
+            {% endfor %}
+          </select>
+
+        </div>
+
+      </div>
+
     </div>
 
     <div class="border-b border-slate-200 mt-10">
@@ -129,9 +131,15 @@
     </div>
 
     <div>
-      <span class="text-2xs text-slate-400 block">Click anywhere on the map to set that as the center of the island when showing pins or displaying the map.</span>
-      <div class="flex-1 min-h-[340px] border border-slate-200 bg-slate-50 rounded-xl overflow-hidden relative z-0">
-        <div id="map" class="w-full h-full"></div>
+      <span class="text-2xs text-slate-400 block">
+      Zoom in/out and then save the record to change the map to that particular zoom level.
+      Click anywhere on the map to set that as the center of the island when showing pins or displaying the map.
+      </span>
+
+      <div class="w-full h-full rounded-xl overflow-hidden bg-slate-50 relative z-0">
+        <div id="map" class="w-full h-full flex items-center justify-center text-sm text-slate-400">
+          <i class="fa fa-map-o mr-2"></i>
+        </div>
       </div>
     </div>
 
@@ -201,18 +209,10 @@
   }
 
   // Load existing database layers cleanly
-  {% if info.geometry and info.geometry.geom_type == "Point" %}
-    var lat = {{ info.geometry.y }};
-    var lng = {{ info.geometry.x }};
+    var lat = {{ info.geometry.centroid.y }};
+    var lng = {{ info.geometry.centroid.x }};
     map.setView([lat, lng], {{ info.map_zoom|default:7 }});
     setPointGeometry(lat, lng);
-  {% elif info.geometry %}
-    // If complex shapes exist, overlay geojson boundaries and zoom map canvas over them
-    var layer = L.geoJSON({{ geojson|safe }}, {
-      style: { opacity: 0.6, fillOpacity: 0.2, weight: 2, color: "#3b82f6" }
-    }).addTo(map);
-    map.fitBounds(layer.getBounds());
-  {% endif %}
 
   // Map user cursor click captures to dynamically reassign field records
   map.on("click", function(e) {

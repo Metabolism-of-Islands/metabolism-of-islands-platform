@@ -79,8 +79,8 @@
       <a href="{{ each.get_absolute_url }}" class="no-underline">
         <div class="border border-slate-200 bg-white rounded-2xl overflow-hidden flex flex-col justify-between hover:border-brand">
           <div>
-            {% if each.photo.image.thumbnail.url %}
-              <img src="{{ each.photo.image.thumbnail.url }}" alt="{{ each.name }}" class="w-full h-40 object-cover border-b border-slate-100">
+            {% if each.photo_bg.image.thumbnail.url %}
+              <img src="{{ each.photo_bg.image.thumbnail.url }}" alt="{{ each.name }}" class="w-full h-40 object-cover border-b border-slate-100">
             {% else %}
               <div class="w-full h-40 bg-slate-100 flex items-center justify-center text-slate-300 border-b border-slate-100">
                 <i class="fa fa-picture-o text-2xl"></i>
@@ -149,8 +149,8 @@
       popupContent = `
         <div>
           <strong>{{ each|escapejs }}</strong>
-          {% if each.photo %}
-            <img src="/media/{{ each.photo.image.thumbnail }}" class="map-popup-thumb" alt="{{ each.title|escapejs }}">
+          {% if each.photo_bg %}
+            <img src="/media/{{ each.photo_bg.image.thumbnail }}" class="map-popup-thumb" alt="{{ each.title|escapejs }}">
           {% endif %}
           <a href="{{ each.get_absolute_url }}" class="map-popup-btn">Read more</a>
         </div>

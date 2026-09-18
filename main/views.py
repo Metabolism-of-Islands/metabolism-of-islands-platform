@@ -1,3 +1,4 @@
+from PIL import Image
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import user_passes_test
@@ -12,6 +13,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.template.loader import render_to_string
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import csrf_exempt
+from io import BytesIO
 from itertools import groupby
 from main.models import *
 import json
@@ -557,6 +559,16 @@ def controlpanel(request):
 
 @staff_required
 def controlpanel_islands(request):
+    # TEMP
+    if "switch" in request.GET:
+        for each in Island.objects_unfiltered.all():
+            first = each.photo
+            second = each.photo_bg
+            each.photo = second
+            each.photo_bg = first
+            each.save()
+    # END TEMP
+
     context = {
         "islands": Island.objects_unfiltered.all(),
         "controlpanel": True,
@@ -615,6 +627,7 @@ def controlpanel_island(request, id=None):
                 type_id=38,
             )
             info.photo = photo
+            RecordRelationship.objects.create(record_child=photo, record_parent=request.user.people, relationship_id=11)
         elif info.photo:
             photo = info.photo
             photo.url = request.POST.get("photo_url")
@@ -623,14 +636,27 @@ def controlpanel_island(request, id=None):
             photo.save()
 
         if "photo_bg" in request.FILES:
+
+            uploaded = request.FILES["photo_bg"]
+
+            # We resize this to 1920 max width because we want to show this without using the "large" resized
+            # image that is automatically saved (see the model), because that one has a smaller size than this.
+            image = Image.open(uploaded)
+            image.thumbnail((1920, 1920))
+
+            output = BytesIO()
+            image.save(output, format=image.format or "JPEG")
+            output.seek(0)
+        
             photo = Photo.objects.create(
                 author_list=request.POST.get("photo_bg_author_list"),
                 url=request.POST.get("photo_bg_url"),
                 license_id=request.POST.get("photo_bg_license"),
-                image=request.FILES["photo_bg"],
+                image=ContentFile(output.read(), name=uploaded.name),
                 type_id=38,
             )
             info.photo_bg = photo
+            RecordRelationship.objects.create(record_child=photo, record_parent=request.user.people, relationship_id=11)
         elif info.photo_bg:
             photo = info.photo_bg
             photo.url = request.POST.get("photo_bg_url")
@@ -663,7 +689,7 @@ def controlpanel_island(request, id=None):
         "geojson": geojson_payload,
         "controlpanel": True,
         "licenses": License.objects.all(),
-        "bg_image": info.photo.image.large.url if info and info.photo else None,
+        "bg_image": info.photo_bg.image.large.url if info and info.photo_bg else None,
     }
     return render(request, "main/controlpanel/island.html", context)
 

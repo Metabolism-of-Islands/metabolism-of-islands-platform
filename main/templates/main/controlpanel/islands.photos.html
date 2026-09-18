@@ -8,22 +8,39 @@
 {% endblock %}
 </h1>
 
+<ul class="nav-tabs">
+  <li class="nav-item"><a class="nav-link" href="./">Regular list</a></li>
+  <li class="nav-item"><a class="nav-link active" href="./?photos=true">Photo overview</a></li>
+</ul>
+
 <table class="table table-striped">
   <thead>
     <tr>
       <th>Name</th>
-      <th>Primary photo</th>
       <th>Background photo</th>
+      <th>Resource metabolism photo</th>
     </tr>
   </thead>
   <tbody>
   {% for each in islands %}
     <tr {% if each.is_deleted %}class="line-through"{% endif %}>
-      <td><a href="{% url "controlpanel_island" each.id %}">{{ each }}</a></td>
-      <td>{% if each.photo.author_list %}By {{ each.photo.author_list }}{% endif %}
-      <br>{{ each.photo.license }}</td>
-      <td>{% if each.photo_bg.author_list %}By {{ each.photo_bg.author_list }}{% endif %}
-      <br>{{ each.photo_bg.license }}</td>
+      <td><a href="{% url "controlpanel_island" each.id %}?redirect={{ request.get_full_path }}">{{ each }}</a></td>
+      <td>
+      {% if each.photo_bg %}
+        <img src="{{ each.photo_bg.image.thumbnail.url }}" class="w-full h-full object-cover rounded-lg border border-gray-200/70" alt="">
+        {% if each.photo_bg.author_list %}By {{ each.photo_bg.author_list }}{% else %}<span class="badge badge-danger">Author missing</span>{% endif %}
+        <br>
+        {% if each.photo_bg.license %}{{ each.photo_bg.license }}{% else %}<span class="badge badge-danger">License missing</span>{% endif %}
+      {% endif %}
+      </td>
+      <td>
+      {% if each.photo %}
+        <img src="{{ each.photo.image.thumbnail.url }}" class="w-full h-full object-cover rounded-lg border border-gray-200/70" alt="">
+        {% if each.photo.author_list %}By {{ each.photo.author_list }}{% else %}<span class="badge badge-danger">Author missing</span>{% endif %}
+        <br>
+        {% if each.photo.license %}{{ each.photo.license }}{% else %}<span class="badge badge-danger">License missing</span>{% endif %}
+      {% endif %}
+      </td>
     </tr>
   {% endfor %}
   </tbody>
