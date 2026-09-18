@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.gis.geos import GEOSGeometry
+from django.core.exceptions import PermissionDenied
 from django.core.files.base import ContentFile
 from django.core.mail import send_mail
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -20,6 +21,17 @@ import json
 import random
 import requests
 import string
+
+def has_access(request, section=None, island=None):
+    if request.user.people.access_type == "full":
+        return True
+    elif request.user.people.access_type == "controlpanel_only":
+        return True if section in request.user.people.controlpanel_access else False
+    # Pending creating the island-specific access
+    return False
+
+def access_denied():
+    raise PermissionDenied
 
 def index(request):
     islands = Island.objects.all()
@@ -559,15 +571,8 @@ def controlpanel(request):
 
 @staff_required
 def controlpanel_islands(request):
-    # TEMP
-    if "switch" in request.GET:
-        for each in Island.objects_unfiltered.all():
-            first = each.photo
-            second = each.photo_bg
-            each.photo = second
-            each.photo_bg = first
-            each.save()
-    # END TEMP
+    if not has_access(request, section="islands"):
+        return access_denied()
 
     context = {
         "islands": Island.objects_unfiltered.all(),
@@ -579,6 +584,8 @@ def controlpanel_islands(request):
 
 @staff_required
 def controlpanel_island(request, id=None):
+    if not has_access(request, section="islands"):
+        return access_denied()
 
     if id:
         info = Island.objects_unfiltered.get(pk=id)
@@ -695,6 +702,9 @@ def controlpanel_island(request, id=None):
 
 @staff_required
 def controlpanel_library(request):
+    if not has_access(request, section="library"):
+        return access_denied()
+
     context = {
         "types": LibraryItemType.objects.filter(items__isnull=False).distinct(),
         "controlpanel": True,
@@ -703,6 +713,9 @@ def controlpanel_library(request):
 
 @staff_required
 def controlpanel_library_items(request, id):
+    if not has_access(request, section="library"):
+        return access_denied()
+
     item_type = LibraryItemType.objects.get(pk=id)
     items = LibraryItem.objects.filter(type=item_type)
     context = {
@@ -714,6 +727,9 @@ def controlpanel_library_items(request, id):
 
 @staff_required
 def controlpanel_library_item(request, id):
+    if not has_access(request, section="library"):
+        return access_denied()
+
     if id:
         info = LibraryItem.objects.get(pk=id)
 
@@ -737,6 +753,8 @@ def controlpanel_library_item(request, id):
 
 @staff_required
 def controlpanel_videos(request):
+    if not has_access(request, section="videos"):
+        return access_denied()
 
     if "highlight" in request.GET:
         Video.objects.filter(is_highlight=True).update(is_highlight=False)
@@ -794,6 +812,9 @@ def controlpanel_videos(request):
 
 @staff_required
 def controlpanel_webpages(request):
+    if not has_access(request, section="webpages"):
+        return access_denied()
+
     context = {
         "pages": Webpage.objects.all(),
         "controlpanel": True,
@@ -802,6 +823,8 @@ def controlpanel_webpages(request):
 
 @staff_required
 def controlpanel_webpage(request, id=None):
+    if not has_access(request, section="webpages"):
+        return access_denied()
 
     if id:
         info = Webpage.objects.get(pk=id)
@@ -832,6 +855,9 @@ def controlpanel_webpage(request, id=None):
 
 @staff_required
 def controlpanel_research_list(request):
+    if not has_access(request, section="research"):
+        return access_denied()
+
     context = {
         "research": Research.objects.all().order_by("-start_date"),
         "controlpanel": True,
@@ -840,6 +866,8 @@ def controlpanel_research_list(request):
 
 @staff_required
 def controlpanel_research(request, id=None):
+    if not has_access(request, section="research"):
+        return access_denied()
 
     if id:
         info = Research.objects.get(pk=id)
@@ -885,6 +913,9 @@ def controlpanel_research(request, id=None):
 
 @staff_required
 def controlpanel_regions(request):
+    if not has_access(request, section="regions"):
+        return access_denied()
+
     context = {
         "regions": Region.objects.all(),
         "controlpanel": True,
@@ -893,6 +924,8 @@ def controlpanel_regions(request):
 
 @staff_required
 def controlpanel_region(request, id):
+    if not has_access(request, section="regions"):
+        return access_denied()
 
     info = Region.objects.get(pk=id)
     if request.method == "POST":
@@ -911,6 +944,9 @@ def controlpanel_region(request, id):
 
 @staff_required
 def controlpanel_tags(request):
+    if not has_access(request, section="tags"):
+        return access_denied()
+
     tags = Tag.objects.all()
     if "children_only" in request.GET:
         tags = tags.filter(children__isnull=True)
@@ -981,6 +1017,8 @@ def controlpanel_tags(request):
 
 @staff_required
 def controlpanel_tag(request, id=None):
+    if not has_access(request, section="tags"):
+        return access_denied()
 
     if id:
         info = Tag.objects.get(pk=id)
@@ -994,6 +1032,8 @@ def controlpanel_tag(request, id=None):
 
 @staff_required
 def controlpanel_events(request):
+    if not has_access(request, section="events"):
+        return access_denied()
     context = {
         "events": Event.objects.all(),
         "controlpanel": True,
@@ -1002,6 +1042,8 @@ def controlpanel_events(request):
 
 @staff_required
 def controlpanel_event(request, id=None):
+    if not has_access(request, section="events"):
+        return access_denied()
 
     if id:
         info = Event.objects.get(pk=id)
@@ -1054,6 +1096,9 @@ def controlpanel_event(request, id=None):
 
 @staff_required
 def controlpanel_news_list(request):
+    if not has_access(request, section="news"):
+        return access_denied()
+
     context = {
         "news": News.objects.all(),
         "controlpanel": True,
@@ -1062,6 +1107,8 @@ def controlpanel_news_list(request):
 
 @staff_required
 def controlpanel_news(request, id=None):
+    if not has_access(request, section="news"):
+        return access_denied()
 
     if id:
         info = News.objects.get(pk=id)
@@ -1097,6 +1144,9 @@ def controlpanel_news(request, id=None):
 @staff_required
 def controlpanel_users(request):
     category = request.GET["category"]
+
+    if not has_access(request, section="users"):
+        return access_denied()
 
     if request.method == "POST":
         email = request.POST["email"]
@@ -1156,6 +1206,9 @@ def controlpanel_users(request):
 
 @staff_required
 def controlpanel_user(request, id=None):
+    if not has_access(request, section="users"):
+        return access_denied()
+
     if id:
         user = User.objects.get(pk=id)
     else:
@@ -1210,6 +1263,9 @@ def controlpanel_user(request, id=None):
 
 @staff_required
 def controlpanel_people_list(request):
+    if not has_access(request, section="people"):
+        return access_denied()
+
     context = {
         "people": People.objects.filter(is_team=True),
         "controlpanel": True,
@@ -1218,6 +1274,9 @@ def controlpanel_people_list(request):
 
 @staff_required
 def controlpanel_people(request, id=None):
+    if not has_access(request, section="people"):
+        return access_denied()
+
     if id:
         info = People.objects.get(pk=id)
     else:
@@ -1259,6 +1318,8 @@ def controlpanel_people(request, id=None):
 
 @staff_required
 def controlpanel_publishers(request):
+    if not has_access(request, section="publishers"):
+        return access_denied()
 
     context = {
         "publishers": Publisher.objects.all(),
@@ -1268,6 +1329,9 @@ def controlpanel_publishers(request):
 
 @staff_required
 def controlpanel_publisher(request, id=None):
+    if not has_access(request, section="publishers"):
+        return access_denied()
+
     if id:
         info = Publisher.objects.get(pk=id)
     else:
@@ -1299,6 +1363,8 @@ def controlpanel_publisher(request, id=None):
 
 @staff_required
 def controlpanel_zotero(request):
+    if not has_access(request, section="zotero"):
+        return access_denied()
 
     # temp
     all_types = []
@@ -1323,6 +1389,9 @@ def controlpanel_zotero(request):
 
 @staff_required
 def controlpanel_zotero_item(request, id):
+    if not has_access(request, section="zotero"):
+        return access_denied()
+
     context = {
         "controlpanel": True,
         "info": ZoteroItem.objects.get(pk=id),
