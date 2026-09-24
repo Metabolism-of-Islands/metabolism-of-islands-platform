@@ -1,4 +1,4 @@
-from PIL import Image
+from PIL import Image, ImageOps
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import user_passes_test
@@ -21,17 +21,6 @@ import json
 import random
 import requests
 import string
-
-def has_access(request, section=None, island=None):
-    if request.user.people.access_type == "full":
-        return True
-    elif request.user.people.access_type == "controlpanel_only":
-        return True if section in request.user.people.controlpanel_access else False
-    # Pending creating the island-specific access
-    return False
-
-def access_denied():
-    raise PermissionDenied
 
 def index(request):
     islands = Island.objects.all()
@@ -562,6 +551,19 @@ def account(request):
 
 staff_required = user_passes_test(lambda u: u.is_staff)
 
+# This function is used to check if a user has access to a particular section or island
+def has_access(request, section=None, island=None):
+    if request.user.people.access_type == "full":
+        return True
+    elif request.user.people.access_type == "controlpanel_only":
+        return True if section in request.user.people.controlpanel_access else False
+    # Pending creating the island-specific access
+    return False
+
+# We can decide to add logging here, hence a separate function
+def access_denied():
+    raise PermissionDenied
+
 @staff_required
 def controlpanel(request):
     context = {
@@ -626,11 +628,19 @@ def controlpanel_island(request, id=None):
                 messages.error(request, "Invalid spatial coordinate data schema submitted.")
         
         if "photo" in request.FILES:
+
+            uploaded_file = request.FILES["photo"]
+            image = Image.open(uploaded_file)
+            image = ImageOps.exif_transpose(image)
+            output = BytesIO()
+            image.save(output, format=image.format or "JPEG", quality=85)
+
             photo = Photo.objects.create(
                 author_list=request.POST.get("photo_author_list"),
                 url=request.POST.get("photo_url"),
                 license_id=request.POST.get("photo_license"),
-                image=request.FILES["photo"],
+                description=request.POST.get("photo_description"),
+                image=ContentFile(output.getvalue(), name=uploaded_file.name),
                 type_id=38,
             )
             info.photo = photo
@@ -640,6 +650,7 @@ def controlpanel_island(request, id=None):
             photo.url = request.POST.get("photo_url")
             photo.author_list = request.POST.get("photo_author_list")
             photo.license_id = request.POST.get("photo_license")
+            photo.description = request.POST.get("photo_description")
             photo.save()
 
         if "photo_bg" in request.FILES:
@@ -649,16 +660,18 @@ def controlpanel_island(request, id=None):
             # We resize this to 1920 max width because we want to show this without using the "large" resized
             # image that is automatically saved (see the model), because that one has a smaller size than this.
             image = Image.open(uploaded)
+            image = ImageOps.exif_transpose(image)
             image.thumbnail((1920, 1920))
 
             output = BytesIO()
-            image.save(output, format=image.format or "JPEG")
+            image.save(output, format=image.format or "JPEG", quality=85)
             output.seek(0)
         
             photo = Photo.objects.create(
                 author_list=request.POST.get("photo_bg_author_list"),
                 url=request.POST.get("photo_bg_url"),
                 license_id=request.POST.get("photo_bg_license"),
+                description=request.POST.get("photo_bg_description"),
                 image=ContentFile(output.read(), name=uploaded.name),
                 type_id=38,
             )
@@ -668,7 +681,7 @@ def controlpanel_island(request, id=None):
             photo = info.photo_bg
             photo.url = request.POST.get("photo_bg_url")
             photo.author_list = request.POST.get("photo_bg_author_list")
-            photo.license_id = request.POST.get("photo_bg_license")
+            photo.description = request.POST.get("photo_bg_description")
             photo.save()
 
         info.save()

@@ -88,6 +88,7 @@
           <input type="file" name="photo_bg" accept=".jpg,.jpeg,.png" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-brand file:cursor-pointer transition-all">
           <input type="text" name="photo_bg_url" value="{{ info.photo_bg.url|default:'' }}" placeholder="URL" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
           <input type="text" name="photo_bg_author_list" value="{{ info.photo_bg.author_list|default:'' }}" placeholder="Author name" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
+          <input type="text" name="photo_bg_description" value="{{ info.photo_bg.description|default:'' }}" placeholder="Description" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
           <select name="photo_bg_license" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
             <option value="">-- Select license --</option>
             {% for each in licenses %}
@@ -113,6 +114,7 @@
           <input type="file" name="photo" accept=".jpg,.jpeg,.png" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-brand file:cursor-pointer transition-all">
           <input type="text" name="photo_url" value="{{ info.photo.url|default:'' }}" placeholder="URL" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
           <input type="text" name="photo_author_list" value="{{ info.photo.author_list|default:'' }}" placeholder="Author name" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
+          <input type="text" name="photo_description" value="{{ info.photo.description|default:'' }}" placeholder="Description" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
           <select name="photo_license" class="w-full rounded-xl bg-white border border-slate-200 py-2.5 px-3 text-sm text-slate-900 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all">
             <option value="">-- Select license --</option>
             {% for each in licenses %}
