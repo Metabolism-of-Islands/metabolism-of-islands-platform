@@ -28,6 +28,8 @@
       <td>
       {% if each.photo_bg %}
         <img src="{{ each.photo_bg.image.thumbnail.url }}" class="w-full h-full object-cover rounded-lg border border-gray-200/70" alt="">
+        <br>
+        {{ each.photo_bg.image.width }} × {{ each.photo_bg.image.height }}px<br>
         {% if each.photo_bg.author_list %}By {{ each.photo_bg.author_list }}{% else %}<span class="badge badge-danger">Author missing</span>{% endif %}
         <br>
         {% if each.photo_bg.license %}{{ each.photo_bg.license }}{% else %}<span class="badge badge-danger">License missing</span>{% endif %}
@@ -36,6 +38,7 @@
       <td>
       {% if each.photo %}
         <img src="{{ each.photo.image.thumbnail.url }}" class="w-full h-full object-cover rounded-lg border border-gray-200/70" alt="">
+        {{ each.photo.image.width }} × {{ each.photo.image.height }}px<br>
         {% if each.photo.author_list %}By {{ each.photo.author_list }}{% else %}<span class="badge badge-danger">Author missing</span>{% endif %}
         <br>
         {% if each.photo.license %}{{ each.photo.license }}{% else %}<span class="badge badge-danger">License missing</span>{% endif %}
