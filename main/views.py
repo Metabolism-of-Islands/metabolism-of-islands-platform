@@ -8,7 +8,7 @@ from django.core.files.base import ContentFile
 from django.core.mail import send_mail
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.serializers import serialize
-from django.db.models import Count #, Q, Subquery, OuterRef, CharField, Avg
+from django.db.models import Count, Q, Subquery, OuterRef
 from django.http import Http404, JsonResponse, FileResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template.loader import render_to_string
@@ -1373,6 +1373,37 @@ def controlpanel_publisher(request, id=None):
         "load_quill": True,
     }
     return render(request, "main/controlpanel/publisher.html", context)
+
+@staff_required
+def controlpanel_datasets(request):
+    if not has_access(request, section="datasets"):
+        return access_denied()
+
+    # 1. Get all datasets (type=39)
+    library_item_files = Document.objects.filter(
+        # Move through attached_to (Record) down to its libraryitem child subclass
+        attached_to__libraryitem__type_id=39,
+        attached_to__libraryitem__spaces=OuterRef("pk")
+    ).values("attached_to__libraryitem__spaces") # Group by the island relation
+
+    # 2. Annotate the island with the subquery count
+    islands = Island.objects.annotate(
+        document_count=Subquery(
+            library_item_files.annotate(cnt=Count("id")).values("cnt")[:1]
+        )
+    ).order_by("-document_count").filter(document_count__gt=0)
+
+    datasets = LibraryItem.objects.filter(type_id=39).prefetch_related("files")
+
+    if "island" in request.GET:
+        datasets = datasets.filter(spaces=request.GET["island"])
+
+    context = {
+        "controlpanel": True,
+        "islands": islands,
+        "datasets": datasets,
+    }
+    return render(request, "main/controlpanel/datasets.html", context)
 
 @staff_required
 def controlpanel_zotero(request):

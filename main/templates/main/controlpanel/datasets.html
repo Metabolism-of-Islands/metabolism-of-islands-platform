@@ -1,0 +1,54 @@
+{% extends "main/_base.html" %}
+
+{% block content %}
+
+<h1>{% block title %}Datasets{% endblock %}</h1>
+
+<div class="alert alert-info"><strong>{{ datasets.count }}</strong> items found.</div>
+
+<ul class="mb-5">
+  {% for each in islands %}
+    <li class="cursor-pointer inline-flex items-center rounded-md {% if request.GET.island == each.id|slugify %}bg-brand font-semibold{% else %}bg-slate-100{% endif %}
+      px-2 py-1 text-xs text-slate-600 
+      hover:bg-brand/10 hover:text-brand transition-colors">
+        <a class="no-underline {% if request.GET.island == each.id|slugify %}text-white{% else %}font-normal text-slate-600{% endif %}" href="?island={{ each.id }}">{{ each }} ({{ each.document_count }})</a>
+      </li>
+  {% endfor %}
+  {% if request.GET.island %}
+    <li class="cursor-pointer inline-flex items-center rounded-md bg-slate-100
+      px-2 py-1 text-xs text-slate-600 
+      hover:bg-brand/10 hover:text-brand transition-colors">
+        <a class="no-underline font-normal text-slate-600" href="./">ALL</a>
+      </li>
+    {% endif %}
+</ul>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Record</th>
+      <th>File(s)</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for each in datasets %}
+    <tr>
+      <td class="font-mono text-slate-600">{{ each.id }}</td>
+      <td>
+        <a href="{% url "library_item" each.id %}">{{ each.name }}</a><br>
+        <strong>Author(s)</strong>: {{ each.author_list }}<br>
+      </td>
+      <td>
+        <ul>
+        {% for file in each.files.all %}
+          <li><i class="fa fa-paperclip"></i> <a href="{{ file.get_file }}">{{ file }}</a> ({{ file.get_size }})</li>
+        {% endfor %}
+        </ul>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

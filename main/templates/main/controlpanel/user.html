@@ -212,6 +212,7 @@
           <option value="videos" {% if "videos" in user.people.controlpanel_access %}selected{% endif %}>Videos</option>
           <option value="tags" {% if "tags" in user.people.controlpanel_access %}selected{% endif %}>Tags</option>
           <option value="zotero" {% if "zotero" in user.people.controlpanel_access %}selected{% endif %}>Zotero</option>
+          <option value="datasets" {% if "data" in user.people.controlpanel_access %}selected{% endif %}>Datasets</option>
         </select>
         <p class="mt-2 text-xs text-slate-500">Selected components render directly in user dashboards.</p>
       </div>

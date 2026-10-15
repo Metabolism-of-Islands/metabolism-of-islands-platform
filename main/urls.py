@@ -94,6 +94,8 @@ urlpatterns = [
     path("controlpanel/people/<int:id>/", views.controlpanel_people, name="controlpanel_people"),
     path("controlpanel/people/create/", views.controlpanel_people, name="controlpanel_people"),
 
+    path("controlpanel/datasets/", views.controlpanel_datasets, name="controlpanel_datasets"),
+
     path("controlpanel/zotero/", views.controlpanel_zotero, name="controlpanel_zotero"),
     path("controlpanel/zotero/<int:id>/", views.controlpanel_zotero_item, name="controlpanel_zotero_item"),
 
