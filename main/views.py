@@ -739,19 +739,72 @@ def controlpanel_library_items(request, id):
     return render(request, "main/controlpanel/library.items.html", context)
 
 @staff_required
-def controlpanel_library_item(request, id):
+def controlpanel_library_item(request, id=None):
     if not has_access(request, section="library"):
         return access_denied()
 
     if id:
         info = LibraryItem.objects.get(pk=id)
+    else:
+        info = LibraryItem()
+        info.type_id = request.GET["type"]
 
     if request.method == "POST":
         if "delete" in request.POST:
             info.is_deleted = True
             info.save()
             messages.success(request, f"<strong>{info}</strong> was deleted")
-            return redirect("controlpanel")
+        else:
+            info.name = request.POST.get("name")
+            info.type_id = request.POST.get("type")
+            info.language = request.POST.get("language")
+            info.title_original_language = request.POST.get("title_original_language")
+            info.author_list = request.POST.get("author_list")
+            info.description = request.POST.get("description")
+            info.year = request.POST.get("year") or None
+            info.license_id = request.POST.get("license") or None
+            info.doi = request.POST.get("doi")
+            info.isbn = request.POST.get("isbn")
+            info.url = request.POST.get("url")
+            info.comments = request.POST.get("comments")
+
+            if info.type.id == 39:
+                # Datasets can be part of another publication, here we configure that
+                related_id = request.POST.get("is_part_of", "").strip()
+                if not related_id:
+                    info.is_part_of = None
+                else:
+                    related_item = get_object_or_404(
+                        LibraryItem,
+                        pk=related_id,
+                        is_deleted=False,
+                    )
+
+                    if related_item.pk == info.pk:
+                        raise ValidationError("A library item cannot be part of itself.")
+
+                    info.is_part_of = related_item
+
+            if request.POST.get("delete_image"):
+                info.image.delete(save=False)
+
+            if request.POST.get("delete_file"):
+                info.file.delete(save=False)
+
+            info.image = request.FILES.get("image", info.image)
+            info.file = request.FILES.get("file", info.file)
+
+            info.save()
+
+            info.spaces.set(request.POST.getlist("spaces"))
+            info.tags.set(request.POST.getlist("tags"))
+
+            messages.success(request, "Information was saved")
+
+        if "redirect" in request.GET:
+            return redirect(request.GET["redirect"])
+        else:
+            return redirect(reverse("controlpanel_library_items", args=[info.type.id]))
     
     context = {
         "types": LibraryItemType.objects.all(),
@@ -1393,7 +1446,7 @@ def controlpanel_datasets(request):
         )
     ).order_by("-document_count").filter(document_count__gt=0)
 
-    datasets = LibraryItem.objects.filter(type_id=39).prefetch_related("files")
+    datasets = LibraryItem.objects.filter(type_id=39).prefetch_related("files").order_by("name", "id")
 
     if "island" in request.GET:
         datasets = datasets.filter(spaces=request.GET["island"])

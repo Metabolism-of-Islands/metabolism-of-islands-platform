@@ -78,6 +78,7 @@ urlpatterns = [
 
     path("controlpanel/library/", views.controlpanel_library, name="controlpanel_library"),
     path("controlpanel/library/<int:id>/", views.controlpanel_library_item, name="controlpanel_library_item"),
+    path("controlpanel/library/create/", views.controlpanel_library_item, name="controlpanel_library_item_create"),
     path("controlpanel/library/items/<int:id>/", views.controlpanel_library_items, name="controlpanel_library_items"),
 
     path("controlpanel/videos/", views.controlpanel_videos, name="controlpanel_videos"),

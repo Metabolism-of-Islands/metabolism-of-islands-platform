@@ -2,7 +2,10 @@
 
 {% block content %}
 
-<h1>{% block title %}{{ info }}{% endblock %}</h1>
+<div class="flex justify-between">
+  <h1>{% block title %}{{ info }}{% endblock %}</h1>
+  <a href="{% url "controlpanel_library_item_create" %}?type={{ info.id }}"><i class="fa fa-plus"></i></a>
+</div>
 
 <div class="alert alert-info"><strong>{{ items.count }}</strong> items found.</div>
 
@@ -10,6 +13,7 @@
   <thead>
     <tr>
       <th>ID</th>
+      <th>View</th>
       <th>Title</th>
       <th>Added</th>
     </tr>
@@ -18,11 +22,14 @@
   {% for each in items %}
     <tr>
       <td class="font-mono text-slate-600">{{ each.id }}</td>
+      <td><a href="{{ each.get_absolute_url }}" title="View on the website"><i class="fal fa-external-link-alt"></i></a></td>
       <td><a href="{% url "controlpanel_library_item" each.id %}">{{ each.name }}</a></td>
       <td class="whitespace-nowrap">{{ each.date_created|date:"M d, Y" }}</td>
     </tr>
   {% endfor %}
   </tbody>
 </table>
+
+<a class="btn-blue mt-5" href="{% url "controlpanel_library_item_create" %}?type={{ info.id }}"><i class="fa fa-plus"></i> Add new "{{ info }}" record</a>
 
 {% endblock %}

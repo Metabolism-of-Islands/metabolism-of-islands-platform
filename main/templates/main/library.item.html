@@ -126,10 +126,17 @@
             </div>
           {% endif %}
 
+          {% if info.is_part_of %}
+            <div class="px-4 py-3 flex flex-col gap-0.5 text-sm font-normal">
+              <span class="text-slate-400">Source publication</span>
+              <a href="{{ info.is_part_of.get_absolute_url }}" class="font-mono text-xs text-slate-600 truncate">{{ info.is_part_of }}</a>
+            </div>
+          {% endif %}
+
           {% if info.uploader %}
             <div class="px-4 py-3 flex justify-between text-sm font-normal">
               <span class="text-slate-400">Uploaded by</span>
-            <span class="font-semibold text-slate-800">{{ info.uploader }}</span>
+              <span class="font-semibold text-slate-800">{{ info.uploader }}</span>
             </div>
           {% endif %}
         </div>

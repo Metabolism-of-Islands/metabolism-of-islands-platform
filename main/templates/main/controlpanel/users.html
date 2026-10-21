@@ -44,6 +44,21 @@
         {% if each.people.access_type %}
           <span class="badge badge-success">{{ each.people.get_access_type_display }}</span>
         {% endif %}
+        {% if each.people.island_access.all %}
+          <div class="mt-1">
+          {% for island in each.people.island_access.all %}
+            <span class="badge badge-info">{{ island }}</span>
+          {% endfor %}
+          </div>
+        {% endif %}
+        {% if each.people.controlpanel_access %}
+          <div class="mt-1">
+            {% for label in each.people.controlpanel_access %}
+              <span class="badge badge-warning">{{ label|title }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+
       </td>
       <td class="whitespace-nowrap">{{ each.last_login|date:"M d, Y" }}</td>
     </tr>

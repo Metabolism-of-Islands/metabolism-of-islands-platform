@@ -27,6 +27,7 @@
   <thead>
     <tr>
       <th>ID</th>
+      <th>View</th>
       <th>Record</th>
       <th>File(s)</th>
     </tr>
@@ -34,9 +35,12 @@
   <tbody>
   {% for each in datasets %}
     <tr>
-      <td class="font-mono text-slate-600">{{ each.id }}</td>
+      <td class="font-mono text-slate-600">
+        {{ each.id }}
+      </td>
+      <td><a href="{{ each.get_absolute_url }}" title="View on the website"><i class="fal fa-external-link-alt"></i></a></td>
       <td>
-        <a href="{% url "library_item" each.id %}">{{ each.name }}</a><br>
+        <a href="{% url "controlpanel_library_item" each.id %}?redirect={{ request.get_full_path|urlencode }}">{{ each.name }}</a><br>
         <strong>Author(s)</strong>: {{ each.author_list }}<br>
       </td>
       <td>
